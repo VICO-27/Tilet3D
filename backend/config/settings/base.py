@@ -24,6 +24,10 @@ INSTALLED_APPS = [
 ]
 
 
+AUTHENTICATION_BACKENDS = [
+    "apps.accounts.backends.EmailBackend",
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",

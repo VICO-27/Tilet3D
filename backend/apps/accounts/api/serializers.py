@@ -49,7 +49,6 @@ class LoginSerializer(serializers.Serializer):
 
 
 
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
@@ -63,8 +62,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = [
-            "id",
-            "created_at",
-            "updated_at",
-        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def update(self, instance, validated_data):
+        # extra safety layer (prevents accidental overwrite bugs)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

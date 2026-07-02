@@ -1,10 +1,16 @@
-import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+from apps.accounts.models import Profile
 
 User = get_user_model()
 
@@ -16,34 +22,49 @@ class GoogleLoginView(APIView):
         token = request.data.get("token")
 
         if not token:
-            return Response({"error": "Token required"}, status=400)
+            return Response(
+                {"error": "Google token required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # verify token with Google
-        google_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
-        response = requests.get(google_url)
+        try:
+            # 1. VERIFY GOOGLE TOKEN
+            id_info = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID
+            )
 
-        if response.status_code != 200:
-            return Response({"error": "Invalid Google token"}, status=400)
+            email = id_info.get("email")
 
-        data = response.json()
+            if not email:
+                return Response(
+                    {"error": "Email not found in Google account"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        email = data.get("email")
+            # 2. CREATE OR GET USER
+            user, created = User.objects.get_or_create(email=email)
 
-        if not email:
-            return Response({"error": "Google account has no email"}, status=400)
+            if created:
+                user.set_unusable_password()
+                user.save()
 
-        user, created = User.objects.get_or_create(
-            email=email
-        )
+                # 3. CREATE PROFILE (IMPORTANT FOR YOUR SYSTEM)
+                Profile.objects.create(user=user)
 
-        if created:
-            user.set_unusable_password()
-            user.save()
+            # 4. GENERATE JWT TOKENS
+            refresh = RefreshToken.for_user(user)
 
-        refresh = RefreshToken.for_user(user)
+            return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "email": user.email,
+                "created": created
+            }, status=status.HTTP_200_OK)
 
-        return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-            "email": user.email
-        }, status=status.HTTP_200_OK)
+        except ValueError:
+            return Response(
+                {"error": "Invalid Google token"},
+                status=status.HTTP_400_BAD_REQUEST
+            )

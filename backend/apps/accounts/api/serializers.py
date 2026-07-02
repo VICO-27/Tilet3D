@@ -1,11 +1,8 @@
-from rest_framework import serializers
-from apps.accounts.models import User
-
-
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-from apps.accounts.models import User
+
+from apps.accounts.models import User, Profile
 
 
 
@@ -47,3 +44,27 @@ class LoginSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
+
+
+
+
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "full_name",
+            "nickname",
+            "gender",
+            "body_type",
+            "skin_tone",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]

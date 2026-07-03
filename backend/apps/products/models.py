@@ -320,3 +320,84 @@ class CartItem(BaseModel):
 
     def __str__(self):
         return f"{self.variant.name} x {self.quantity}"
+
+
+
+
+
+class ProductLike(BaseModel):
+    """
+    User likes a product (wishlist-style).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_likes"
+    )
+
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="likes"
+    )
+
+    class Meta:
+        unique_together = ("user", "product")
+
+    def __str__(self):
+        return f"{self.user.email} likes {self.product.name}"
+
+
+
+class ProductComment(BaseModel):
+    """
+    User comments on a product.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_comments"
+    )
+
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+
+    text = models.TextField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.email}: {self.text[:30]}"
+
+
+class ProductShare(BaseModel):
+    """
+    Tracks product sharing (virality metric).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_shares"
+    )
+
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="shares"
+    )
+
+    platform = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="e.g. WhatsApp, Telegram, Facebook"
+    )
+
+    def __str__(self):
+        return f"{self.user.email} shared {self.product.name}"

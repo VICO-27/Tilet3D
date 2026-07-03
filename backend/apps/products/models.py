@@ -139,3 +139,139 @@ class Product(BaseModel):
 
     def __str__(self):
         return self.name
+    
+
+
+
+class ProductVariant(BaseModel):
+    """
+    Represents a purchasable version of a product.
+
+    This is what users actually buy.
+    A Product can have many Variants.
+    """
+
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="variants",
+        help_text="Parent product"
+    )
+
+    name = models.CharField(
+        max_length=150,
+        help_text="Variant label (e.g. White - M - Cotton)"
+    )
+
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Stock Keeping Unit (unique identifier)"
+    )
+
+    color = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Color of this variant"
+    )
+
+    size = models.CharField(
+        max_length=30,
+        blank=True,
+        help_text="Size (S, M, L, XL or numeric)"
+    )
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Price of this variant"
+    )
+
+    stock = models.PositiveIntegerField(
+        default=0,
+        help_text="Available quantity in inventory"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="If false, variant is hidden"
+    )
+
+    # 🔥 IMPORTANT FOR YOUR 3D SYSTEM (future use)
+    measurements = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Body/garment measurements for 3D try-on"
+    )
+
+    class Meta:
+        ordering = ["price"]
+        verbose_name = "Product Variant"
+        verbose_name_plural = "Product Variants"
+
+    def __str__(self):
+        return f"{self.product.name} - {self.name}"
+    
+
+
+
+class ProductMedia(BaseModel):
+    """
+    Media assets for a product variant.
+
+    This supports:
+    - Images (front, back, side)
+    - Videos (product showcase)
+    - Future 360/AR assets
+    """
+
+    MEDIA_TYPES = (
+        ("image", "Image"),
+        ("video", "Video"),
+    )
+
+    variant = models.ForeignKey(
+        "products.ProductVariant",
+        on_delete=models.CASCADE,
+        related_name="media",
+        help_text="Variant this media belongs to"
+    )
+
+    media_type = models.CharField(
+        max_length=10,
+        choices=MEDIA_TYPES,
+        default="image",
+        help_text="Type of media"
+    )
+
+    file = models.FileField(
+        upload_to="products/media/",
+        help_text="Image or video file"
+    )
+
+    alt_text = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Accessibility / SEO text"
+    )
+
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Main image shown on product card"
+    )
+
+    display_order = models.PositiveIntegerField(
+        default=0,
+        help_text="Controls ordering in gallery / animation"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["display_order"]
+        verbose_name = "Product Media"
+        verbose_name_plural = "Product Media"
+
+    def __str__(self):
+        return f"{self.variant.name} - {self.media_type}"

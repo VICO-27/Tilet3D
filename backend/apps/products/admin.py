@@ -1,7 +1,10 @@
 from django.contrib import admin
-from .models import Category, Product
+from .models import Category, Product, ProductVariant, ProductMedia
 
 
+# -------------------------
+# CATEGORY ADMIN
+# -------------------------
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """
@@ -36,9 +39,15 @@ class CategoryAdmin(admin.ModelAdmin):
     )
 
 
-
+# -------------------------
+# PRODUCT ADMIN
+# -------------------------
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Product.
+    """
+
     list_display = (
         "name",
         "category",
@@ -63,3 +72,55 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         "slug": ("name",),
     }
+
+
+# -------------------------
+# PRODUCT VARIANT ADMIN
+# -------------------------
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Product Variants.
+    """
+
+    list_display = (
+        "name",
+        "product",
+        "price",
+        "stock",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_active",
+        "product",
+    )
+
+    search_fields = (
+        "name",
+        "sku",
+        "color",
+        "size",
+    )
+
+
+# -------------------------
+# PRODUCT MEDIA ADMIN
+# -------------------------
+@admin.register(ProductMedia)
+class ProductMediaAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for Product Media.
+    """
+
+    list_display = (
+        "variant",
+        "media_type",
+        "is_primary",
+        "display_order",
+    )
+
+    list_filter = (
+        "media_type",
+        "is_primary",
+    )

@@ -1,7 +1,6 @@
 import uuid
 
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
 from common.models import BaseModel
@@ -45,7 +44,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     DO NOT put business fields here (profile, avatar, address, etc).
     """
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    #id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     email = models.EmailField(unique=True)
 

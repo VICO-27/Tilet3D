@@ -4,26 +4,35 @@ User = get_user_model()
 
 
 class EmailBackend:
-    """
-    Custom authentication backend using email instead of username.
-    """
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        """
-        Django passes 'username' even if we use email login.
-        """
+    def authenticate(
+        self,
+        request,
+        username=None,
+        email=None,
+        password=None,
+        **kwargs,
+    ):
+        # Accept either "username" or "email"
+        email = email or username
+
+        if email is None or password is None:
+            return None
 
         try:
-            user = User.objects.get(email=username)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             return None
 
-        if user.check_password(password):
+        if user.check_password(password) and user.is_active:
             return user
 
         return None
 
     def get_user(self, user_id):
+        """
+        Return the user object from the database.
+        """
         try:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:

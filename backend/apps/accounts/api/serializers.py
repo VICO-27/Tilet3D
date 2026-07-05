@@ -22,30 +22,46 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 
 class LoginSerializer(serializers.Serializer):
+    """
+    Authenticate a user using email and password
+    and return JWT tokens.
+    """
+
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data):
-        email = data.get("email")
-        password = data.get("password")
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
 
-        user = authenticate(email=email, password=password)
+        # Authenticate using our custom EmailBackend
+        user = authenticate(
+            username=email,
+            password=password,
+        )
 
-        if not user:
-            raise serializers.ValidationError("Invalid credentials")
+        if user is None:
+            raise serializers.ValidationError(
+                {"non_field_errors": ["Invalid email or password."]}
+            )
 
         if not user.is_active:
-            raise serializers.ValidationError("User is inactive")
+            raise serializers.ValidationError(
+                {"non_field_errors": ["This account is inactive."]}
+            )
 
         refresh = RefreshToken.for_user(user)
 
         return {
-            "user": user.email,
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+            },
+            "tokens": {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            },
         }
-
-
 
 
 

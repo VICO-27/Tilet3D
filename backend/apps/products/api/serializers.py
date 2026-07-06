@@ -1,31 +1,50 @@
 from rest_framework import serializers
-from apps.products.models import Product, ProductComment, ProductLike, ProductShare, ProductVariant, ProductMedia, Cart, CartItem
+
+from apps.products.models import (
+    Product,
+    ProductVariant,
+    ProductMedia,
+    ProductLike,
+    ProductComment,
+    ProductShare,
+)
 
 
-# -------------------------
-# MEDIA SERIALIZER
-# -------------------------
+# ==========================================================
+# PRODUCT MEDIA SERIALIZER
+# ==========================================================
 class ProductMediaSerializer(serializers.ModelSerializer):
+    """
+    Serializes images/videos belonging to a product variant.
+    """
+
     class Meta:
         model = ProductMedia
-        fields = [
+        fields = (
             "id",
             "media_type",
             "file",
             "is_primary",
             "display_order",
-        ]
+        )
 
 
-# -------------------------
-# VARIANT SERIALIZER
-# -------------------------
+# ==========================================================
+# PRODUCT VARIANT SERIALIZER
+# ==========================================================
 class ProductVariantSerializer(serializers.ModelSerializer):
-    media = ProductMediaSerializer(many=True, read_only=True)
+    """
+    Serializes purchasable product variants.
+    """
+
+    media = ProductMediaSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = ProductVariant
-        fields = [
+        fields = (
             "id",
             "name",
             "sku",
@@ -35,15 +54,26 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "stock",
             "measurements",
             "media",
-        ]
+        )
 
 
-# -------------------------
+# ==========================================================
 # PRODUCT SERIALIZER
-# -------------------------
+# ==========================================================
 class ProductSerializer(serializers.ModelSerializer):
-    variants = ProductVariantSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(source="category.name", read_only=True)
+    """
+    Main serializer returned by product endpoints.
+    """
+
+    category_name = serializers.CharField(
+        source="category.name",
+        read_only=True,
+    )
+
+    variants = ProductVariantSerializer(
+        many=True,
+        read_only=True,
+    )
 
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
@@ -51,7 +81,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = [
+        fields = (
             "id",
             "name",
             "slug",
@@ -64,11 +94,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "like_count",
             "comment_count",
             "is_liked",
-        ]
-
-    # -------------------------
-    # 🔥 METHODS MUST GO HERE
-    # -------------------------
+        )
 
     def get_like_count(self, obj):
         return obj.likes.count()
@@ -79,92 +105,65 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_is_liked(self, obj):
         request = self.context.get("request")
 
-        if not request or not request.user.is_authenticated:
+        if request is None:
+            return False
+
+        if not request.user.is_authenticated:
             return False
 
         return obj.likes.filter(user=request.user).exists()
 
-class CartItemSerializer(serializers.ModelSerializer):
-    variant_name = serializers.CharField(source="variant.name", read_only=True)
-    price = serializers.DecimalField(source="variant.price", max_digits=10, decimal_places=2, read_only=True)
 
-    class Meta:
-        model = CartItem
-        fields = [
-            "id",
-            "variant",
-            "variant_name",
-            "quantity",
-            "price",
-        ]
-
-class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
-    total_price = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Cart
-        fields = [
-            "id",
-            "items",
-            "total_price",
-        ]
-
-    def get_total_price(self, obj):
-        return sum(
-            item.quantity * item.variant.price
-            for item in obj.items.all()
-        )
-
+# ==========================================================
+# PRODUCT LIKE SERIALIZER
+# ==========================================================
 class ProductLikeSerializer(serializers.ModelSerializer):
-    """
-    Serializes product likes (wishlist behavior).
-    """
 
     class Meta:
         model = ProductLike
-        fields = [
+        fields = (
             "id",
             "product",
             "created_at",
-        ]
-    
-    
+        )
 
 
+# ==========================================================
+# PRODUCT COMMENT SERIALIZER
+# ==========================================================
 class ProductCommentSerializer(serializers.ModelSerializer):
-    """
-    Product comments for UI display.
-    """
 
-    user_email = serializers.CharField(source="user.email", read_only=True)
+    user_email = serializers.CharField(
+        source="user.email",
+        read_only=True,
+    )
 
     class Meta:
         model = ProductComment
-        fields = [
+        fields = (
             "id",
             "product",
             "user",
             "user_email",
             "text",
             "created_at",
-        ]
-        read_only_fields = ["user"]
-    
+        )
+
+        read_only_fields = (
+            "user",
+        )
 
 
-
-
+# ==========================================================
+# PRODUCT SHARE SERIALIZER
+# ==========================================================
 class ProductShareSerializer(serializers.ModelSerializer):
-    """
-    Tracks product sharing events.
-    """
 
     class Meta:
         model = ProductShare
-        fields = [
+        fields = (
             "id",
             "product",
             "platform",
             "created_at",
-        ]
+        )

@@ -173,3 +173,13 @@ class OrderItem(BaseModel):
 
     def __str__(self):
         return f"{self.order.order_number} - {self.product_name}"
+    
+
+# ==========================================================
+# SAFE STATUS CHECK (OPTIONAL SAFETY LAYER)
+# ==========================================================
+def can_transition(self, new_status):
+    from apps.orders.services.lifecycle import OrderLifecycle
+
+    allowed = OrderLifecycle.ALLOWED_TRANSITIONS.get(self.status, [])
+    return new_status in allowed

@@ -18,6 +18,39 @@ from .serializers import (
 )
 
 
+from ..services.checkout import CheckoutService
+
+
+class CheckoutView(APIView):
+
+    def post(self, request):
+        """
+        ONE CALL:
+        Cart → Order → Payment → Checkout URL
+        """
+
+        provider = request.data.get("provider", "chapa")
+
+        try:
+            order, payment = CheckoutService.checkout(
+                user=request.user,
+                provider=provider
+            )
+
+            return Response({
+                "order_id": str(order.id),
+                "payment_id": str(payment.id),
+                "checkout_url": payment.checkout_url
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=400)
+
+
+
+
 # ==========================================================
 # MY ORDERS
 # ==========================================================

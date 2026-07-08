@@ -130,6 +130,7 @@ class ProductVariant(BaseModel):
     """
     Purchasable version of a product.
     """
+    reserved_stock = models.PositiveIntegerField(default=0)
 
     product = models.ForeignKey(
         "products.Product",

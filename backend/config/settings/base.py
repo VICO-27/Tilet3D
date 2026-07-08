@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "apps.products",
     "apps.cart",
     "apps.orders",
+    "apps.payments",
 ]
 
 
@@ -36,6 +37,12 @@ env = environ.Env()
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
+
+
+
+import os
+
+CHAPA_SECRET_KEY = os.getenv("CHAPA_SECRET_KEY")
 
 
 

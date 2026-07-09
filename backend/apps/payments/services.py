@@ -1,39 +1,69 @@
 # ==========================================================
-# PAYMENT SERVICE (FINAL INTEGRATION VERSION)
+# PAYMENT SERVICE
+# ==========================================================
+#
+# Responsibilities
+# - Create payment records
+# - Handle payment state transitions
+# - Synchronize order status
+# - Synchronize inventory
+#
+# Business logic only.
+# No external API calls.
+#
 # ==========================================================
 
 from django.db import transaction
 
-from .models import Payment, PaymentStatus
+from apps.orders.models import (
+    OrderStatus,
+    PaymentStatus as OrderPaymentStatus,
+)
+
 from apps.products.services.inventory import InventoryService
+
+from .models import (
+    Payment,
+    PaymentStatus,
+)
 
 
 class PaymentService:
 
+    # ==========================================================
+    # CREATE PAYMENT
+    # ==========================================================
     @staticmethod
     def create_payment(order, user, provider="chapa"):
 
-        existing = Payment.objects.filter(order=order).first()
-        if existing:
-            return existing
+        payment, created = Payment.objects.get_or_create(
 
-        return Payment.objects.create(
             order=order,
-            user=user,
-            amount=order.total,
-            currency="ETB",
-            provider=provider,
-            status=PaymentStatus.INITIATED,
+
+            defaults={
+                "user": user,
+                "amount": order.total,
+                "currency": "ETB",
+                "provider": provider,
+                "status": PaymentStatus.INITIATED,
+            },
         )
 
+        return payment
+
     # ==========================================================
-    # SUCCESS FLOW (CONFIRM INVENTORY)
+    # PAYMENT SUCCESS
     # ==========================================================
     @staticmethod
     @transaction.atomic
     def mark_success(payment):
 
-        payment = Payment.objects.select_for_update().get(id=payment.id)
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .select_related("order")
+            .get(pk=payment.pk)
+        )
 
         if payment.status == PaymentStatus.SUCCESS:
             return payment
@@ -42,26 +72,40 @@ class PaymentService:
         payment.save(update_fields=["status"])
 
         order = payment.order
-        order.payment_status = "paid"
-        order.status = "processing"
-        order.save(update_fields=["payment_status", "status"])
 
-        # ======================================================
-        # CONFIRM STOCK (FINAL DEDUCTION)
-        # ======================================================
-        for item in order.items.all():
-            InventoryService.confirm(item.variant, item.quantity)
+        # --------------------------------------------------
+        # FIX 1: Routing via Lifecycle State Machine
+        # --------------------------------------------------
+        from apps.orders.services.lifecycle import OrderLifecycle
+        
+        OrderLifecycle.mark_paid(order)
+        OrderLifecycle.transition(
+            order,
+            OrderStatus.PROCESSING,
+        )
+
+        # Confirm Inventory Reservations
+        for item in order.items.select_related("variant"):
+            InventoryService.confirm(
+                variant=item.variant,
+                quantity=item.quantity,
+            )
 
         return payment
 
     # ==========================================================
-    # FAILURE FLOW (RELEASE INVENTORY)
+    # PAYMENT FAILED
     # ==========================================================
     @staticmethod
     @transaction.atomic
     def mark_failed(payment):
 
-        payment = Payment.objects.select_for_update().get(id=payment.id)
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .select_related("order")
+            .get(pk=payment.pk)
+        )
 
         if payment.status == PaymentStatus.FAILED:
             return payment
@@ -70,14 +114,21 @@ class PaymentService:
         payment.save(update_fields=["status"])
 
         order = payment.order
-        order.payment_status = "failed"
-        order.status = "cancelled"
-        order.save(update_fields=["payment_status", "status"])
 
-        # ======================================================
-        # RELEASE STOCK BACK
-        # ======================================================
-        for item in order.items.all():
-            InventoryService.release(item.variant, item.quantity)
+        # --------------------------------------------------
+        # FIX 2: Routing Failures via Lifecycle State Machine
+        # --------------------------------------------------
+        order.payment_status = OrderPaymentStatus.FAILED
+        order.save(update_fields=["payment_status"])
+        
+        from apps.orders.services.lifecycle import OrderLifecycle
+        OrderLifecycle.cancel(order)
+
+        # Release Reserved Inventory Back to Stock
+        for item in order.items.select_related("variant"):
+            InventoryService.release(
+                variant=item.variant,
+                quantity=item.quantity,
+            )
 
         return payment

@@ -21,8 +21,9 @@ urlpatterns = [
     path("comment/", AddCommentView.as_view(), name="comment-add"),
     path("share/", ShareProductView.as_view(), name="share"),
 
+
+
     # =========================
     # PRODUCT DETAIL (LAST)
     # =========================
-    path("<slug:slug>/", ProductDetailAPIView.as_view(), name="product-detail"),
-]
+path("<uuid:id>/", ProductDetailAPIView.as_view(), name="product-detail"),]

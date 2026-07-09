@@ -61,7 +61,7 @@ class OrderLifecycle:
         # APPLY TRANSITION
         # ==================================================
         order.status = new_status
-        order.save()
+        order.save(update_fields=["status"])
 
         return order
 
@@ -80,7 +80,7 @@ class OrderLifecycle:
         if order.status == OrderStatus.PENDING:
             order.status = OrderStatus.CONFIRMED
 
-        order.save()
+        order.save(update_fields=["payment_status", "status"])
 
         return order
 
@@ -97,6 +97,6 @@ class OrderLifecycle:
             raise OrderLifecycleError("Cannot cancel shipped/delivered order")
 
         order.status = OrderStatus.CANCELLED
-        order.save()
+        order.save(update_fields=["status"])
 
         return order

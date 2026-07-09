@@ -39,21 +39,23 @@ class ProductListAPIView(generics.ListAPIView):
 class ProductDetailAPIView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
-    lookup_field = "slug"
+
+    lookup_field = "id"
+    lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return Product.objects.filter(
-            is_active=True
-        ).prefetch_related(
-            "variants__media",
-            "likes",
-            "comments",
-            "category"
+        return (
+            Product.objects.filter(is_active=True)
+            .prefetch_related(
+                "variants__media",
+                "likes",
+                "comments",
+                "category",
+            )
         )
 
     def get_serializer_context(self):
         return {"request": self.request}
-
 
 # ==========================================================
 # LIKE TOGGLE

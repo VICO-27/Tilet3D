@@ -97,14 +97,14 @@ class ProductVariantAdmin(admin.ModelAdmin):
     """
 
     list_display = (
-        "name",
-        "product",
-        "color",
-        "size",
-        "price",
-        "stock",
-        "is_active",
-    )
+    "name",
+    "product",
+    "sku",
+    "price",
+    "stock",
+    "reserved_stock",
+    "is_active",
+)
 
     list_filter = (
         "product",
@@ -123,6 +123,10 @@ class ProductVariantAdmin(admin.ModelAdmin):
         "product",
         "price",
     )
+    
+    readonly_fields = (
+    "reserved_stock",
+)
 
 
 # ==========================================================

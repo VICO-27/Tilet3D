@@ -75,6 +75,10 @@ class OrderAdmin(admin.ModelAdmin):
         OrderItemInline,
     ]
 
+    autocomplete_fields = (
+    "user",
+)
+
 
 # ==========================================================
 # ORDER ITEM ADMIN

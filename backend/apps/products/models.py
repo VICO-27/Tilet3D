@@ -130,7 +130,6 @@ class ProductVariant(BaseModel):
     """
     Purchasable version of a product.
     """
-    reserved_stock = models.PositiveIntegerField(default=0)
 
     product = models.ForeignKey(
         "products.Product",
@@ -160,7 +159,19 @@ class ProductVariant(BaseModel):
         decimal_places=2
     )
 
-    stock = models.PositiveIntegerField(default=0)
+    # ==========================================================
+    # INVENTORY
+    # ==========================================================
+
+    stock = models.PositiveIntegerField(
+        default=0,
+        help_text="Total physical inventory."
+    )
+
+    reserved_stock = models.PositiveIntegerField(
+        default=0,
+        help_text="Reserved during checkout but not yet paid."
+    )
 
     is_active = models.BooleanField(default=True)
 
@@ -175,9 +186,23 @@ class ProductVariant(BaseModel):
         verbose_name = "Product Variant"
         verbose_name_plural = "Product Variants"
 
+    # ==========================================================
+    # AVAILABLE STOCK
+    # ==========================================================
+    @property
+    def available_stock(self):
+        """
+        Stock available for new purchases.
+        """
+        return max(self.stock - self.reserved_stock, 0)
+
     def __str__(self):
         return f"{self.product.name} - {self.name}"
+    
 
+
+
+    
 
 class ProductMedia(BaseModel):
     """

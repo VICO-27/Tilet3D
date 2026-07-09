@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User
+from .models import User, Profile
 
 
 @admin.register(User)
@@ -75,4 +75,27 @@ class CustomUserAdmin(UserAdmin):
                 ),
             },
         ),
+    )
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "user",
+        "full_name",
+        "nickname",
+        "gender",
+        "body_type",
+        "skin_tone",
+    )
+
+    search_fields = (
+        "user__email",
+        "full_name",
+        "nickname",
+    )
+
+    autocomplete_fields = (
+        "user",
     )

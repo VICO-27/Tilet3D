@@ -100,3 +100,30 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+
+
+
+# Environment
+.env
+
+# Virtual environment
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+*.log
+db.sqlite3
+
+# Media
+media/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

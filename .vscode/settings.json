@@ -5,8 +5,14 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend"
     ],
-    "python.terminal.useEnvFile": true
+    "python.terminal.useEnvFile": true,
+    "cSpell.words": [
+        "chapa",
+        "woreda"
+    ]
 
+
+    
 
 
 }

@@ -34,6 +34,13 @@ class ChapaGateway(BaseGateway):
             "Content-Type": "application/json",
         }
 
+
+        print("\n" + "=" * 80)
+        print("CHAPA REQUEST")
+        print(json.dumps(payload, indent=4))
+        print("=" * 80 + "\n")
+
+
         response = requests.post(
             self.BASE_URL,
             json=payload,

@@ -2,16 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Heart, MessageCircle, Bookmark, Share2, X, Send } from "lucide-react";
-import {
-  type CatalogProduct,
-  PRODUCT_FALLBACK_IMG,
-} from "../data/catalog";
-import { useEngagementStore } from "../../../app/store/useEngagementStore";
+import { type CatalogProduct, PRODUCT_FALLBACK_IMG } from "../data/catalog";
+import { useEngagementStore, type ProductComment } from "../../../app/store/useEngagementStore";
 import { useAuthStore } from "../../../app/store/useAuthStore";
 
 interface Props {
   product: CatalogProduct;
-  width: string; // tailwind width class — varied per position
+  width: string;
   isVideo: boolean;
   onTryOn: (p: CatalogProduct) => void;
 }
@@ -21,183 +18,124 @@ const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   if (img.src !== PRODUCT_FALLBACK_IMG) img.src = PRODUCT_FALLBACK_IMG;
 };
 
-export const ProductCard: React.FC<Props> = ({
-  product,
-  width,
-  isVideo,
-  onTryOn,
-}) => {
+export const ProductCard: React.FC<Props> = ({ product, width, isVideo, onTryOn }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const eng = useEngagementStore();
-  const { user } = useAuthStore();
-  const liked = eng.isLiked(product.id);
-  const saved = eng.isSaved(product.id);
-  const commentCount = eng.commentCount(product.id);
-  const [vidFailed, setVidFailed] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const { toggleLike, addComment, trackShare } = useEngagementStore();
+  const { isAuthenticated } = useAuthStore();
 
-  // Play videos only while in view (prevents many concurrent decoders).
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [vidFailed, setVidFailed] = useState(false);
+  const [inView, setInView] = useState(false);
+
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
     const io = new IntersectionObserver(
-      ([e]) => (e.isIntersecting ? v.play().catch(() => {}) : v.pause()),
-      { threshold: 0.2 },
+      ([e]) => {
+        setInView(e.isIntersecting);
+        if (v) {
+          if (e.isIntersecting) v.play().catch(() => {});
+          else v.pause();
+        }
+      },
+      { threshold: 0.1 }
     );
-    io.observe(v);
+    if (v) io.observe(v);
     return () => io.disconnect();
-  }, [isVideo, vidFailed]);
+  }, []);
 
-  const useVideo = isVideo && !!product.video && !vidFailed;
+  const handleLike = async () => {
+    if (!isAuthenticated) return alert("Please sign in to like products.");
+    setIsLiked(!isLiked);
+    await toggleLike(product.id);
+  };
+
+  const handleShare = () => {
+    trackShare(product.id, "copy_link");
+    navigator.clipboard.writeText(window.location.origin + `/products?q=${product.id}`);
+    alert("Link copied to clipboard!");
+  };
 
   return (
-    <div
-      className={`group relative ${width} h-[clamp(380px,46vw,520px)] shrink-0 select-none overflow-hidden bg-neutral-200`}
-    >
-      {/* Media */}
-      {isVideo && !!product.video ? (
-        <>
-          {/* Poster image — always present so the card is never blank */}
-          <img
-            src={product.img}
-            onError={onImgError}
-            alt={product.name}
-            loading="lazy"
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover"
+    <div className={`group relative ${width} h-[clamp(380px,46vw,520px)] shrink-0 select-none overflow-hidden bg-neutral-100 rounded-2xl`}>
+      <div className="absolute inset-0 z-0">
+        <img
+          src={product.img}
+          onError={onImgError}
+          alt={product.name}
+          className={`h-full w-full object-cover transition-opacity duration-700 ${isVideo && inView && !vidFailed ? 'opacity-0' : 'opacity-100'}`}
+        />
+        {isVideo && !vidFailed && (
+          <video
+            ref={videoRef}
+            src={inView ? product.video : ""}
+            loop
+            muted
+            playsInline
+            onError={() => setVidFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
           />
-          {useVideo && (
-            <video
-              ref={videoRef}
-              src={product.video}
-              loop
-              muted
-              playsInline
-              preload="none"
-              onError={() => setVidFailed(true)}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <img
-            src={product.img}
-            onError={onImgError}
-            alt={product.name}
-            loading="lazy"
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out group-hover:opacity-0"
-          />
-          <img
-            src={product.imgHover}
-            onError={onImgError}
-            alt=""
-            loading="lazy"
-            draggable={false}
-            className="absolute inset-0 h-full w-full scale-[1.04] object-cover opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100"
-          />
-        </>
-      )}
+        )}
+      </div>
 
-      {/* Hover scrim */}
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-      {/* Badge */}
-      {product.badge && (
-        <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-plum-700 backdrop-blur-sm">
-          {product.badge}
-        </span>
-      )}
-
-      {/* TikTok-style action rail */}
-      <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2.5 opacity-0 transition-all duration-500 group-hover:opacity-100">
-        <ActionButton label="Add to order" onClick={() => onTryOn(product)}>
+      <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 opacity-0 transition-all duration-500 group-hover:opacity-100">
+        <ActionButton label="Try on Avatar" onClick={() => onTryOn(product)}>
           <Plus className="h-4 w-4" />
         </ActionButton>
-        <ActionButton
-          label="Like"
-          active={liked}
-          onClick={() => eng.toggleLike(product.id)}
-        >
-          <Heart className={`h-4 w-4 ${liked ? "fill-rose-500 text-rose-500" : ""}`} />
+        
+        <ActionButton label="Like" active={isLiked} onClick={handleLike}>
+          <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
         </ActionButton>
-        <ActionButton label="Comment" onClick={() => setShowComments(true)}>
+
+        <ActionButton label="Comments" onClick={() => setShowComments(true)}>
           <MessageCircle className="h-4 w-4" />
-          {commentCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-plum-600 px-1 text-[8px] font-bold text-white">
-              {commentCount}
-            </span>
-          )}
         </ActionButton>
-        <ActionButton
-          label="Save"
-          active={saved}
-          onClick={() => eng.toggleSave(product.id)}
-        >
-          <Bookmark className={`h-4 w-4 ${saved ? "fill-plum-600 text-plum-600" : ""}`} />
+
+        <ActionButton label="Save" active={isSaved} onClick={() => setIsSaved(!isSaved)}>
+          <Bookmark className={`h-4 w-4 ${isSaved ? "fill-plum-600 text-plum-600" : ""}`} />
         </ActionButton>
-        <ActionButton label="Share">
+
+        <ActionButton label="Share" onClick={handleShare}>
           <Share2 className="h-4 w-4" />
         </ActionButton>
       </div>
 
-      {/* Bottom overlay — title/desc/price hidden until hover, slides up */}
-      <div className="absolute inset-x-0 bottom-0 z-10 translate-y-6 p-5 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-plum-300">
-          {product.brand}
-        </p>
-        <h3 className="display mt-1 text-lg font-semibold leading-tight text-white">
-          {product.name}
-        </h3>
-        <p className="mt-1 line-clamp-1 text-[11px] text-white/60">
-          {product.fabric}
-        </p>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-white">
-            ETB {product.price.toLocaleString()}
-          </span>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+      <div className="absolute inset-x-0 bottom-0 z-10 p-5 translate-y-4 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-plum-400">{product.brand}</p>
+        <h3 className="text-lg font-semibold text-white leading-tight mt-1">{product.name}</h3>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm font-bold text-white">ETB {product.price.toLocaleString()}</span>
+          <button 
             onClick={() => onTryOn(product)}
-            className="rounded-full bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-ink transition-colors hover:bg-plum-600 hover:text-white"
+            className="rounded-full bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-black hover:bg-plum-600 hover:text-white transition-colors"
           >
-            Try On Avatar
-          </motion.button>
+            Try On
+          </button>
         </div>
       </div>
 
       <CommentsModal
         open={showComments}
         product={product}
-        author={user?.name ?? "Guest"}
         onClose={() => setShowComments(false)}
-        eng={eng}
+        addComment={addComment}
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );
 };
 
-const ActionButton: React.FC<{
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}> = ({ label, active, onClick, children }) => (
+const ActionButton: React.FC<{ label: string; active?: boolean; onClick: () => void; children: React.ReactNode }> = ({ label, active, onClick, children }) => (
   <motion.button
-    whileHover={{ scale: 1.12 }}
+    whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.9 }}
-    onClick={(e) => {
-      e.stopPropagation();
-      onClick?.();
-    }}
+    onClick={(e) => { e.stopPropagation(); onClick(); }}
     aria-label={label}
     title={label}
-    className={`relative flex h-9 w-9 items-center justify-center rounded-full shadow-lg backdrop-blur-md transition-colors ${
-      active
-        ? "bg-white text-plum-600"
-        : "bg-white/85 text-ink/70 hover:bg-white hover:text-plum-600"
-    }`}
+    className={`flex h-10 w-10 items-center justify-center rounded-full shadow-xl backdrop-blur-md transition-colors ${active ? "bg-white text-plum-600" : "bg-white/90 text-black/70 hover:bg-white"}`}
   >
     {children}
   </motion.button>
@@ -206,99 +144,73 @@ const ActionButton: React.FC<{
 const CommentsModal: React.FC<{
   open: boolean;
   product: CatalogProduct;
-  author: string;
   onClose: () => void;
-  eng: ReturnType<typeof useEngagementStore>;
-}> = ({ open, product, author, onClose, eng }) => {
+  addComment: (id: string, text: string) => Promise<ProductComment | null>;
+  isAuthenticated: boolean;
+}> = ({ open, product, onClose, addComment, isAuthenticated }) => {
   const [text, setText] = useState("");
-  const comments = eng.getComments(product.id);
+  const [localComments, setLocalComments] = useState<ProductComment[]>([]);
 
-  const post = () => {
-    if (!text.trim()) return;
-    eng.addComment(product.id, author, text);
-    setText("");
+  const handlePost = async () => {
+    if (!text.trim() || !isAuthenticated) return;
+    const newComment = await addComment(product.id, text);
+    if (newComment) {
+      setLocalComments([newComment, ...localComments]);
+      setText("");
+    }
   };
 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="flex h-[500px] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white"
           >
-            {/* Header with product */}
-            <div className="flex items-center gap-3 border-b border-ink/[0.06] p-4">
-              <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
-                <img src={product.img} onError={onImgError} alt={product.name} className="h-full w-full object-cover" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-plum-500">
-                  {product.brand}
-                </p>
-                <h4 className="truncate font-serif text-sm font-semibold text-ink">
-                  {product.name}
-                </h4>
-                <p className="text-xs text-ink/50">{comments.length} comments</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-ink/50 hover:bg-ink/[0.05]"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <div className="flex items-center justify-between border-b p-4">
+              <h4 className="font-bold text-ink">Comments</h4>
+              <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X size={18} /></button>
             </div>
 
-            {/* Comments list */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {comments.length === 0 ? (
-                <p className="py-10 text-center text-sm text-ink/40">
-                  No comments yet — be the first to share your thoughts.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {comments.map((c) => (
-                    <div key={c.id} className="flex gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-plum-100 text-[11px] font-bold text-plum-700">
-                        {c.author.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs">
-                          <span className="font-semibold text-ink">{c.author}</span>{" "}
-                          <span className="text-ink/40">· {c.date}</span>
-                        </p>
-                        <p className="mt-0.5 text-sm text-ink/75">{c.text}</p>
-                      </div>
-                    </div>
-                  ))}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {localComments.length === 0 && <p className="text-center text-neutral-400 mt-10 text-sm">No comments yet.</p>}
+              {localComments.map((c, i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="h-8 w-8 rounded-full bg-plum-100 flex items-center justify-center text-[10px] font-bold text-plum-700">
+                    {c.user.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">{c.user}</p>
+                    <p className="text-sm text-neutral-600">{c.text}</p>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
 
-            {/* Composer */}
-            <div className="flex items-center gap-2 border-t border-ink/[0.06] p-3">
+            <div className="p-4 border-t flex gap-2">
               <input
+                disabled={!isAuthenticated}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && post()}
-                placeholder={`Comment as ${author}…`}
-                className="flex-1 rounded-full border border-ink/10 bg-neutral-50 px-4 py-2.5 text-sm text-ink placeholder-ink/35 focus:border-plum-500 focus:bg-white focus:outline-none"
+                placeholder={isAuthenticated ? "Add a comment..." : "Sign in to comment"}
+                className="flex-1 rounded-full bg-neutral-100 px-4 py-2 text-sm outline-none focus:ring-1 ring-plum-500"
               />
               <button
-                onClick={post}
-                disabled={!text.trim()}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-plum-600 text-white transition-colors hover:bg-plum-500 disabled:bg-ink/10 disabled:text-ink/30"
+                onClick={handlePost}
+                disabled={!text.trim() || !isAuthenticated}
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-plum-600 text-white disabled:opacity-50"
               >
-                <Send className="h-4 w-4" />
+                <Send size={16} />
               </button>
             </div>
           </motion.div>
         </div>
       )}
     </AnimatePresence>,
-    document.body,
+    document.body
   );
 };

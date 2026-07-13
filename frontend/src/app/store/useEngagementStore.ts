@@ -1,90 +1,112 @@
 import { useCallback, useState } from "react";
 
 /**
- * TikTok-style engagement persisted to localStorage:
- * likes, saves (per product id) and public comments (shared in this browser).
- * Each mutation re-reads localStorage before writing so multiple cards on the
- * page never clobber one another.
+ * Tilet3D Engagement Store
+ * Connects UI interactions (Likes, Comments, Shares) to the Django API.
  */
 
 export interface ProductComment {
   id: string;
-  author: string;
+  user: string; // Updated from 'author' to match standard Django user relation
   text: string;
-  date: string;
+  created_at: string;
 }
 
-const LIKES = "tilet3d_likes";
-const SAVES = "tilet3d_saves";
-const COMMENTS = "tilet3d_comments";
-
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function write<T>(key: string, val: T) {
-  localStorage.setItem(key, JSON.stringify(val));
-}
+const API_URL = "http://127.0.0.1:8000/api";
+const ACCESS_TOKEN_KEY = "tilet3d_access_token";
 
 export const useEngagementStore = () => {
-  const [, bump] = useState(0);
-  const rerender = useCallback(() => bump((v) => v + 1), []);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const likedIds = useCallback(() => read<string[]>(LIKES, []), []);
-  const savedIds = useCallback(() => read<string[]>(SAVES, []), []);
+  // Helper to get headers with JWT
+  const getAuthHeaders = useCallback(() => {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, []);
 
-  const isLiked = useCallback((id: string) => likedIds().includes(id), [likedIds]);
-  const isSaved = useCallback((id: string) => savedIds().includes(id), [savedIds]);
+  const toggleLike = useCallback(
+    async (productId: string) => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/products/like/`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ product_id: productId }),
+        });
 
-  const toggle = useCallback(
-    (key: string, id: string) => {
-      const cur = read<string[]>(key, []);
-      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [id, ...cur];
-      write(key, next);
-      rerender();
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.detail || "Could not process like");
+        }
+
+        const result = await response.json();
+        return result; // Usually returns { status: 'liked' | 'unliked' }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Like failed");
+        return null;
+      } finally {
+        setLoading(false);
+      }
     },
-    [rerender],
-  );
-
-  const toggleLike = useCallback((id: string) => toggle(LIKES, id), [toggle]);
-  const toggleSave = useCallback((id: string) => toggle(SAVES, id), [toggle]);
-
-  const getComments = useCallback(
-    (id: string) => read<Record<string, ProductComment[]>>(COMMENTS, {})[id] ?? [],
-    [],
+    [getAuthHeaders]
   );
 
   const addComment = useCallback(
-    (id: string, author: string, text: string) => {
-      const all = read<Record<string, ProductComment[]>>(COMMENTS, {});
-      const comment: ProductComment = {
-        id: `${id}-${Date.now()}`,
-        author: author || "Guest",
-        text: text.trim(),
-        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      };
-      all[id] = [comment, ...(all[id] ?? [])];
-      write(COMMENTS, all);
-      rerender();
+    async (productId: string, text: string) => {
+      if (!text.trim()) return null;
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/products/comment/`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            product: productId, 
+            text: text.trim() 
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Failed to add comment");
+
+        return data as ProductComment;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Comment failed");
+        return null;
+      } finally {
+        setLoading(false);
+      }
     },
-    [rerender],
+    [getAuthHeaders]
   );
 
-  const commentCount = useCallback((id: string) => getComments(id).length, [getComments]);
+  const trackShare = useCallback(
+    async (productId: string, platform: string = "link") => {
+      try {
+        await fetch(`${API_URL}/products/share/`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            product: productId,
+            platform: platform 
+          }),
+        });
+      } catch (err) {
+        // Sharing analytics failures are usually silent to the user
+        console.error("Share tracking failed", err);
+      }
+    },
+    [getAuthHeaders]
+  );
 
   return {
-    isLiked,
-    isSaved,
+    loading,
+    error,
     toggleLike,
-    toggleSave,
-    likedIds,
-    savedIds,
-    getComments,
     addComment,
-    commentCount,
+    trackShare,
   };
 };

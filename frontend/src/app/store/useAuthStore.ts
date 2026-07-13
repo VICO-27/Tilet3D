@@ -1,79 +1,148 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 /**
- * Lightweight front-end-only auth (no backend).
- * Demo credentials are persisted to localStorage — passwords are base64-obfuscated,
- * which is NOT real security, only enough for a local prototype sign-in flow.
+ * Tilet3D Authentication Store
+ * Integrated with Django JWT Backend
  */
 
 export interface AuthUser {
-  name: string;
+  id: string;
   email: string;
+  full_name?: string;
 }
 
-interface StoredUser extends AuthUser {
-  pw: string; // btoa(password)
-}
-
-const USERS_KEY = "tilet3d_users";
-const SESSION_KEY = "tilet3d_auth_user";
-
-function loadUsers(): StoredUser[] {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+const API_URL = "http://127.0.0.1:8000/api";
+const ACCESS_TOKEN_KEY = "tilet3d_access_token";
+const REFRESH_TOKEN_KEY = "tilet3d_refresh_token";
+const USER_DATA_KEY = "tilet3d_user_data";
 
 export const useAuthStore = () => {
+  // Fix: Initialize state directly from localStorage to avoid cascading renders in useEffect
   const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const raw = localStorage.getItem(SESSION_KEY);
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
-    } catch {
-      return null;
-    }
+    const savedUser = localStorage.getItem(USER_DATA_KEY);
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return savedUser && token ? (JSON.parse(savedUser) as AuthUser) : null;
   });
 
-  useEffect(() => {
-    if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    else localStorage.removeItem(SESSION_KEY);
-  }, [user]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const signUp = useCallback(
-    (name: string, email: string, password: string): string | null => {
-      const e = email.trim().toLowerCase();
-      const users = loadUsers();
-      if (users.some((u) => u.email === e)) {
-        return "An account with this email already exists.";
+  // 1. Sign Out (Declared first because others depend on it)
+  const signOut = useCallback(async () => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    
+    if (refreshToken) {
+      await fetch(`${API_URL}/auth/logout/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refreshToken }),
+      }).catch(() => { /* ignore silent fail */ });
+    }
+
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_DATA_KEY);
+    setUser(null);
+    setError(null);
+  }, []);
+
+  // 2. Fetch Profile (Depends on signOut)
+  const fetchProfile = useCallback(async (token: string) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/profile/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userData = await response.json();
+
+      if (response.ok) {
+        setUser(userData);
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+        return null;
       }
-      users.push({ name: name.trim(), email: e, pw: btoa(password) });
-      saveUsers(users);
-      setUser({ name: name.trim(), email: e });
-      return null;
-    },
-    [],
-  );
+      throw new Error("Failed to fetch profile");
+    } catch (err: unknown) {
+      await signOut();
+      return err instanceof Error ? err.message : "An unknown error occurred";
+    }
+  }, [signOut]);
 
+  // 3. Sign In (Depends on fetchProfile)
   const signIn = useCallback(
-    (email: string, password: string): string | null => {
-      const e = email.trim().toLowerCase();
-      const found = loadUsers().find((u) => u.email === e);
-      if (!found || found.pw !== btoa(password)) {
-        return "Incorrect email or password.";
+    async (email: string, password: string): Promise<string | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_URL}/auth/login/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Incorrect email or password.");
+        }
+
+        localStorage.setItem(ACCESS_TOKEN_KEY, data.access);
+        localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh);
+        
+        return await fetchProfile(data.access);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Login failed";
+        setError(msg);
+        return msg;
+      } finally {
+        setLoading(false);
       }
-      setUser({ name: found.name, email: found.email });
-      return null;
     },
-    [],
+    [fetchProfile]
   );
 
-  const signOut = useCallback(() => setUser(null), []);
+  // 4. Sign Up (Depends on signIn)
+  const signUp = useCallback(
+    async (name: string, email: string, password: string): Promise<string | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_URL}/auth/register/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: name,
+            email: email.trim().toLowerCase(),
+            password: password,
+          }),
+        });
 
-  return { user, signUp, signIn, signOut };
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || data.email || "Registration failed");
+        }
+
+        return await signIn(email, password);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Registration failed";
+        setError(msg);
+        return msg;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [signIn]
+  );
+
+  return { 
+    user, 
+    loading, 
+    error, 
+    signUp, 
+    signIn, 
+    signOut, 
+    isAuthenticated: !!user 
+  };
 };

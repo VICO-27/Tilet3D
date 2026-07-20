@@ -1,27 +1,37 @@
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF, ContactShadows, Html, Preload } from "@react-three/drei";
+import { OrbitControls, useGLTF, ContactShadows, Preload } from "@react-three/drei";
 import * as THREE from "three";
 import { prepareAvatar } from "../../avatar/utils/avatarRig";
 import type { Gender } from "../../avatar/types/avatar.types";
 
 const MALE = "/models/maleAvatar.glb";
 const FEMALE = "/models/femaleAvatar.glb";
-
-// Draco Decoder CDN - This is the key to ultra-fast 3D loading
 const DRACO_URL = "https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/";
 
-// Preload both with Draco enabled
 useGLTF.preload(MALE, DRACO_URL);
 useGLTF.preload(FEMALE, DRACO_URL);
 
+// This sub-component handles the "Signal" that 3D is ready
+function AssetManager({ onReady }: { onReady: () => void }) {
+  // useGLTF here will suspend until both are loaded because of the preloads
+  useGLTF(MALE, DRACO_URL);
+  useGLTF(FEMALE, DRACO_URL);
+
+  useEffect(() => {
+    // Small timeout ensures the GPU has actually uploaded the textures 
+    // before we hide the loading screen
+    const timer = setTimeout(onReady, 100);
+    return () => clearTimeout(timer);
+  }, [onReady]);
+
+  return null;
+}
+
 function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
-  // We load the scene. useGLTF handles caching automatically.
   const { scene } = useGLTF(gender === "male" ? MALE : FEMALE, DRACO_URL);
 
   const transform = useMemo(() => {
-    // Clone the scene so we don't conflict with other instances if needed, 
-    // but prepareAvatar once per unique scene reference.
     if (!scene.userData.posed) {
       prepareAvatar(scene, gender);
       scene.userData.posed = true;
@@ -41,13 +51,8 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
     };
   }, [scene, gender]);
 
-  // Toggle visibility instead of unmounting to keep the model in GPU memory
   return (
-    <group 
-      scale={transform.scale} 
-      position={transform.position} 
-      visible={active}
-    >
+    <group scale={transform.scale} position={transform.position} visible={active}>
       <primitive object={scene} />
     </group>
   );
@@ -65,30 +70,12 @@ function IdleRig({ children }: { children: React.ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
-function Loader() {
-  return (
-    <Html center>
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-9 w-9 animate-spin-slow rounded-full border-2 border-plum-200 border-t-plum-600" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-plum-500">
-          Syncing 3D
-        </span>
-      </div>
-    </Html>
-  );
-}
-
-const HeroModel = ({ gender }: { gender: Gender }) => {
+const HeroModel = ({ gender, onReady }: { gender: Gender; onReady: () => void }) => {
   return (
     <Canvas
       camera={{ position: [0, 1.05, 3.4], fov: 34 }}
-      gl={{ 
-        alpha: true, 
-        antialias: true, 
-        powerPreference: "high-performance",
-        preserveDrawingBuffer: false // Optimization for memory
-      }}
-      dpr={[1, 1.5]} // Performance: limit resolution on high-dpi screens
+      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+      dpr={[1, 1.5]}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
       <ambientLight intensity={0.9} />
@@ -96,26 +83,13 @@ const HeroModel = ({ gender }: { gender: Gender }) => {
       <directionalLight position={[-5, 4, -3]} intensity={1.5} color="#b98cff" />
       <spotLight position={[0, 8, 2]} angle={0.5} penumbra={1} intensity={1.1} />
 
-      <Suspense fallback={<Loader />}>
+      <Suspense fallback={null}>
+        <AssetManager onReady={onReady} />
         <IdleRig>
-          {/* 
-             OPTIMIZATION: We render BOTH models immediately. 
-             Only one is 'visible'. This keeps both loaded in the GPU
-             so the switch is instant after the first load.
-          */}
           <AvatarModel gender="female" active={gender === "female"} />
           <AvatarModel gender="male" active={gender === "male"} />
         </IdleRig>
-        
-        <ContactShadows 
-          position={[0, 0, 0]} 
-          opacity={0.4} 
-          scale={6} 
-          blur={2.5} 
-          far={4} 
-          color="#4c1d95" 
-        />
-        {/* Preload assets into the cache as soon as the canvas starts */}
+        <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={6} blur={2.5} far={4} color="#4c1d95" />
         <Preload all />
       </Suspense>
 

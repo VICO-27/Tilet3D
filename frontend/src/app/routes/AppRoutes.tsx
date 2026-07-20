@@ -2,19 +2,29 @@ import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import HomePage from "../../features/home/pages/HomePage";
 
-// Route-level code-splitting: heavy pages (Three.js, video grids) load on demand
-// so the initial bundle stays small and the first page paints fast.
 const ProductsPage = lazy(
   () => import("../../features/products/pages/ProductsPage"),
 );
+
+const CategoryDetailPage = lazy(
+  () => import("../../features/products/pages/CategoryDetailPage"),
+);
+
+// Lazy load the Product Detail Page
+const ProductDetailPage = lazy(
+  () => import("../../features/products/pages/ProductDetailPage"),
+);
+
 const AvatarPage = lazy(() =>
   import("@/features/avatar/pages/AvatarPage").then((m) => ({
     default: m.AvatarPage,
   })),
 );
+
 const OrderHistoryPage = lazy(
   () => import("../../features/orders/pages/OrderHistoryPage"),
 );
+
 const AccountPage = lazy(
   () => import("../../features/account/pages/AccountPage"),
 );
@@ -31,6 +41,13 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<ProductsPage />} />
+        
+        {/* Category Detail Page ("More" button) */}
+        <Route path="/products/category/:categoryName" element={<CategoryDetailPage />} />
+        
+        {/* Product Detail Page */}
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        
         <Route path="/avatar" element={<AvatarPage />} />
         <Route path="/orders" element={<OrderHistoryPage />} />
         <Route path="/account" element={<AccountPage />} />

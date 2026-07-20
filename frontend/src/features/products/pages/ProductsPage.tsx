@@ -1,206 +1,185 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+// src/features/products/pages/ProductsPage.tsx
+import React, { useMemo, useState, useEffect } from 'react';
+import { useProducts } from '../hooks/useProducts';
+import ProductPageHeader from '../components/ProductPageHeader';
+import CategoryBlock from '../components/CategoryBlock';
+import BlockDivider from '../components/BlockDivider';
+import PageLayout from '@/shared/components/layout/PageLayout';
+import BrandLoader from '@/shared/components/BrandLoader';
 
-import Navbar from "../../../shared/components/layout/Navbar";
-import ProductFooter from "../components/ProductFooter";
-import CategoryNav from "../components/CategoryNav";
-import { ProductBlock } from "../components/ProductBlock";
-import { ProductCard } from "../components/ProductCard";
-import CulturalInterlude from "../components/CulturalInterlude";
-import {
-  BLOCKS,
-  CATEGORIES,
-  INTERLUDES,
-  PRODUCTS_BY_CATEGORY,
-  toClothingVariants,
-  type CatalogProduct,
-} from "../data/catalog";
+const STORY_VARIATIONS = [
+  { title: "Every pattern tells a story", subtitle: "For centuries, Ethiopian weavers have encoded geography, faith, and family into the Tilet — the woven border that crowns every garment.", variant: "light" as const, align: "left" as const, watermark: "TILET" },
+  { title: "Woven on pit looms, by hand", subtitle: "From the cotton fields of Arba Minch to the looms of Shiro Meda, each piece passes through dozens of artisan hands before it ever reaches yours.", variant: "dark" as const, align: "left" as const, watermark: "HAND" },
+  { title: "The geometry of heritage", subtitle: "Each diamond and line represents a profound architectural or spiritual landmark, speaking a silent language known to the community.", variant: "plum" as const, align: "right" as const, watermark: "HERITAGE" },
+  { title: "A dialogue across centuries", subtitle: "By blending authentic Habesha weaving techniques with structural 3D design, we anchor timeless heritage firmly into the modern day.", variant: "light" as const, align: "right" as const, watermark: "3D" },
+  { title: "Honoring the master weavers", subtitle: "Every single piece is hand-finished in Ethiopia's finest ateliers, honoring the patience, skill, and souls of the artisans behind the craft.", variant: "dark" as const, align: "left" as const, watermark: "LOOM" }
+];
 
-// Memoized slug helper to prevent unnecessary string operations
-const getSlug = (s: string) => s.toLowerCase().replace(/\s+/g, "-");
-const ALL_PRODUCTS = Object.values(PRODUCTS_BY_CATEGORY).flat();
+const CUTOFF_CATEGORY = "netela";
 
-const ProductsPage = () => {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const query = params.get("q")?.trim() ?? "";
-  const [active, setActive] = useState<string>("All");
+const ProductsPage: React.FC = () => {
+  const { groupedProducts, categories, isLoading, error } = useProducts();
+  
+  const [viewContext, setViewContext] = useState<string>('normal');
+  const [loadDeferredBatch, setLoadDeferredBatch] = useState(false);
 
-  const tryOn = (p: CatalogProduct) => {
-    navigate("/avatar", { state: { clothing: toClothingVariants(p) } });
+  // 1. Gather all active categories that populated successfully from the hook
+  const activeCategories = useMemo(() => {
+    return categories.filter((cat) => groupedProducts[cat]?.length > 0);
+  }, [categories, groupedProducts]);
+
+  // 2. Identify structural pagination partitions
+  const { initialBatch, deferredBatch } = useMemo(() => {
+    const cutoffIndex = activeCategories.findIndex(
+      (cat) => cat.toLowerCase() === CUTOFF_CATEGORY
+    );
+    const splitPoint = cutoffIndex !== -1 ? cutoffIndex + 1 : 4;
+    
+    return {
+      initialBatch: activeCategories.slice(0, splitPoint),
+      deferredBatch: activeCategories.slice(splitPoint)
+    };
+  }, [activeCategories]);
+
+  // 3. Compute Pinterest Dynamic Context Render Stream
+  const activeRenderList = useMemo(() => {
+    if (viewContext === 'normal') {
+      return loadDeferredBatch ? [...initialBatch, ...deferredBatch] : initialBatch;
+    }
+
+    const chosenIndex = activeCategories.findIndex(
+      (cat) => cat.toLowerCase() === viewContext.toLowerCase()
+    );
+
+    if (chosenIndex !== -1) {
+      // Return the targeted category and everything after it, filtering out prior blocks
+      return activeCategories.slice(chosenIndex);
+    }
+
+    return initialBatch;
+  }, [viewContext, loadDeferredBatch, activeCategories, initialBatch, deferredBatch]);
+
+  const displayProducts = useMemo(() => {
+    const updatedGroups = { ...groupedProducts };
+    const kemisKey = Object.keys(updatedGroups).find(k => k.toLowerCase() === 'kemis');
+    if (kemisKey && updatedGroups[kemisKey]) {
+      updatedGroups[kemisKey] = [...updatedGroups[kemisKey]].reverse();
+    }
+    return updatedGroups;
+  }, [groupedProducts]);
+
+  // Automatically adjust view target focus smoothly
+  useEffect(() => {
+    if (viewContext !== 'normal') {
+      window.scrollTo({ top: 380, behavior: 'smooth' });
+    }
+  }, [viewContext]);
+
+  // COMBINED CONTROLLER FOR LINK SELECTION
+  const handleCategoryNavigation = (rawCat: string) => {
+    const normalizedCat = rawCat.toLowerCase();
+
+    if (normalizedCat === 'all') {
+      setViewContext('normal');
+      setLoadDeferredBatch(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const isInitiallyAvailable = initialBatch.some(i => i.toLowerCase() === normalizedCat);
+
+    if (isInitiallyAvailable) {
+      setViewContext('normal');
+      setTimeout(() => {
+        const exactCatName = activeCategories.find(c => c.toLowerCase() === normalizedCat);
+        // Standardize element queries to locate dynamic container ids cleanly
+        const element = document.getElementById(`category-${exactCatName}`);
+        if (element) {
+          window.scrollTo({
+            top: element.offsetTop - 96,
+            behavior: "smooth"
+          });
+        }
+      }, 50);
+    } else {
+      // Category belongs to page 2 (Deferred): trigger Pinterest filter view swap instantly
+      setViewContext(normalizedCat);
+    }
   };
 
-  // Optimization: Efficient search with early exit
-  const results = useMemo(() => {
-    if (!query) return [];
-    const q = query.toLowerCase();
-    return ALL_PRODUCTS.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.fabric?.toLowerCase().includes(q)
-    );
-  }, [query]);
-
-  // Optimization: Intersection Observer for scroll-spy (Category Highlighting)
-  useEffect(() => {
-    if (query) return;
-
-    const sections = CATEGORIES.map((c) => document.getElementById(getSlug(c))).filter(
-      Boolean
-    ) as HTMLElement[];
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (visible) {
-          const cat = CATEGORIES.find((c) => getSlug(c) === visible.target.id);
-          if (cat) setActive(cat);
-        }
-      },
-      { 
-        rootMargin: "-20% 0px -60% 0px", // Better "hit area" for scroll spy
-        threshold: [0, 0.1, 0.5] 
-      }
-    );
-
-    sections.forEach((s) => io.observe(s));
-    return () => io.disconnect();
-  }, [query]);
-
-  // Clean up WebGL/Three.js contexts on unmount to prevent "Context Lost"
-  useEffect(() => {
-    return () => {
-      // Force cleanup hint for the browser when leaving the page
-      window.dispatchEvent(new Event("unload"));
-    };
-  }, []);
+  if (isLoading) return <BrandLoader />;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-white text-ink antialiased">
-      <Navbar />
+    <PageLayout>
+      <ProductPageHeader 
+        categories={categories} 
+        onCategorySelect={handleCategoryNavigation} 
+      />
 
-      <section className="mx-auto max-w-[1400px] px-6 pb-5 pt-[100px] md:px-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
-        >
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-plum-600">
-              ጥለት3D · The Collection
-            </span>
-            <h1 className="display mt-2 text-3xl font-semibold leading-tight tracking-tight text-ink md:text-5xl">
-              Heritage couture, <br className="hidden md:block" /> woven for now.
-            </h1>
-          </div>
-          <p className="max-w-sm text-sm leading-relaxed text-ink/50 font-medium">
-            Hand-finished Habesha pieces from Ethiopia's finest ateliers — preview
-            any garment live on your 3D avatar.
-          </p>
-        </motion.div>
-      </section>
-
-      {!query && <CategoryNav active={active} onSelect={setActive} />}
-
-      <main className="pt-4">
-        <AnimatePresence mode="wait">
-          {query ? (
-            <motion.section 
-              key="search-results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="mx-auto max-w-[1400px] px-6 pb-20 md:px-10"
-            >
-              <div className="flex items-center justify-between border-b border-ink/5 pb-6">
-                <h2 className="text-xl font-medium">
-                  Found {results.length} results for “{query}”
-                </h2>
-                <button
-                  onClick={() => navigate("/products")}
-                  className="text-xs font-bold uppercase tracking-widest text-plum-600 hover:text-plum-700"
-                >
-                  Close Search
-                </button>
-              </div>
-
-              {results.length === 0 ? (
-                <div className="py-32 text-center">
-                  <p className="text-ink/40">No pieces match your search.</p>
-                </div>
-              ) : (
-                <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-                  {results.map((p) => (
-                    <ProductCard key={p.id} product={p} width="w-full" onTryOn={tryOn} />
-                  ))}
-                </div>
+      <main className="min-h-screen pb-32">
+        {activeRenderList.map((cat, index) => {
+          const storyData = STORY_VARIATIONS[index % STORY_VARIATIONS.length];
+          return (
+            <div key={cat} id={`category-${cat}`}>
+              <CategoryBlock categoryName={cat} products={displayProducts[cat] ?? []} />
+              
+              {index < activeRenderList.length - 1 && (
+                <BlockDivider 
+                  title={storyData.title}
+                  subtitle={storyData.subtitle}
+                  variant={storyData.variant}
+                  align={storyData.align}
+                  watermark={storyData.watermark}
+                />
               )}
-            </motion.section>
-          ) : (
-            <motion.div key="browse-grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              {BLOCKS.map((block, i) => (
-                <div key={block.id}>
-                  <LazyMount minHeight={1200} eager={i === 0}>
-                    <ProductBlock categories={block.categories} onTryOn={tryOn} />
-                  </LazyMount>
+            </div>
+          );
+        })}
 
-                  {i < INTERLUDES.length && (
-                    <LazyMount minHeight={400}>
-                      <CulturalInterlude
-                        interlude={INTERLUDES[i]}
-                        variant={(i % 2) as 0 | 1}
-                      />
-                    </LazyMount>
-                  )}
-                </div>
+        {/* BOTTOM REFERRAL NAVBAR (Larger, luxury action layout style) */}
+        {viewContext === 'normal' && !loadDeferredBatch && (
+          <div className="w-full flex flex-col items-center justify-center mt-20 px-6">
+            <div className="w-full max-w-5xl h-[1px] bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-16" />
+            
+            <p className="text-[11px] tracking-[0.35em] uppercase font-black text-zinc-400 mb-8 animate-pulse">
+              Explore More Collections
+            </p>
+            
+            <div className="h-[58px] inline-flex items-center gap-3 bg-zinc-50 border border-zinc-200/80 p-2 rounded-full shadow-md hover:shadow-xl transition-all duration-500 hover:scale-[1.01]">
+              {deferredBatch.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryNavigation(cat)}
+                  className="h-full px-7 text-[12px] font-bold tracking-widest text-zinc-600 hover:text-black rounded-full hover:bg-white hover:shadow-sm transition-all duration-300 uppercase"
+                >
+                  {cat}
+                </button>
               ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="h-4 w-[1px] bg-zinc-300 mx-1" />
+              <button
+                onClick={() => setLoadDeferredBatch(true)}
+                className="h-full px-6 text-[12px] font-black tracking-widest text-white bg-black rounded-full hover:bg-zinc-800 transition-all duration-200 uppercase"
+              >
+                View All
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Isolated Pinterest View Reset UI Component */}
+        {viewContext !== 'normal' && (
+          <div className="w-full flex justify-center mt-24">
+            <button
+              onClick={() => handleCategoryNavigation('all')}
+              className="px-8 py-4 border-2 border-black text-[12px] font-black tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-all duration-300 rounded-full shadow-lg"
+            >
+              ← Back to All Collections
+            </button>
+          </div>
+        )}
       </main>
-
-      <ProductFooter />
-    </div>
-  );
-};
-
-/** Improved LazyMount: Uses better intersection logic to prevent layout jumps */
-const LazyMount: React.FC<{
-  minHeight: number;
-  eager?: boolean;
-  children: React.ReactNode;
-}> = ({ minHeight, eager = false, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [show, setShow] = useState(eager);
-
-  useEffect(() => {
-    if (eager || show) return;
-    const el = ref.current;
-    if (!el) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShow(true);
-        }
-      },
-      { rootMargin: "600px 0px" } // Load early enough that the user doesn't see white space
-    );
-
-    io.observe(el);
-    return () => io.disconnect();
-  }, [eager, show]);
-
-  return (
-    <div ref={ref} style={!show ? { minHeight, contentVisibility: 'auto' } : {}}>
-      {show ? children : null}
-    </div>
+    </PageLayout>
   );
 };
 

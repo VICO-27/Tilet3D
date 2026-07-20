@@ -10,8 +10,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-from apps.accounts.models import Profile
-
 User = get_user_model()
 
 
@@ -49,11 +47,9 @@ class GoogleLoginView(APIView):
             if created:
                 user.set_unusable_password()
                 user.save()
+                # Profile is auto-created by the post_save signal
 
-                # 3. CREATE PROFILE (IMPORTANT FOR YOUR SYSTEM)
-                Profile.objects.create(user=user)
-
-            # 4. GENERATE JWT TOKENS
+            # 3. GENERATE JWT TOKENS
             refresh = RefreshToken.for_user(user)
 
             return Response({

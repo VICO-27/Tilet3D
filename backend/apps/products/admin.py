@@ -128,7 +128,6 @@ class ProductVariantAdmin(admin.ModelAdmin):
     "reserved_stock",
 )
 
-
 # ==========================================================
 # PRODUCT MEDIA ADMIN
 # ==========================================================
@@ -139,7 +138,7 @@ class ProductMediaAdmin(admin.ModelAdmin):
     """
 
     list_display = (
-        "variant",
+        "product",
         "media_type",
         "is_primary",
         "display_order",
@@ -151,14 +150,13 @@ class ProductMediaAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        "variant__name",
+        "product__name",
     )
 
     ordering = (
-        "variant",
+        "product",
         "display_order",
     )
-
 
 # ==========================================================
 # PRODUCT LIKE ADMIN

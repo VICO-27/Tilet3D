@@ -10,7 +10,28 @@ from apps.products.models import (
     ProductShare,
 )
 
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, ProductCommentSerializer
+
+
+
+
+
+# ==========================================================
+# LIST COMMENTS FOR A PRODUCT
+# ==========================================================
+class ProductCommentsListView(generics.ListAPIView):
+    serializer_class = ProductCommentSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return ProductComment.objects.filter(
+            product_id=self.kwargs["id"]
+        ).select_related("user")
+
+
+
+
+
 
 
 # ==========================================================
@@ -24,9 +45,10 @@ class ProductListAPIView(generics.ListAPIView):
         return Product.objects.filter(
             is_active=True
         ).prefetch_related(
-            "variants__media",
+            "media",
+            "variants",
             "likes",
-            "comments"
+            "comments",
         )
 
     def get_serializer_context(self):
@@ -47,11 +69,11 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
         return (
             Product.objects.filter(is_active=True)
             .prefetch_related(
-                "variants__media",
-                "likes",
-                "comments",
-                "category",
-            )
+    "media",
+    "variants",
+    "likes",
+    "comments",
+)
         )
 
     def get_serializer_context(self):
@@ -94,11 +116,8 @@ class AddCommentView(APIView):
             text=text
         )
 
-        return Response({
-            "message": "Comment added",
-            "comment_id": comment.id
-        })
-
+        serializer = ProductCommentSerializer(comment)
+        return Response(serializer.data)
 
 # ==========================================================
 # SHARE PRODUCT

@@ -6,6 +6,7 @@ from .views import (
     ToggleLikeView,
     AddCommentView,
     ShareProductView,
+    ProductCommentsListView,
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("share/", ShareProductView.as_view(), name="share"),
 
 
+    path("<uuid:id>/comments/", ProductCommentsListView.as_view(), name="product-comments"),
 
     # =========================
     # PRODUCT DETAIL (LAST)

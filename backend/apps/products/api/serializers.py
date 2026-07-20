@@ -33,17 +33,16 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 # PRODUCT VARIANT SERIALIZER
 # ==========================================================
 class ProductVariantSerializer(serializers.ModelSerializer):
-    """
-    Serializes purchasable product variants.
-    """
 
-    media = ProductMediaSerializer(
-        many=True,
-        read_only=True,
+    available_stock = serializers.IntegerField(
+        read_only=True
     )
 
+
     class Meta:
+
         model = ProductVariant
+
         fields = (
             "id",
             "name",
@@ -51,36 +50,37 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "color",
             "size",
             "price",
-            "stock",
+            "available_stock",
             "measurements",
-            "media",
         )
-
-
 # ==========================================================
 # PRODUCT SERIALIZER
 # ==========================================================
 class ProductSerializer(serializers.ModelSerializer):
-    """
-    Main serializer returned by product endpoints.
-    """
 
     category_name = serializers.CharField(
         source="category.name",
-        read_only=True,
+        read_only=True
+    )
+
+    media = ProductMediaSerializer(
+        many=True,
+        read_only=True
     )
 
     variants = ProductVariantSerializer(
         many=True,
-        read_only=True,
+        read_only=True
     )
 
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
 
+
     class Meta:
         model = Product
+
         fields = (
             "id",
             "name",
@@ -88,31 +88,37 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "brand",
             "is_featured",
-            "category",
+
             "category_name",
+
+            "media",
             "variants",
+
             "like_count",
             "comment_count",
             "is_liked",
         )
 
-    def get_like_count(self, obj):
-        return obj.likes.count()
 
-    def get_comment_count(self, obj):
-        return obj.comments.count()
+    def get_like_count(self,obj):
+        return len(obj.likes.all())
 
-    def get_is_liked(self, obj):
+
+    def get_comment_count(self,obj):
+        return len(obj.comments.all())
+
+
+    def get_is_liked(self,obj):
+
         request = self.context.get("request")
 
-        if request is None:
+        if not request or not request.user.is_authenticated:
             return False
 
-        if not request.user.is_authenticated:
-            return False
-
-        return obj.likes.filter(user=request.user).exists()
-
+        return any(
+            like.user_id == request.user.id
+            for like in obj.likes.all()
+        )
 
 # ==========================================================
 # PRODUCT LIKE SERIALIZER

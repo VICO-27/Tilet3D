@@ -206,7 +206,8 @@ class ProductVariant(BaseModel):
 
 class ProductMedia(BaseModel):
     """
-    Images/videos belonging to a product variant.
+    Images/videos belonging directly to a product.
+    One product can have many images and videos.
     """
 
     MEDIA_TYPES = (
@@ -214,43 +215,50 @@ class ProductMedia(BaseModel):
         ("video", "Video"),
     )
 
-    variant = models.ForeignKey(
-        "products.ProductVariant",
+    product = models.ForeignKey(
+        "products.Product",
         on_delete=models.CASCADE,
-        related_name="media"
+        related_name="media",
     )
 
     media_type = models.CharField(
         max_length=10,
         choices=MEDIA_TYPES,
-        default="image"
+        default="image",
     )
 
     file = models.FileField(
-        upload_to="products/media/"
+        upload_to="products/media/",
     )
 
     alt_text = models.CharField(
         max_length=255,
-        blank=True
+        blank=True,
     )
 
-    is_primary = models.BooleanField(default=False)
+    is_primary = models.BooleanField(
+        default=False,
+    )
 
-    display_order = models.PositiveIntegerField(default=0)
+    display_order = models.PositiveIntegerField(
+        default=0,
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["display_order"]
+        ordering = ["display_order", "id"]
         verbose_name = "Product Media"
         verbose_name_plural = "Product Media"
 
     def __str__(self):
-        return f"{self.variant.name} - {self.media_type}"
-
+        return f"{self.product.name} - {self.media_type}"
 
 class ProductLike(BaseModel):
     """

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EngagementBar from './EngagementBar';
 import { useEngagementStore } from '@/app/store/useEngagementStore';
+import { useCartStore } from '@/app/store/useCartStore';
+import { ShoppingBag, Check } from 'lucide-react';
 
 interface ProductMedia {
   id: string;
@@ -37,11 +39,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const navigate = useNavigate();
 
   useEngagementStore();
+  const { addToCart, isAdded } = useCartStore();
+
+  // Safeguard: Check variants or fallback to product id if variants are structured differently
+  const variantId = product.variants?.[0]?.id || product.id;
+  const alreadyAdded = variantId ? isAdded(variantId) : false;
 
   const isWide = index % 5 === 0;
   const primary = product.media.find((m) => m.is_primary) || product.media[0];
   const hoverMedia = product.media.length > 1 ? product.media.find((m) => !m.is_primary) : null;
   const activeMedia = (isHovered && hoverMedia) ? hoverMedia : primary;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!variantId) {
+      console.error("Product variants missing:", product);
+      alert("Unable to add item: Variant ID not found.");
+      return;
+    }
+
+    console.log("Adding variant to cart:", variantId);
+    const success = await addToCart(variantId, 1);
+    if (!success) {
+      alert("Failed to sync with cart. Please ensure you are logged in.");
+    }
+  };
 
   return (
     <div
@@ -83,15 +105,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
       </div>
 
       {/* Combined Lower Control Interface */}
-      <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-4 text-left">
+      <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
 
-        {/* Try-on Action — now turns purple on hover */}
-        <div className="w-full">
+        {/* Action Buttons Row */}
+        <div className="grid grid-cols-2 gap-2 w-full">
           <button
             onClick={(e) => { e.stopPropagation(); navigate('/avatar'); }}
-            className="w-full py-3 bg-white text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
+            className="py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
           >
             Try-on Avatar
+          </button>
+
+          <button
+            onClick={handleAddToCart}
+            className={`py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl transition-colors duration-300 flex items-center justify-center gap-1.5 ${
+              alreadyAdded 
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-black/80 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black'
+            }`}
+          >
+            {alreadyAdded ? (
+              <>
+                <Check className="h-3.5 w-3.5" /> Added
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="h-3.5 w-3.5" /> Add to Bag
+              </>
+            )}
           </button>
         </div>
 
@@ -101,7 +142,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             {product.name}
           </h3>
           <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
-            {product.variants[0]?.price ? `${product.variants[0].price} ETB` : 'Bespoke Order'}
+            {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : 'Bespoke Order'}
           </p>
         </div>
 

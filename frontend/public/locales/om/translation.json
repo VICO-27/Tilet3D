@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "home": "Fuula Duraa",
+    "collection": "Walitti Qabama",
+    "fittingRoom": "Kutaa Uffata Safarri",
+    "bag": "Boorsaa",
+    "shoppingBag": "Boorsaa Bittaa",
+    "orders": "Ajajoota",
+    "orderHistory": "Seenaa Ajajaa",
+    "account": "Herrega",
+    "searchPlaceholder": "Uffata, buraandiiwwan, huccuuwwan barbaadi...",
+    "esc": "Ba'i",
+    "popular": "Bebbeekamo",
+    "suggestions": {
+      "kemis": "Qamiisii Habeshaa",
+      "zuria": "Xibab Zuriyaa",
+      "netela": "Naxalaa",
+      "suri": "Surrii fi Guutuu",
+      "gabi": "Gaabii"
+    }
+  },
+  "footer": {
+    "footnote1": "1. 3D Studio safarri uffataa kaameeraa ykn faayilii 3D akkasumas herrega mirkanaa'e barbaada. Qulqullinni fakkii humna giraafiksii meeshaa keessaniirratti hundaa'a.",
+    "footnote2Part1": "2. Uffanni aadaa hundi manneen hojii Itoophiyaa keessatti of-eeggannoodhaan harkaan kan hojjetamedha. Garaagarummaan xiqqaan bifa diizaayinii ",
+    "footnote2Part2": " irratti mul'atu amala ogummaa harkaa aadaa ta'uu isaa hubatamuu qaba.",
+    "explore": "Daawwadhu",
+    "allCollections": "Walitti Qabama Hunda",
+    "bespokeCouture": "Uffata Ajajaan Hojjetamu",
+    "giftCards": "Kaardii Kennaa",
+    "showroomLocations": "Bakka Agarsiisaa",
+    "collection": "Walitti Qabama",
+    "habeshaKemis": "Qamiisii Habeshaa",
+    "suriSets": "Surrii fi Guutuu",
+    "shemiz": "Shamiizii",
+    "netelaGabi": "Naxalaa fi Gaabii",
+    "studioAccount": "Istuudiyoo fi Herrega",
+    "createAvatar": "Fakkii Uumi",
+    "manageProfile": "Herrega Bulchi",
+    "atelierHeritage": "Seenaa Ogeessotaa",
+    "ourWeavers": "Dhahoowwan Keenya",
+    "sustainability": "Itti Fufiinsa",
+    "patternDictionary": "Galmee Diizaayinii",
+    "traceOrigin": "Madda Hordofi",
+    "tiletValues": "Duudhaalee Tilet3D",
+    "findAtelier": "Mana Hojii Barbaadi",
+    "artisanFund": "Fandii Ogeessotaa",
+    "careers": "Carraa Hojii",
+    "contactSupport": "Deeggarsa Quunnami",
+    "moreWaysToShop": "Filannoowwan bittaa biroo: ",
+    "findRepresentative": "Bakka bu'aa mana hojii barbaadi",
+    "orCall": " ykn bilbilaa ",
+    "copyright": "Mirgi Waraabbii © 2026 Tilet3D Inc.",
+    "rights": "Finfinnee, Itoophiyaatti kan hojjetame. Mirgi hundi seeraan eegamaadha.",
+    "privacyPolicy": "Imaammata Mateenyaa",
+    "termsOfUse": "Haala Itti Fayyadamaa",
+    "salesRefunds": "Gurgurtaa fi Maallaqa Deebisuu",
+    "legal": "Seera fi Qajeelfama",
+    "region": "Itoophiyaa (Ethiopia)"
+  },
+  
+  "cart": {
+    "title": "Boorsaa Bittaa",
+    "piece": "Uffata",
+    "pieces": "Uffata",
+    "emptyTitle": "Boorsaan kee duwwaadha",
+    "emptyDesc": "Walitti qabama uffata Habeshaa haaraa keenya daawwadhu.",
+    "exploreBtn": "Walitti Qabama Daawwadhu",
+    "defaultItemName": "Uffata Aadaa",
+    "shippingLabel": "Ergaa fi Hodhaa Uffataa",
+    "calculatedCheckout": "Yeroo kaffaltii shallagama",
+    "subtotal": "Ida'ama",
+    "checkoutBtn": "Gara Kaffaltiitti Darbi"
+  },
+  "account": {
+    "tabs": {
+      "overview": "Haala Waliigalaa",
+      "personalDetails": "Odeeffannoo Dhuunfaa",
+      "addresses": "Teessoo Ergaa",
+      "security": "Iggitii fi Nageenya",
+      "preferences": "Naannoo fi Filannoowwan"
+    },
+    "signOut": "Ba'i"
+  },
+  "hero": {
+    "badge": "Faashinii, 3D'n bifa haaraan",
+    "title1": "Uffadhu",
+    "title2": "bituu kee",
+    "title3": "dura.",
+    "subtitle": "Fakkii 3D kee uumi, uffata aadaa Itoophiyaa harkaan hojjetame qaama keetti safaramee sirreessi—kirriin jalqabaa osoo hin fo'amin dura.",
+    "createAvatar": "Fakkii kee uumi",
+    "explore": "Walitti qabama daawwadhu",
+    "lovedBy": "Maamiltoota 2,400+ ta'aniin kan jaallatame",
+    "testimonials": {
+      "1": "Qamiisicha fakkii koo irratti yaaleera — safarri isaa sirrii ture.",
+      "2": "Dhumarratti uffata Habeshaa tilmaama malee ajajeera.",
+      "3": "Diizaayiniin Tilet 3D keessatti baay'ee namatti tola."
+    }
+  }
+
+}

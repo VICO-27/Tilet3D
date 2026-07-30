@@ -1,0 +1,102 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "collection": "Collection",
+    "fittingRoom": "Cabine d'essayage",
+    "bag": "Panier",
+    "shoppingBag": "Panier d'achats",
+    "orders": "Commandes",
+    "orderHistory": "Historique des commandes",
+    "account": "Compte",
+    "searchPlaceholder": "Rechercher des créations, marques, tissus...",
+    "esc": "Échap",
+    "popular": "Populaire",
+    "suggestions": {
+      "kemis": "Habesha Kemis",
+      "zuria": "Tibeb Zuria",
+      "netela": "Netela",
+      "suri": "Ensemble Suri",
+      "gabi": "Gabi"
+    }
+  },
+  "footer": {
+    "footnote1": "1. Les simulations 3D nécessitent un profil utilisateur vérifié et une webcam active. La précision du rendu dépend des performances de votre appareil.",
+    "footnote2Part1": "2. Chaque pièce de notre collection est méticuleusement tissée à la main dans des ateliers traditionnels en Éthiopie. Des différences mineures dans l'alignement géométrique des motifs ",
+    "footnote2Part2": " sont la marque naturelle du travail artisanal et doivent être attendues.",
+    "explore": "Explorer",
+    "allCollections": "Toutes les collections",
+    "bespokeCouture": "Couture sur mesure",
+    "giftCards": "Cartes-cadeaux",
+    "showroomLocations": "Nos boutiques",
+    "collection": "Collection",
+    "habeshaKemis": "Habesha Kemis",
+    "suriSets": "Ensembles Suri",
+    "shemiz": "Shemiz",
+    "netelaGabi": "Netela & Gabi",
+    "studioAccount": "Studio & Compte",
+    "createAvatar": "Créer un Avatar",
+    "manageProfile": "Gérer le profil",
+    "atelierHeritage": "Héritage Artisanal",
+    "ourWeavers": "Nos Tisserands",
+    "sustainability": "Durabilité",
+    "patternDictionary": "Dictionnaire des motifs",
+    "traceOrigin": "Traçabilité",
+    "tiletValues": "Valeurs Tilet3D",
+    "findAtelier": "Trouver un Atelier",
+    "artisanFund": "Fonds pour les Artisans",
+    "careers": "Carrières",
+    "contactSupport": "Service Client",
+    "moreWaysToShop": "Plus de façons d'acheter : ",
+    "findRepresentative": "Trouver un conseiller en atelier",
+    "orCall": " ou appelez le ",
+    "copyright": "Copyright © 2026 Tilet3D Inc.",
+    "rights": "Fabriqué à la main à Addis-Abeba, Éthiopie. Tous droits réservés.",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfUse": "Conditions d'utilisation",
+    "salesRefunds": "Ventes et remboursements",
+    "legal": "Mentions légales",
+    "region": "Éthiopie (Ethiopia)"
+  },
+
+
+  
+  "cart": {
+    "title": "Panier d'achats",
+    "piece": "Pièce",
+    "pieces": "Pièces",
+    "emptyTitle": "Votre panier est vide",
+    "emptyDesc": "Découvrez notre dernière collection de couture Habesha.",
+    "exploreBtn": "Explorer la collection",
+    "defaultItemName": "Pièce de couture",
+    "shippingLabel": "Livraison et retouche sur mesure",
+    "calculatedCheckout": "Calculé au moment du paiement",
+    "subtotal": "Sous-total",
+    "checkoutBtn": "Passer à la caisse"
+  },
+  "account": {
+    "tabs": {
+      "overview": "Aperçu",
+      "personalDetails": "Informations personnelles",
+      "addresses": "Adresses de livraison",
+      "security": "Mot de passe et sécurité",
+      "preferences": "Préférences régionales"
+    },
+    "signOut": "Se déconnecter"
+  },
+  "hero": {
+    "badge": "La mode, réimaginée en 3D",
+    "title1": "Essayez-le",
+    "title2": "avant de",
+    "title3": "l'acheter.",
+    "subtitle": "Créez votre avatar 3D et ajustez la couture éthiopienne tissée à la main à vos proportions exactes—avant même que le premier fil ne soit filé.",
+    "createAvatar": "Créez votre avatar",
+    "explore": "Explorer la collection",
+    "lovedBy": "Apprécié par plus de 2 400 clients",
+    "testimonials": {
+      "1": "J'ai essayé le kemis sur mon propre avatar — la coupe était impeccable.",
+      "2": "J'ai enfin commandé des vêtements Habesha sans deviner ma taille.",
+      "3": "Le détail du Tilet est magnifique en 3D."
+    }
+  }
+
+}

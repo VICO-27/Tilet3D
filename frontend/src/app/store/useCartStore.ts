@@ -1,18 +1,35 @@
 import { create } from 'zustand';
 import apiClient from '@/shared/api/apiClient';
 
+export interface CartProductInfo {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface CartVariantInfo {
+  id: string;
+  name: string;
+  sku: string;
+  color: string;
+  size: string;
+  price: number | string;
+  stock: number;
+}
+
 export interface CartItem {
   id: string;
-  product_name: string;
-  price: number;
   quantity: number;
-  variant_details: any;
+  subtotal: number | string;
+  product: CartProductInfo;
+  variant: CartVariantInfo;
+  image: string | null;
 }
 
 interface CartState {
   cartItems: CartItem[];
   loading: boolean;
-  addedVariantIds: string[]; // variants added this session — drives the TikTok-style "added" icon
+  addedVariantIds: string[];
   isAdded: (variantId: string) => boolean;
   fetchCart: () => Promise<void>;
   addToCart: (variantId: string, quantity?: number) => Promise<boolean>;
@@ -31,10 +48,15 @@ export const useCartStore = create<CartState>((set, get) => ({
   fetchCart: async () => {
     set({ loading: true });
     try {
-      const { data } = await apiClient.get('/cart/');
-      set({ cartItems: data.items || [] });
+      const response = await apiClient.get('/cart/');
+      const rawData = response.data;
+      const items = Array.isArray(rawData) 
+        ? rawData 
+        : (rawData.items || rawData.cart_items || []);
+
+      set({ cartItems: items });
     } catch (err) {
-      console.error('Failed to fetch cart', err);
+      console.error('Failed to fetch cart from backend', err);
     } finally {
       set({ loading: false });
     }
@@ -43,7 +65,6 @@ export const useCartStore = create<CartState>((set, get) => ({
   addToCart: async (variantId: string, quantity: number = 1) => {
     if (!variantId) return false;
 
-    // Optimistic: flip the icon instantly, don't wait on the network
     set((state) => ({
       addedVariantIds: state.addedVariantIds.includes(variantId)
         ? state.addedVariantIds
@@ -55,10 +76,9 @@ export const useCartStore = create<CartState>((set, get) => ({
         variant_id: variantId,
         quantity,
       });
-      get().fetchCart(); // refresh in the background, doesn't block UI
+      await get().fetchCart();
       return true;
     } catch (err) {
-      // Roll back on failure so the icon reverts to "+"
       set((state) => ({
         addedVariantIds: state.addedVariantIds.filter((id) => id !== variantId),
       }));
@@ -68,7 +88,6 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   updateQuantity: async (itemId: string, quantity: number) => {
-    // Optimistic update first
     set((state) => ({
       cartItems: state.cartItems.map((item) =>
         item.id === itemId ? { ...item, quantity } : item
@@ -76,9 +95,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     }));
     try {
       await apiClient.patch(`/cart/item/${itemId}/update/`, { quantity });
+      await get().fetchCart();
     } catch (err) {
       console.error('Update failed', err);
-      get().fetchCart(); // resync with server truth on failure
+      get().fetchCart();
     }
   },
 
@@ -89,12 +109,13 @@ export const useCartStore = create<CartState>((set, get) => ({
     }));
     try {
       await apiClient.delete(`/cart/item/${itemId}/`);
+      await get().fetchCart();
     } catch (err) {
       console.error('Remove failed', err);
-      set({ cartItems: previous }); // roll back
+      set({ cartItems: previous });
     }
   },
 
   cartTotal: () =>
-    get().cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+    get().cartItems.reduce((acc, item) => acc + Number(item.variant?.price || 0) * item.quantity, 0),
 }));

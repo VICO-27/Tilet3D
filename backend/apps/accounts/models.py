@@ -7,6 +7,29 @@ from django.utils import timezone
 from common.models import BaseModel
 
 
+
+from django.db import models
+from django.conf import settings
+
+
+class SecurityAuditLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="security_logs",
+    )
+    event = models.CharField(max_length=255)  # e.g. "Password Changed", "Successful Sign-in"
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.event} ({self.created_at})"
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -37,6 +60,42 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(email, password, **extra_fields)
+
+
+
+
+class Address(BaseModel):
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="addresses",
+    )
+    label = models.CharField(max_length=50, default="Home") # Home, Office, etc.
+    full_name = models.CharField(max_length=200)
+    phone_number = models.CharField(max_length=30)
+    region = models.CharField(max_length=100, blank=True, default="Addis Ababa")
+    city = models.CharField(max_length=100)
+    sub_city = models.CharField(max_length=100, blank=True)
+    woreda = models.CharField(max_length=100, blank=True)
+    house_no = models.CharField(max_length=100, blank=True)
+    is_default = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-is_default", "-created_at"]
+        verbose_name_plural = "Addresses"
+
+    def save(self, *args, **kwargs):
+        # Ensure only one default address per user
+        if self.is_default:
+            Address.objects.filter(user=self.user, is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.label} ({self.city})"
+
+
+
+
 
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):

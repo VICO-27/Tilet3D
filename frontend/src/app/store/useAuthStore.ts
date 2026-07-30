@@ -25,28 +25,39 @@ interface AuthState {
 
 interface AxiosErrorResponse {
   response?: {
-    data?: {
-      detail?: string;
-      email?: string[];
-      code?: string[];
-      password2?: string[];
-      new_password?: string[];
-      non_field_errors?: string[];
-    };
+    status?: number;
+    data?: Record<string, unknown> | string;
   };
 }
 
 function extractMessage(err: unknown, fallback: string): string {
   const e = err as AxiosErrorResponse;
-  return (
-    e?.response?.data?.non_field_errors?.[0] ||
-    e?.response?.data?.detail ||
-    e?.response?.data?.email?.[0] ||
-    e?.response?.data?.code?.[0] ||
-    e?.response?.data?.password2?.[0] ||
-    e?.response?.data?.new_password?.[0] ||
-    fallback
-  );
+  const data = e?.response?.data;
+  if (!data) return fallback;
+
+  // Sometimes DRF/Django returns a raw string or HTML (e.g. unhandled 500s)
+  if (typeof data === "string") {
+    return data.length < 200 ? data : fallback;
+  }
+
+  // detail / non_field_errors take priority
+  if (typeof data.detail === "string") return data.detail;
+  if (Array.isArray(data.non_field_errors) && data.non_field_errors.length) {
+    return String(data.non_field_errors[0]);
+  }
+
+  // Otherwise grab the first error from whatever field DRF flagged
+  for (const key of Object.keys(data)) {
+    const value = data[key];
+    if (Array.isArray(value) && value.length) {
+      return String(value[0]);
+    }
+    if (typeof value === "string") {
+      return value;
+    }
+  }
+
+  return fallback;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -55,19 +66,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
 
   initialize: async () => {
-    if (!authService.hasToken()) return;
+    if (!authService.hasToken()) {
+      set({ user: null });
+      return;
+    }
 
     try {
+      set({ loading: true });
       const profile = await authService.getProfile();
-      const current = authService.getStoredUser();
-      if (!current) return;
+      const current = authService.getStoredUser() || {};
 
-      const user = { ...current, ...profile };
+      const user = { ...current, ...profile } as AuthUser;
       authService.storeUser(user);
       set({ user });
     } catch {
       await authService.logout();
       set({ user: null });
+    } finally {
+      set({ loading: false });
     }
   },
 
@@ -106,8 +122,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    await authService.logout();
-    set({ user: null, error: null });
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error("Error logging out from server:", err);
+    } finally {
+      // Complete client-side storage cleanup
+      localStorage.removeItem("tilet3d_access_token");
+      localStorage.removeItem("tilet3d_refresh_token");
+      localStorage.removeItem("tilet3d_user");
+      set({ user: null, error: null });
+    }
   },
 
   requestOtp: async (email, purpose) => {

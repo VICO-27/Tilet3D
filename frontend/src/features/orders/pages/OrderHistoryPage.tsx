@@ -1,140 +1,142 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, Trash2, ArrowUpRight, Truck } from "lucide-react";
+import { Package, ArrowUpRight, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Search } from "lucide-react";
+import Navbar from "../../../shared/components/layout/Navbar";
+import { useOrders } from "../hooks/useOrders";
+import { OrderStatus, OrderListType } from "../api/orderApi";
 
-import StoreNav from "../../../shared/components/layout/StoreNav";
-import { useAvatarStore } from "../../avatar/store/useAvatarStore";
-
-const STATUS_STYLES: Record<string, string> = {
-  Processing: "bg-amber-50 text-amber-600 border-amber-100",
-  Shipped: "bg-sky-50 text-sky-600 border-sky-100",
-  Completed: "bg-emerald-50 text-emerald-600 border-emerald-100",
+const getStatusConfig = (status: OrderStatus) => {
+  switch (status) {
+    case "pending": return { color: "text-amber-600 bg-amber-50 border-amber-200", icon: Clock, label: "Pending" };
+    case "confirmed": return { color: "text-indigo-600 bg-indigo-50 border-indigo-200", icon: CheckCircle2, label: "Confirmed" };
+    case "processing": return { color: "text-blue-600 bg-blue-50 border-blue-200", icon: Package, label: "Processing" };
+    case "shipped": return { color: "text-violet-600 bg-violet-50 border-violet-200", icon: Truck, label: "Shipped" };
+    case "delivered": return { color: "text-emerald-600 bg-emerald-50 border-emerald-200", icon: CheckCircle2, label: "Delivered" };
+    case "cancelled": return { color: "text-rose-600 bg-rose-50 border-rose-200", icon: XCircle, label: "Cancelled" };
+    default: return { color: "text-slate-600 bg-slate-50 border-slate-200", icon: Clock, label: status };
+  }
 };
 
 const OrderHistoryPage = () => {
   const navigate = useNavigate();
-  const { orders, setOrders } = useAvatarStore();
+  const [filter, setFilter] = useState<"all" | OrderStatus>("all");
+  
+  const { orders, isLoading, error } = useOrders();
 
-  const total = orders.reduce((sum, o) => sum + o.clothing.price, 0);
+  const filteredOrders = filter === "all" 
+    ? orders 
+    : orders.filter((o: OrderListType) => o.status === filter);
 
-  const clear = () => {
-    if (window.confirm("Clear your entire order history?")) setOrders([]);
+  const formatDate = (isoString: string) => {
+    return new Date(isoString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <StoreNav />
+    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-20 pt-16">
+      <Navbar />
 
-      <section className="mx-auto max-w-5xl px-6 py-12 md:px-10">
-        {/* Header */}
-        <div className="flex flex-col gap-4 border-b border-slate-100 pb-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-500">
-              Your Atelier
-            </p>
-            <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-              Order History
-            </h1>
-            <p className="mt-3 text-sm text-slate-500">
-              {orders.length === 0
-                ? "No bespoke orders yet."
-                : `${orders.length} order${orders.length > 1 ? "s" : ""} · ETB ${total.toLocaleString()} total`}
-            </p>
+      <main className="mx-auto max-w-4xl px-6 py-12 md:px-8">
+        <header className="mb-10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-600 mb-3">Your Atelier</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Order History</h1>
+            
+            {!isLoading && orders.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+                {["all", "pending", "confirmed", "processing", "shipped", "delivered"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f as typeof filter)}
+                    className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold capitalize transition-all ${
+                      filter === f ? "bg-slate-900 text-white" : "bg-white text-slate-500 border border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+        </header>
 
-          {orders.length > 0 && (
-            <button
-              onClick={clear}
-              className="inline-flex items-center gap-1.5 self-start rounded-full border border-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wider text-rose-500 transition-colors hover:bg-rose-50 sm:self-auto"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear History
-            </button>
-          )}
-        </div>
-
-        {/* Body */}
-        {orders.length === 0 ? (
-          <div className="py-24 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 text-violet-600">
+        {isLoading ? (
+          <div className="py-24 text-center flex flex-col items-center justify-center">
+             <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+             <p className="mt-4 text-sm text-slate-500">Loading your orders...</p>
+          </div>
+        ) : error ? (
+          <div className="py-12 text-center text-rose-500">{error}</div>
+        ) : orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white py-24 text-center shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-violet-600">
               <Package className="h-7 w-7" />
             </div>
-            <h2 className="mt-6 font-serif text-2xl font-semibold">
-              Nothing here yet
-            </h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-              Explore the collection, try a piece on your avatar, and place your
-              first custom-fit order.
-            </p>
+            <h2 className="mt-6 font-serif text-2xl font-semibold">Nothing here yet</h2>
+            <p className="mt-2 max-w-sm text-sm text-slate-500">Explore the collection, try a piece on your avatar, and place your first custom-fit order.</p>
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/products")}
-              className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-violet-600"
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-violet-600"
             >
               Browse Collection
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              <ArrowUpRight className="h-4 w-4" />
             </motion.button>
           </div>
+        ) : filteredOrders.length === 0 ? (
+           <div className="py-12 text-center text-slate-500 flex flex-col items-center">
+              <Search className="h-8 w-8 mb-3 opacity-20" />
+              <p>No orders found for this status.</p>
+           </div>
         ) : (
-          <div className="mt-8 space-y-4">
-            {orders.map((o, i) => (
-              <motion.div
-                key={o.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
-                className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center"
-              >
-                <div className="h-32 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
-                  {o.clothing.image && (
-                    <img
-                      src={o.clothing.image}
-                      alt={o.clothing.name}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </div>
+          <div className="space-y-4">
+            {filteredOrders.map((order: OrderListType, i: number) => {
+              const statusConfig = getStatusConfig(order.status);
+              const StatusIcon = statusConfig.icon;
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] font-bold text-violet-600">
-                      {o.id}
-                    </span>
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                        STATUS_STYLES[o.status] ?? STATUS_STYLES.Processing
-                      }`}
-                    >
-                      {o.status}
-                    </span>
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.2) }}
+                  onClick={() => navigate(`/orders/${order.id}`)}
+                  className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-violet-200 hover:shadow-md sm:p-6"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-mono text-sm font-bold text-slate-900">{order.order_number}</h3>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusConfig.color}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          {statusConfig.label}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-sm text-slate-500 flex items-center gap-3">
+                        <span>{formatDate(order.created_at)}</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                        <span>{order.item_count} {order.item_count === 1 ? 'Item' : 'Items'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-6 border-t border-slate-100 pt-4 sm:border-0 sm:pt-0">
+                      <div className="text-left sm:text-right">
+                        <p className="text-lg font-bold text-slate-900">ETB {Number(order.total).toLocaleString()}</p>
+                        <p className={`text-xs font-medium ${order.payment_status === 'paid' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          {order.payment_status === 'paid' ? 'Payment Successful' : 'Payment Pending'}
+                        </p>
+                      </div>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors group-hover:bg-violet-600 group-hover:text-white">
+                        <ChevronRight className="h-5 w-5" />
+                      </div>
+                    </div>
                   </div>
-                  <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-500">
-                    {o.clothing.brand}
-                  </p>
-                  <h3 className="font-serif text-lg font-semibold text-slate-900">
-                    {o.clothing.name}
-                  </h3>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
-                    <Truck className="h-3.5 w-3.5" />
-                    Ordered {o.date} · for {o.profile.nickname} ({o.profile.height}
-                    cm)
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-lg font-bold text-slate-900">
-                    {o.clothing.currency ?? "ETB"}{" "}
-                    {o.clothing.price.toLocaleString()}
-                  </p>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-400">
-                    Custom fit
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
-      </section>
+      </main>
     </div>
   );
 };

@@ -1,196 +1,436 @@
-import { useCallback, useEffect, useState } from "react";
-import type {
-  AvatarProfile,
-  BodyMorphs,
-  ClothingItem,
-} from "../types/avatar.types";
+import { create } from 'zustand';
 
-export interface Order {
-  id: string;
-  profile: AvatarProfile;
-  morphs: BodyMorphs;
-  clothing: ClothingItem;
-  date: string;
-  status: "Processing" | "Completed" | "Shipped";
+import {
+  AvatarState,
+  AvatarData,
+  BodyType,
+  Gender,
+  SkinTone,
+} from '../types/avatar.types';
+
+import { avatarApi } from '../api/avatarApi';
+
+interface AvatarStore extends AvatarState {
+  hasAttempted: boolean;
+  notification: string | null;
+  notificationType: 'success' | 'error' | null;
+  isInteracting: boolean;
+
+  setIsInteracting: (value: boolean) => void;
+  setAvatarData: (data: Partial<AvatarData>) => void;
+  confirmAvatar: () => Promise<void>;
+  setAnimation: (
+    animation: 'idle' | 'walk' | 'spin'
+  ) => void;
+  enterEditMode: () => void;
+  fetchAvatar: () => Promise<void>;
+  clearNotification: () => void;
 }
 
-export interface DeliveryInfo {
-  fullName: string;
-  phone: string;
-  address: string;
-}
+const DEFAULT_AVATAR_DATA: AvatarData = {
+  nickname: '',
+  age: 25,
+  gender: 'male',
+  body_type: 'average',
+  skin_tone: 'medium',
+  height: 170,
+  weight: 70,
+  chest: 90,
+  waist: 80,
+  shoulder_width: 45,
+  hips: 95,
+};
 
-const DEFAULT_MORPHS: BodyMorphs = { height: 1.0, build: 1.0 };
+const VALID_GENDERS: Gender[] = [
+  'male',
+  'female',
+];
 
-const KEYS = {
-  profile: "tilet3d_profile",
-  morphs: "tilet3d_morphs",
-  selected: "tilet3d_selected_clothing",
-  orders: "tilet3d_orders",
-  garment: "tilet3d_garment_color",
-} as const;
+const VALID_BODY_TYPES: BodyType[] = [
+  'slim',
+  'athletic',
+  'average',
+  'plus',
+  'inverted_triangle',
+  'pear',
+  'rectangle',
+];
 
-const DEFAULT_GARMENT = "#f4efe2"; // ivory (white with Tilet design)
+const VALID_SKIN_TONES: SkinTone[] = [
+  'fair',
+  'light',
+  'medium',
+  'tan',
+  'rich',
+  'deep',
+];
 
-function load<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
+const parseSafeNumber = (
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number
+): number => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number.parseFloat(value)
+        : Number.NaN;
+
+  if (!Number.isFinite(parsed)) {
     return fallback;
   }
-}
 
-/**
- * Derive the body-scale multipliers from a profile's metrics + body type.
- * Height ~ vertical scale, weight + body type ~ lateral (build) scale.
- * Clamped to keep the mesh believable.
- */
-export function deriveMorphs(profile: AvatarProfile): BodyMorphs {
-  const height = clamp(0.92 + (profile.height - 170) / 170, 0.9, 1.12);
+  if (parsed < minimum || parsed > maximum) {
+    return fallback;
+  }
 
-  const bodyTypeBias: Record<AvatarProfile["bodyType"], number> = {
-    slim: -0.05,
-    athletic: 0.0,
-    average: 0.03,
-    plus: 0.1,
-  };
-  const weightBias = (profile.weight - 70) / 260;
-  const build = clamp(1.0 + weightBias + bodyTypeBias[profile.bodyType], 0.86, 1.2);
+  return parsed;
+};
 
-  return { height, build };
-}
+const extractAvatarPayload = (
+  responseData: unknown
+): Record<string, unknown> | null => {
+  if (
+    !responseData ||
+    typeof responseData !== 'object' ||
+    Array.isArray(responseData)
+  ) {
+    return null;
+  }
 
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v));
-}
+  const response = responseData as Record<
+    string,
+    unknown
+  >;
 
-export const useAvatarStore = () => {
-  const [profile, setProfile] = useState<AvatarProfile | null>(() =>
-    load<AvatarProfile | null>(KEYS.profile, null),
-  );
-  const [morphs, setMorphs] = useState<BodyMorphs>(() =>
-    load<BodyMorphs>(KEYS.morphs, DEFAULT_MORPHS),
-  );
-  const [selectedClothing, setSelectedClothing] = useState<ClothingItem | null>(
-    () => load<ClothingItem | null>(KEYS.selected, null),
-  );
-  const [orders, setOrders] = useState<Order[]>(() =>
-    load<Order[]>(KEYS.orders, []),
-  );
+  if (
+    response.avatar &&
+    typeof response.avatar === 'object' &&
+    !Array.isArray(response.avatar)
+  ) {
+    return response.avatar as Record<string, unknown>;
+  }
 
-  // Items surfaced in the panel's primary section (from a product entry).
-  const [primaryClothing, setPrimaryClothing] = useState<ClothingItem[]>([]);
+  if (
+    response.data &&
+    typeof response.data === 'object' &&
+    !Array.isArray(response.data)
+  ) {
+    return response.data as Record<string, unknown>;
+  }
 
-  const [garmentColor, setGarmentColorState] = useState<string>(() =>
-    load<string>(KEYS.garment, DEFAULT_GARMENT),
-  );
+  return response;
+};
 
-  const [isEditingBody, setIsEditingBody] = useState(false);
-  const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
+const sanitizeAvatarData = (
+  raw: Record<string, unknown>,
+  fallback: AvatarData = DEFAULT_AVATAR_DATA
+): AvatarData => {
+  const gender = VALID_GENDERS.includes(
+    raw.gender as Gender
+  )
+    ? (raw.gender as Gender)
+    : fallback.gender;
 
-  useEffect(() => {
-    localStorage.setItem(KEYS.garment, JSON.stringify(garmentColor));
-  }, [garmentColor]);
+  const bodyType = VALID_BODY_TYPES.includes(
+    raw.body_type as BodyType
+  )
+    ? (raw.body_type as BodyType)
+    : fallback.body_type;
 
-  const setGarmentColor = useCallback((hex: string) => setGarmentColorState(hex), []);
-
-  // ── Persistence ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (profile) localStorage.setItem(KEYS.profile, JSON.stringify(profile));
-    else localStorage.removeItem(KEYS.profile);
-  }, [profile]);
-
-  useEffect(() => {
-    localStorage.setItem(KEYS.morphs, JSON.stringify(morphs));
-  }, [morphs]);
-
-  useEffect(() => {
-    if (selectedClothing)
-      localStorage.setItem(KEYS.selected, JSON.stringify(selectedClothing));
-    else localStorage.removeItem(KEYS.selected);
-  }, [selectedClothing]);
-
-  useEffect(() => {
-    localStorage.setItem(KEYS.orders, JSON.stringify(orders));
-  }, [orders]);
-
-  // ── Actions ──────────────────────────────────────────────────────────────
-  const updateProfile = useCallback((next: AvatarProfile | null) => {
-    setProfile(next);
-    if (next) {
-      setMorphs(deriveMorphs(next));
-    } else {
-      // Full reset on profile clear.
-      setMorphs(DEFAULT_MORPHS);
-      setSelectedClothing(null);
-    }
-  }, []);
-
-  /** Live-edit a single body-scale axis (height | build) without a full profile rebuild. */
-  const updateMorph = useCallback((key: keyof BodyMorphs, val: number) => {
-    setMorphs((prev) => ({ ...prev, [key]: val }));
-  }, []);
-
-  const setSkinTone = useCallback((tone: AvatarProfile["skinTone"]) => {
-    setProfile((prev) => (prev ? { ...prev, skinTone: tone } : prev));
-  }, []);
-
-  const setBodyType = useCallback((bodyType: AvatarProfile["bodyType"]) => {
-    setProfile((prev) => {
-      if (!prev) return prev;
-      const next = { ...prev, bodyType };
-      setMorphs(deriveMorphs(next));
-      return next;
-    });
-  }, []);
-
-  const selectClothing = useCallback((item: ClothingItem) => {
-    setSelectedClothing(item);
-  }, []);
-
-  const placeOrder = useCallback(
-    (_delivery?: DeliveryInfo) => {
-      if (!profile || !selectedClothing) return;
-      const newOrder: Order = {
-        id: "TLT-" + Math.floor(Math.random() * 90000 + 10000),
-        profile,
-        morphs,
-        clothing: selectedClothing,
-        date: new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
-        status: "Processing",
-      };
-      setOrders((prev) => [newOrder, ...prev]);
-      setIsConfirmingOrder(false);
-    },
-    [profile, morphs, selectedClothing],
-  );
+  const skinTone = VALID_SKIN_TONES.includes(
+    raw.skin_tone as SkinTone
+  )
+    ? (raw.skin_tone as SkinTone)
+    : fallback.skin_tone;
 
   return {
-    profile,
-    morphs,
-    selectedClothing,
-    primaryClothing,
-    orders,
-    garmentColor,
-    setGarmentColor,
-    isEditingBody,
-    isConfirmingOrder,
-    updateProfile,
-    updateMorph,
-    setMorphs,
-    setSkinTone,
-    setBodyType,
-    selectClothing,
-    setSelectedClothing,
-    setPrimaryClothing,
-    placeOrder,
-    setIsEditingBody,
-    setIsConfirmingOrder,
-    setOrders,
+    nickname:
+      typeof raw.nickname === 'string'
+        ? raw.nickname
+        : fallback.nickname,
+
+    age: parseSafeNumber(
+      raw.age,
+      fallback.age,
+      1,
+      120
+    ),
+
+    gender,
+    body_type: bodyType,
+    skin_tone: skinTone,
+
+    height: parseSafeNumber(
+      raw.height,
+      fallback.height,
+      120,
+      230
+    ),
+
+    weight: parseSafeNumber(
+      raw.weight,
+      fallback.weight,
+      30,
+      250
+    ),
+
+    chest: parseSafeNumber(
+      raw.chest,
+      fallback.chest,
+      40,
+      200
+    ),
+
+    waist: parseSafeNumber(
+      raw.waist,
+      fallback.waist,
+      35,
+      200
+    ),
+
+    shoulder_width: parseSafeNumber(
+      raw.shoulder_width,
+      fallback.shoulder_width,
+      20,
+      100
+    ),
+
+    hips: parseSafeNumber(
+      raw.hips,
+      fallback.hips,
+      40,
+      220
+    ),
   };
 };
+
+let notificationTimer:
+  | ReturnType<typeof setTimeout>
+  | null = null;
+
+const scheduleNotificationClear = (
+  set: (
+    partial:
+      | Partial<AvatarStore>
+      | ((
+          state: AvatarStore
+        ) => Partial<AvatarStore>)
+  ) => void
+): void => {
+  if (notificationTimer) {
+    clearTimeout(notificationTimer);
+  }
+
+  notificationTimer = setTimeout(() => {
+    set({
+      notification: null,
+      notificationType: null,
+    });
+
+    notificationTimer = null;
+  }, 4000);
+};
+
+export const useAvatarStore =
+  create<AvatarStore>((set, get) => ({
+    ...DEFAULT_AVATAR_DATA,
+
+    isConfirmed: false,
+    currentAnimation: 'idle',
+    isLoading: false,
+    hasAttempted: false,
+    notification: null,
+    notificationType: null,
+    isInteracting: false,
+
+    setIsInteracting: (value) => {
+      set({ isInteracting: value });
+    },
+
+    setAvatarData: (data) => {
+      set((state) => {
+        const currentAvatarData: AvatarData = {
+          nickname: state.nickname,
+          age: state.age,
+          gender: state.gender,
+          body_type: state.body_type,
+          skin_tone: state.skin_tone,
+          height: state.height,
+          weight: state.weight,
+          chest: state.chest,
+          waist: state.waist,
+          shoulder_width: state.shoulder_width,
+          hips: state.hips,
+        };
+
+        const sanitized = sanitizeAvatarData(
+          {
+            ...currentAvatarData,
+            ...data,
+          },
+          currentAvatarData
+        );
+
+        return sanitized;
+      });
+    },
+
+    confirmAvatar: async () => {
+      if (get().isLoading) {
+        return;
+      }
+
+      set({ isLoading: true });
+
+      try {
+        const state = get();
+
+        const currentData: AvatarData = {
+          nickname: state.nickname,
+          age: state.age,
+          gender: state.gender,
+          body_type: state.body_type,
+          skin_tone: state.skin_tone,
+          height: state.height,
+          weight: state.weight,
+          chest: state.chest,
+          waist: state.waist,
+          shoulder_width: state.shoulder_width,
+          hips: state.hips,
+        };
+
+        const payload = sanitizeAvatarData(
+          currentData as unknown as Record<
+            string,
+            unknown
+          >
+        );
+
+        await avatarApi.saveProfile(payload);
+
+        set({
+          ...payload,
+          isConfirmed: true,
+          currentAnimation: 'idle',
+          notification:
+            'Measurements securely saved to your profile.',
+          notificationType: 'success',
+        });
+
+        scheduleNotificationClear(set);
+      } catch (error) {
+        console.error(
+          'Backend avatar save failed:',
+          error
+        );
+
+        const apiError = error as {
+          response?: {
+            status?: number;
+          };
+        };
+
+        set({
+          notification:
+            apiError.response?.status === 500
+              ? 'Server error. Check the backend configuration.'
+              : 'Failed to save the avatar. Please try again.',
+          notificationType: 'error',
+        });
+
+        scheduleNotificationClear(set);
+      } finally {
+        set({ isLoading: false });
+      }
+    },
+
+    setAnimation: (animation) => {
+      set({ currentAnimation: animation });
+    },
+
+    enterEditMode: () => {
+      set({
+        isConfirmed: false,
+        currentAnimation: 'idle',
+      });
+    },
+
+    fetchAvatar: async () => {
+      if (get().hasAttempted) {
+        return;
+      }
+
+      set({
+        hasAttempted: true,
+        isLoading: true,
+      });
+
+      try {
+        const response =
+          await avatarApi.getProfile();
+
+        const payload = extractAvatarPayload(
+          response.data
+        );
+
+        if (!payload) {
+          throw new Error(
+            'The avatar API returned an invalid payload.'
+          );
+        }
+
+        /*
+         * Do not treat an empty object as a saved profile.
+         */
+        const hasAvatarProfile =
+          'height' in payload ||
+          'weight' in payload ||
+          'gender' in payload ||
+          'nickname' in payload;
+
+        if (!hasAvatarProfile) {
+          return;
+        }
+
+        const normalizedData =
+          sanitizeAvatarData(payload);
+
+        set({
+          ...normalizedData,
+          isConfirmed: true,
+          currentAnimation: 'idle',
+        });
+      } catch (error) {
+        /*
+         * A missing avatar profile is acceptable for a new user.
+         * Keep the safe defaults and display the calibration form.
+         */
+        console.info(
+          'No saved avatar profile was loaded.',
+          error
+        );
+
+        set({
+          isConfirmed: false,
+          currentAnimation: 'idle',
+        });
+      } finally {
+        set({ isLoading: false });
+      }
+    },
+
+    clearNotification: () => {
+      if (notificationTimer) {
+        clearTimeout(notificationTimer);
+        notificationTimer = null;
+      }
+
+      set({
+        notification: null,
+        notificationType: null,
+      });
+    },
+  }));

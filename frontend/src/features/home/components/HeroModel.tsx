@@ -2,6 +2,7 @@ import { Suspense, useMemo, useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF, ContactShadows, Preload } from "@react-three/drei";
 import * as THREE from "three";
+import { SkeletonUtils } from "three-stdlib";
 import { prepareAvatar } from "../../avatar/utils/avatarRig";
 import type { Gender } from "../../avatar/types/avatar.types";
 
@@ -12,15 +13,11 @@ const DRACO_URL = "https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/"
 useGLTF.preload(MALE, DRACO_URL);
 useGLTF.preload(FEMALE, DRACO_URL);
 
-// This sub-component handles the "Signal" that 3D is ready
 function AssetManager({ onReady }: { onReady: () => void }) {
-  // useGLTF here will suspend until both are loaded because of the preloads
   useGLTF(MALE, DRACO_URL);
   useGLTF(FEMALE, DRACO_URL);
 
   useEffect(() => {
-    // Small timeout ensures the GPU has actually uploaded the textures 
-    // before we hide the loading screen
     const timer = setTimeout(onReady, 100);
     return () => clearTimeout(timer);
   }, [onReady]);
@@ -31,12 +28,16 @@ function AssetManager({ onReady }: { onReady: () => void }) {
 function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
   const { scene } = useGLTF(gender === "male" ? MALE : FEMALE, DRACO_URL);
 
+  // FIX: Clone the scene so it doesn't fight with the AvatarViewer for the same object!
+  const clonedScene = useMemo(() => SkeletonUtils.clone(scene), [scene]);
+
   const transform = useMemo(() => {
-    if (!scene.userData.posed) {
-      prepareAvatar(scene, gender);
-      scene.userData.posed = true;
+    if (!clonedScene.userData.posed) {
+      // FIX: Removed the 'gender' argument since prepareAvatar only accepts 1 argument
+      prepareAvatar(clonedScene);
+      clonedScene.userData.posed = true;
     }
-    const box = new THREE.Box3().setFromObject(scene);
+    const box = new THREE.Box3().setFromObject(clonedScene);
     const size = new THREE.Vector3();
     const center = new THREE.Vector3();
     box.getSize(size);
@@ -49,11 +50,11 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
       scale: s,
       position: [-center.x * s, -box.min.y * s, -center.z * s] as [number, number, number],
     };
-  }, [scene, gender]);
+  }, [clonedScene]);
 
   return (
     <group scale={transform.scale} position={transform.position} visible={active}>
-      <primitive object={scene} />
+      <primitive object={clonedScene} />
     </group>
   );
 }

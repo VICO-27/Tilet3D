@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 import environ
+import os
 
 
 # ==========================================================
@@ -34,9 +35,12 @@ DEBUG = env.bool(
     default=False
 )
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS", 
+    default=["*"]
+)
 
-import os
+
 # ==========================================================
 # INSTALLED APPS
 # ==========================================================
@@ -65,6 +69,7 @@ INSTALLED_APPS = [
     "apps.cart",
     "apps.orders",
     "apps.payments",
+    'apps.avatars',  # <-- Add this line
 
 
     # Extensions
@@ -80,15 +85,15 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
 
-        "NAME": env("DB_NAME"),
+        "NAME": env("DB_NAME", default="tilet3d"),
 
-        "USER": env("DB_USER"),
+        "USER": env("DB_USER", default="postgres"),
 
-        "PASSWORD": env("DB_PASSWORD"),
+        "PASSWORD": env("DB_PASSWORD", default="postgres"),
 
-        "HOST": env("DB_HOST"),
+        "HOST": env("DB_HOST", default="localhost"),
 
-        "PORT": env("DB_PORT"),
+        "PORT": env("DB_PORT", default="5432"),
     }
 }
 
@@ -107,11 +112,44 @@ GOOGLE_CLIENT_SECRET = env(
     default=""
 )
 
-
 CHAPA_SECRET_KEY = env(
     "CHAPA_SECRET_KEY",
     default=""
 )
+
+CHAPA_CALLBACK_URL = env(
+    "CHAPA_CALLBACK_URL",
+    default="http://localhost:8000/api/payments/webhook/"
+)
+
+CHAPA_RETURN_URL = env(
+    "CHAPA_RETURN_URL",
+    default="http://localhost:3000/checkout/success"
+)
+
+
+# ==========================================================
+# EMAIL CONFIGURATION (BREVO/GMAIL SMTP)
+# ==========================================================
+
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", 
+    default="django.core.mail.backends.smtp.EmailBackend"
+)
+
+EMAIL_HOST = env("EMAIL_HOST", default="smtp-relay.brevo.com")
+
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@tilet3d.com")
+
+OTP_EXPIRY_MINUTES = env.int("OTP_EXPIRY_MINUTES", default=10)
 
 
 # ==========================================================
@@ -145,9 +183,9 @@ REST_FRAMEWORK = {
 }
 
 
-
-
-# 4. Add Media File Settings (Crucial for Product Images/Videos)
+# ==========================================================
+# MEDIA FILES
+# ==========================================================
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -289,17 +327,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-
-
-
-
-
-
 
 
 SPECTACULAR_SETTINGS = {
@@ -321,29 +351,24 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
-
-
+from celery.schedules import crontab
 
 # ==========================================================
-# EMAIL CONFIGURATION (BREVO SMTP)
+# CELERY & REDIS CONFIGURATION
 # ==========================================================
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
 
-EMAIL_BACKEND = env(
-    "EMAIL_BACKEND", 
-    default="django.core.mail.backends.smtp.EmailBackend"
-)
-
-EMAIL_HOST = env("EMAIL_HOST", default="smtp-relay.brevo.com")
-
-EMAIL_PORT = env.int("EMAIL_PORT", default=587)
-
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-
-DEFAULT_FROM_EMAIL = env(
-    "DEFAULT_FROM_EMAIL", 
-    default="webmaster@localhost"
-)
+# ==========================================================
+# CELERY BEAT (PERIODIC TASKS)
+# ==========================================================
+CELERY_BEAT_SCHEDULE = {
+    'expire-pending-orders-every-30-minutes': {
+        'task': 'apps.orders.tasks.task_expire_orders',
+        'schedule': crontab(minute='*/30'), # Runs every 30 minutes
+    },
+}

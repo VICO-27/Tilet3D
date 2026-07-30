@@ -22,13 +22,28 @@ from django.db import transaction
 from apps.cart.models import Cart
 from apps.orders.models import Order, OrderItem
 from apps.orders.services.numbering import OrderNumberService
-
 from apps.products.services.inventory import InventoryService
-
 from apps.payments.services import PaymentService
-
 from apps.payments.gateway_factory import GatewayFactory
+
+
 class CheckoutService:
+
+    @staticmethod
+    def calculate_shipping(region: str, city: str) -> Decimal:
+        region = region.lower().strip()
+        city = city.lower().strip()
+
+        if city == "adama":
+            return Decimal("150.00")
+        elif city in ["addis ababa", "finfinne", "sheger"]:
+            return Decimal("300.00")
+        elif region in ["oromia", "amhara", "sidama", "dire dawa"]:
+            # Standard regional courier
+            return Decimal("500.00")
+        else:
+            # Default fallback for other areas
+            return Decimal("700.00")
 
     @staticmethod
     @transaction.atomic
@@ -64,9 +79,17 @@ class CheckoutService:
 
             subtotal += variant.price * item.quantity
 
-        shipping_fee = Decimal("0.00")
-        tax = Decimal("0.00")
-        discount = Decimal("0.00")
+        # ==========================================================
+        # CALCULATE FEES
+        # ==========================================================
+
+        shipping_fee = CheckoutService.calculate_shipping(
+            region=checkout_data.get("region", ""),
+            city=checkout_data.get("city", "")
+        )
+
+        tax = subtotal * Decimal("0.15")  # 15% VAT
+        discount = Decimal("0.00")  # Promo codes later
 
         total = subtotal + shipping_fee + tax - discount
 
@@ -131,6 +154,7 @@ class CheckoutService:
         # ==========================================================
 
         cart.items.all().delete()
+
         # ==========================================================
         # CREATE PAYMENT
         # ==========================================================
@@ -140,8 +164,6 @@ class CheckoutService:
             user=user,
             provider=provider,
         )
-
-        from apps.payments.gateway_factory import GatewayFactory
 
         gateway = GatewayFactory.get_gateway(provider)
 
@@ -158,5 +180,3 @@ class CheckoutService:
         )
 
         return order, payment
-
-

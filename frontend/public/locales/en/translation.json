@@ -1,0 +1,106 @@
+{
+  "nav": {
+    "home": "Home",
+    "collection": "Collection",
+    "fittingRoom": "Fitting Room",
+    "bag": "Bag",
+    "shoppingBag": "Shopping Bag",
+    "orders": "Orders",
+    "orderHistory": "Order History",
+    "account": "Account",
+    "searchPlaceholder": "Search couture, brands, fabrics…",
+    "esc": "Esc",
+    "popular": "Popular",
+    "suggestions": {
+      "kemis": "Habesha Kemis",
+      "zuria": "Tibeb Zuria",
+      "netela": "Netela",
+      "suri": "Suri Set",
+      "gabi": "Gabi"
+    }
+  },
+  "footer": {
+    "footnote1": "1. 3D Studio Fitting Room simulations require a verified user profile and an active webcam or uploaded mesh file. Real-time rendering precision depends on your local device graphics framework.",
+    "footnote2Part1": "2. Each couture item in the collection is meticulously hand-woven across traditional ateliers in Ethiopia. Minor differences in the geometric alignment of the ",
+    "footnote2Part2": " border motifs are natural hallmarks of bespoke artisan craft and should be expected.",
+    "explore": "Explore",
+    "allCollections": "All Collections",
+    "bespokeCouture": "Bespoke Couture",
+    "giftCards": "Gift Cards",
+    "showroomLocations": "Showroom Locations",
+    "collection": "Collection",
+    "habeshaKemis": "Habesha Kemis",
+    "suriSets": "Suri & Sets",
+    "shemiz": "Shemiz",
+    "netelaGabi": "Netela & Gabi",
+    "studioAccount": "Studio & Account",
+    "createAvatar": "Create Avatar",
+    "manageProfile": "Manage Profile",
+    "atelierHeritage": "Atelier Heritage",
+    "ourWeavers": "Our Weavers",
+    "sustainability": "Sustainability",
+    "patternDictionary": "Pattern Dictionary",
+    "traceOrigin": "Trace Origin",
+    "tiletValues": "Tilet3D Values",
+    "findAtelier": "Find an Atelier",
+    "artisanFund": "Artisan Fund",
+    "careers": "Careers",
+    "contactSupport": "Contact Support",
+    "moreWaysToShop": "More ways to shop: ",
+    "findRepresentative": "Find an Atelier Representative",
+    "orCall": " or call ",
+    "copyright": "Copyright © 2026 ጥለት3D Inc.",
+    "rights": "Handcrafted in Addis Ababa, Ethiopia. All rights reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "salesRefunds": "Sales and Refunds",
+    "legal": "Legal & Compliance",
+    "region": "ኢትዮጵያ (Ethiopia)"
+  },
+  
+  "cart": {
+    "title": "Shopping Bag",
+    "piece": "Piece",
+    "pieces": "Pieces",
+    "emptyTitle": "Your bag is empty",
+    "emptyDesc": "Discover our latest Habesha couture collection.",
+    "exploreBtn": "Explore Collection",
+    "defaultItemName": "Couture Piece",
+    "shippingLabel": "Shipping & Custom Tailoring",
+    "calculatedCheckout": "Calculated at checkout",
+    "subtotal": "Subtotal",
+    "checkoutBtn": "Proceed to Checkout"
+  },
+  "account": {
+    "tabs": {
+      "overview": "Overview",
+      "personalDetails": "Personal Details",
+      "addresses": "Shipping Addresses",
+      "security": "Password & Security",
+      "preferences": "Regional Preferences"
+    },
+    "signOut": "Sign Out"
+  },
+  "hero": {
+    "badge": "Fashion, reimagined in 3D",
+    "title1": "Wear it",
+    "title2": "before you",
+    "title3": "buy it.",
+    "subtitle": "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.",
+    "createAvatar": "Create your avatar",
+    "explore": "Explore the collection",
+    "lovedBy": "Loved by 2,400+ clients",
+    "testimonials": {
+      "1": "Tried the kemis on my own avatar — the fit was flawless.",
+      "2": "Finally ordered Habesha wear without guessing my size.",
+      "3": "The Tilet detail is stunning in 3D."
+    }
+  }
+
+
+
+
+
+
+}
+

@@ -3,12 +3,12 @@ import gsap from "gsap";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Gender } from "../../avatar/types/avatar.types";
-
-// Removed lazy loading to ensure 3D starts immediately
 import HeroModel from "./HeroModel";
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const line1Ref = useRef(null);
   const line2Ref = useRef(null);
@@ -50,31 +50,26 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-white pt-[48px]">
-      {/* Background Blobs - Expanded for full screen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 top-0 h-[80vh] w-[80vh] rounded-full bg-plum-200/25 blur-[120px]" />
         <div className="absolute -left-20 bottom-0 h-[60vh] w-[60vh] rounded-full bg-amber-100/30 blur-[120px]" />
       </div>
 
-      {/* Main Container - Removed max-w constraint and added h-full */}
       <div className="relative grid h-full w-full grid-cols-1 items-center px-8 md:px-16 lg:grid-cols-2 lg:px-24 xl:px-32">
-        
-        {/* LEFT — Copy */}
         <div className="z-10 py-10 lg:py-0">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/60">
             <span className="h-1.5 w-1.5 rounded-full bg-plum-600" />
-            Fashion, reimagined in 3D
+            {t("hero.badge", "Fashion, reimagined in 3D")}
           </div>
 
           <h1 className="display text-[clamp(3rem,7vw,6rem)] font-semibold leading-[0.9] text-ink">
-            <span ref={line1Ref} className="block">Wear it</span>
-            <span ref={line2Ref} className="block italic text-plum-600">before you</span>
-            <span ref={line3Ref} className="block">buy it.</span>
+            <span ref={line1Ref} className="block">{t("hero.title1", "Wear it")}</span>
+            <span ref={line2Ref} className="block italic text-plum-600">{t("hero.title2", "before you")}</span>
+            <span ref={line3Ref} className="block">{t("hero.title3", "buy it.")}</span>
           </h1>
 
           <p ref={subRef} className="mt-6 max-w-lg text-lg leading-relaxed text-ink/60">
-            Build your 3D avatar and fit hand-woven Ethiopian couture to your exact 
-            proportions—before the first thread is spun.
+            {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.")}
           </p>
 
           <div ref={ctaRef} className="mt-10 flex flex-wrap items-center gap-4">
@@ -82,14 +77,14 @@ const HeroSection = () => {
               onClick={() => navigate("/avatar")}
               className="group inline-flex items-center gap-3 rounded-full bg-ink px-8 py-4 text-sm font-bold text-white transition-all hover:bg-plum-600 hover:shadow-2xl hover:shadow-plum-300/40"
             >
-              Create your avatar
+              {t("hero.createAvatar", "Create your avatar")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
             <button
               onClick={() => navigate("/products")}
               className="inline-flex items-center rounded-full border border-ink/20 px-8 py-4 text-sm font-bold text-ink transition-colors hover:bg-ink/[0.03]"
             >
-              Explore the collection
+              {t("hero.explore", "Explore the collection")}
             </button>
           </div>
 
@@ -98,7 +93,6 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* RIGHT — 3D Avatar Canvas */}
         <div
           className="relative h-full w-full lg:translate-x-10"
           onPointerDown={markInteracting}
@@ -119,11 +113,9 @@ const HeroSection = () => {
             )}
           </AnimatePresence>
 
-          {/* Switchers */}
           <HeroSwitch side="left" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
           <HeroSwitch side="right" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
 
-          {/* Dots */}
           <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 gap-2">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
@@ -141,32 +133,35 @@ const HeroSection = () => {
   );
 };
 
-const TESTIMONIALS = [
-  { name: "Selam T.", city: "Addis Ababa", color: "#7c3aed", quote: "Tried the kemis on my own avatar — the fit was flawless." },
-  { name: "Dawit K.", city: "Washington D.C.", color: "#0ea5e9", quote: "Finally ordered Habesha wear without guessing my size." },
-  { name: "Hanna G.", city: "Dubai", color: "#f59e0b", quote: "The Tilet detail is stunning in 3D." },
-];
-
 const Testimonials = () => {
+  const { t } = useTranslation();
   const [i, setI] = useState(0);
+
+  const TESTIMONIALS = [
+    { name: "Selam T.", city: "Addis Ababa", color: "#7c3aed", quote: t("hero.testimonials.1", "Tried the kemis on my own avatar — the fit was flawless.") },
+    { name: "Dawit K.", city: "Washington D.C.", color: "#0ea5e9", quote: t("hero.testimonials.2", "Finally ordered Habesha wear without guessing my size.") },
+    { name: "Hanna G.", city: "Dubai", color: "#f59e0b", quote: t("hero.testimonials.3", "The Tilet detail is stunning in 3D.") },
+  ];
+
   useEffect(() => {
     const id = setInterval(() => setI((v) => (v + 1) % TESTIMONIALS.length), 4500);
     return () => clearInterval(id);
-  }, []);
-  const t = TESTIMONIALS[i];
+  }, [TESTIMONIALS.length]);
+
+  const currentT = TESTIMONIALS[i];
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className="flex text-plum-500">
           {[...Array(5)].map((_, s) => <Star key={s} className="h-4 w-4 fill-plum-500" />)}
         </div>
-        <span className="text-xs font-bold tracking-wider text-ink/40">Loved by 2,400+ clients</span>
+        <span className="text-xs font-bold tracking-wider text-ink/40">{t("hero.lovedBy", "Loved by 2,400+ clients")}</span>
       </div>
       <div className="relative h-8 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: t.color }}>{t.name.charAt(0)}</span>
-            <p className="text-sm text-ink/70 italic">“{t.quote}” <span className="not-italic font-bold text-ink/30 ml-2">— {t.name}</span></p>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: currentT.color }}>{currentT.name.charAt(0)}</span>
+            <p className="text-sm text-ink/70 italic">“{currentT.quote}” <span className="not-italic font-bold text-ink/30 ml-2">— {currentT.name}</span></p>
           </motion.div>
         </AnimatePresence>
       </div>

@@ -13,7 +13,24 @@ from apps.products.models import (
 from .serializers import ProductSerializer, ProductCommentSerializer
 
 
+# ==========================================================
+# USER LIKED PRODUCTS LIST
+# ==========================================================
+class UserLikedProductsAPIView(generics.ListAPIView):
+    """
+    Returns a list of all active products liked by the current authenticated user.
+    """
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Product.objects.filter(
+            likes__user=self.request.user,
+            is_active=True
+        ).prefetch_related("media", "variants", "likes", "comments")
+
+    def get_serializer_context(self):
+        return {"request": self.request}
 
 
 # ==========================================================
@@ -27,11 +44,6 @@ class ProductCommentsListView(generics.ListAPIView):
         return ProductComment.objects.filter(
             product_id=self.kwargs["id"]
         ).select_related("user")
-
-
-
-
-
 
 
 # ==========================================================
@@ -66,18 +78,16 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return (
-            Product.objects.filter(is_active=True)
-            .prefetch_related(
-    "media",
-    "variants",
-    "likes",
-    "comments",
-)
+        return Product.objects.filter(is_active=True).prefetch_related(
+            "media",
+            "variants",
+            "likes",
+            "comments",
         )
 
     def get_serializer_context(self):
         return {"request": self.request}
+
 
 # ==========================================================
 # LIKE TOGGLE
@@ -118,6 +128,7 @@ class AddCommentView(APIView):
 
         serializer = ProductCommentSerializer(comment)
         return Response(serializer.data)
+
 
 # ==========================================================
 # SHARE PRODUCT

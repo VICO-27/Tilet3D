@@ -3,7 +3,50 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.accounts.models import User, Profile, OTPCode, OTPPurpose
+from apps.accounts.models import User, Profile, OTPCode, OTPPurpose, SecurityAuditLog,  Address
+
+
+
+
+
+
+
+
+
+class SecurityAuditLogSerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(source="created_at", format="%b %d, %Y, %I:%M %p")
+    ip = serializers.CharField(source="ip_address")
+
+    class Meta:
+        model = SecurityAuditLog
+        fields = ["id", "event", "date", "ip"]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
+
+
+
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = [
+            "id",
+            "label",
+            "full_name",
+            "phone_number",
+            "region",
+            "city",
+            "sub_city",
+            "woreda",
+            "house_no",
+            "is_default",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):

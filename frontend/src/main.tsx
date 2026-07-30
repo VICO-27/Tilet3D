@@ -7,6 +7,9 @@ import App from "./App";
 import "@/styles/globals.css";
 import { useAuthStore } from "./app/store/useAuthStore";
 
+import "./i18n"; // Add this line!
+
+
 // --- 3D ASSET PRE-WARMING ---
 const DRACO_URL =
   "https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/";

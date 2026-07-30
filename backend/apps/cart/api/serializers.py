@@ -55,7 +55,13 @@ class CartItemSerializer(serializers.ModelSerializer):
         ]
 
     def get_image(self, obj):
-        media = obj.variant.media.filter(is_primary=True).first()
+        # Fixed: Access media through product instead of variant directly
+        try:
+            media = obj.variant.product.media.filter(is_primary=True).first()
+            if not media:
+                media = obj.variant.product.media.first()
+        except AttributeError:
+            return None
 
         if not media:
             return None

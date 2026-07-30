@@ -26,7 +26,6 @@ class CartView(RetrieveAPIView):
         cart, _ = (
             Cart.objects.prefetch_related(
                 "items__variant__product",
-                "items__variant__media",
             ).get_or_create(
                 user=self.request.user
             )
@@ -37,7 +36,6 @@ class CartView(RetrieveAPIView):
         context = super().get_serializer_context()
         context["request"] = self.request
         return context
-
 
 # ==========================================================
 # ADD TO CART

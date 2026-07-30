@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "home": "ዋና ገጽ",
+    "collection": "ስብስብ",
+    "fittingRoom": "ልብስ መለኪያ",
+    "bag": "ቦርሳ",
+    "shoppingBag": "የገበያ ቦርሳ",
+    "orders": "ትዕዛዞች",
+    "orderHistory": "የትዕዛዝ ታሪክ",
+    "account": "መለያ",
+    "searchPlaceholder": "ፋሽን፣ ብራንዶች፣ ጨርቆችን ይፈልጉ...",
+    "esc": "ውጣ",
+    "popular": "ታዋቂ",
+    "suggestions": {
+      "kemis": "የሀበሻ ቀሚስ",
+      "zuria": "ጥበብ ዙሪያ",
+      "netela": "ነጠላ",
+      "suri": "ሱሪ እና ሙሉ ልብስ",
+      "gabi": "ጋቢ"
+    }
+  },
+
+
+
+
+  "cart": {
+    "title": "የገበያ ቦርሳ",
+    "piece": "ልብስ",
+    "pieces": "ልብሶች",
+    "emptyTitle": "ቦርሳዎ ባዶ ነው",
+    "emptyDesc": "አዲሱን የሀበሻ ፋሽን ስብስባችንን ያግኙ።",
+    "exploreBtn": "ስብስቡን ያስሱ",
+    "defaultItemName": "የፋሽን ልብስ",
+    "shippingLabel": "መላኪያ እና ልብስ ስፌት",
+    "calculatedCheckout": "በክፍያ ጊዜ ይሰላል",
+    "subtotal": "ንዑስ ድምር",
+    "checkoutBtn": "ወደ ክፍያ ይቀጥሉ"
+  },
+  "account": {
+    "tabs": {
+      "overview": "አጠቃላይ እይታ",
+      "personalDetails": "የግል መረጃ",
+      "addresses": "የመላኪያ አድራሻዎች",
+      "security": "የይለፍ ቃል እና ደህንነት",
+      "preferences": "ክልል እና ምርጫዎች"
+    },
+    "signOut": "ውጣ"
+  },
+  "hero": {
+    "badge": "ፋሽን፣ በ3-ል እንደገና ታስቧል",
+    "title1": "ይልበሱት",
+    "title2": "ከመግዛትዎ",
+    "title3": "በፊት።",
+    "subtitle": "የ3-ል አምሳያዎን ይፍጠሩ እና በእጅ የተሰራውን የኢትዮጵያ ባህላዊ ልብስ ከእርስዎ ልክ ጋር ያመጣጥኑ—የመጀመሪያው ክር ከመፈተሉ በፊት።",
+    "createAvatar": "አምሳያዎን ይፍጠሩ",
+    "explore": "ስብስቡን ያስሱ",
+    "lovedBy": "ከ 2,400+ በላይ ደንበኞች የተወደደ",
+    "testimonials": {
+      "1": "ቀሚሱን በራሴ አምሳያ ላይ ሞከርኩት — ልኩ ፍጹም ነበር።",
+      "2": "በመጨረሻም የሀበሻ ልብስን ልኬን ሳልገምት አዘዝኩ።",
+      "3": "የጥለት ዲዛይኑ በ3-ል በጣም አስደናቂ ነው።"
+    }
+  },
+
+  
+  "footer": {
+    "footnote1": "1. 3D የልብስ መለኪያ ካሜራ ወይም የ3-ል ፋይል እና የተረጋገጠ መለያ ይፈልጋል። የጥራት ደረጃው በስልክዎ ግራፊክስ ይወሰናል።",
+    "footnote2Part1": "2. እያንዳንዱ የፋሽን እቃ በኢትዮጵያ ውስጥ በሚገኙ ባህላዊ የልብስ ስፌት ቤቶች በጥንቃቄ በእጅ የተሰራ ነው። በ ",
+    "footnote2Part2": " ዲዛይን ላይ የሚታዩ ጥቃቅን ልዩነቶች የባህላዊ እደ-ጥበብ መገለጫዎች በመሆናቸው ሊጠበቁ ይገባል።",
+    "explore": "ያስሱ",
+    "allCollections": "ሁሉም ስብስቦች",
+    "bespokeCouture": "በልዩ ትዕዛዝ የሚሰፉ",
+    "giftCards": "የስጦታ ካርዶች",
+    "showroomLocations": "የማሳያ ቦታዎች",
+    "collection": "ስብስብ",
+    "habeshaKemis": "የሀበሻ ቀሚስ",
+    "suriSets": "ሱሪ እና ሙሉ ልብስ",
+    "shemiz": "ሸሚዝ",
+    "netelaGabi": "ነጠላ እና ጋቢ",
+    "studioAccount": "ስቱዲዮ እና መለያ",
+    "createAvatar": "አምሳያ ይፍጠሩ",
+    "manageProfile": "መለያ አስተዳድር",
+    "atelierHeritage": "የልብስ ስፌት ቅርስ",
+    "ourWeavers": "ሸማኔዎቻችን",
+    "sustainability": "ዘላቂነት",
+    "patternDictionary": "የጥበብ ዲዛይኖች",
+    "traceOrigin": "የመነሻ ታሪክ",
+    "tiletValues": "የጥለት3D እሴቶች",
+    "findAtelier": "የልብስ ስፌት ቤት ያግኙ",
+    "artisanFund": "የእደ-ጥበብ ፈንድ",
+    "careers": "ስራዎች",
+    "contactSupport": "እርዳታ ያግኙ",
+    "moreWaysToShop": "በሌሎች መንገዶች ለመገበያየት፡ ",
+    "findRepresentative": "ወኪል ያግኙ",
+    "orCall": " ወይም ይደውሉ ",
+    "copyright": "የቅጂ መብት © 2026 ጥለት3D Inc.",
+    "rights": "በአዲስ አበባ፣ ኢትዮጵያ የተሰራ። መብቱ በህግ የተጠበቀ ነው።",
+    "privacyPolicy": "የግላዊነት ፖሊሲ",
+    "termsOfUse": "የአጠቃቀም ውል",
+    "salesRefunds": "ሽያጭ እና ተመላሽ",
+    "legal": "ህጋዊ መረጃ",
+    "region": "ኢትዮጵያ (Ethiopia)"
+  }
+  
+}

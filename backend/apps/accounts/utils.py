@@ -8,6 +8,28 @@ from django.utils import timezone
 from .models import OTPCode, OTPPurpose
 
 
+from .models import SecurityAuditLog
+
+
+def log_security_event(request, user, event_description):
+    ip = request.META.get("HTTP_X_FORWARDED_FOR")
+    if ip:
+        ip = ip.split(",")[0].strip()
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+
+    user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+    SecurityAuditLog.objects.create(
+        user=user,
+        event=event_description,
+        ip_address=ip,
+        user_agent=user_agent,
+    )
+
+
+
+
 def generate_otp(user, purpose):
     # Invalidate any previous unused OTPs of the same purpose
     OTPCode.objects.filter(user=user, purpose=purpose, is_used=False).update(is_used=True)

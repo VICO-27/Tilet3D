@@ -1,12 +1,24 @@
+// features/account/components/Dashboard.tsx
 // cspell:words Tilet Tilet3D
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, LogOut, Package, Ruler, Heart, Bookmark, ArrowUpRight } from "lucide-react";
+import { Package, Ruler, Heart, Bookmark, ArrowUpRight } from "lucide-react";
 import { useEngagementStore } from "../../../app/store/useEngagementStore";
 import { useAvatarStore } from "../../avatar/store/useAvatarStore";
 import { useProducts } from "../../products/hooks/useProducts";
 import { type Product } from "../../products/components/ProductCard";
-import { type AuthUser } from "../types/auth"; 
+import { type AuthUser } from "../types/auth";
+import { useOrders } from "../../orders/hooks/useOrders";
+import { type OrderListType } from "../../orders/api/orderApi";
+
+interface AvatarProfile {
+  nickname: string;
+  gender: string;
+  height: number;
+  weight: number;
+  bodyType: string;
+  skinTone: string;
+}
 
 interface DashboardProps {
   user: AuthUser;
@@ -15,8 +27,14 @@ interface DashboardProps {
   onEditProfile?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigate, onEditProfile }) => {
-  const { profile, orders } = useAvatarStore();
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  // Extract profile safely
+  const avatarStore = useAvatarStore() as { profile?: AvatarProfile; avatar?: AvatarProfile };
+  const profile = avatarStore.profile || avatarStore.avatar || null;
+
+  // Use your actual useOrders hook!
+  const { orders } = useOrders();
+
   const { groupedProducts } = useProducts();
   const eng = useEngagementStore();
 
@@ -27,83 +45,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigat
 
   const productById = (id: string) => allProducts.find((p) => p.id === id);
 
-  const savedIds: string[] = "savedIds" in eng && typeof eng.savedIds === "function" ? eng.savedIds() : [];
-  const likedIds: string[] = "likedIds" in eng && typeof eng.likedIds === "function" ? eng.likedIds() : [];
+  const savedIds: string[] =
+    "savedIds" in eng && typeof eng.savedIds === "function" ? eng.savedIds() : [];
+  const likedIds: string[] =
+    "likedIds" in eng && typeof eng.likedIds === "function" ? eng.likedIds() : [];
 
   const saved = savedIds.map(productById).filter(Boolean) as Product[];
   const liked = likedIds.map(productById).filter(Boolean) as Product[];
-  
+
   // Transform the Product structure into clothing parameters for the avatar canvas context
   const tryOn = (p: Product) => {
     const primaryMedia = p.media.find((m) => m.is_primary) || p.media[0];
     const targetVariant = p.variants[0];
-    
-    onNavigate("/avatar", { 
-      state: { 
+
+    onNavigate("/avatar", {
+      state: {
         clothing: {
           id: p.id,
           name: p.name,
           image: primaryMedia?.file || "",
-          price: targetVariant ? Number(targetVariant.price) : 0
-        } 
-      } 
+          price: targetVariant ? Number(targetVariant.price) : 0,
+        },
+      },
     });
   };
 
-  const displayName =
-    user.full_name?.trim() ||
-    user.nickname?.trim() ||
-    user.email.split("@")[0];
-
-  const initials = displayName
-    .split(" ")
-    .map((word: string) => word[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
-    <div className="mx-auto max-w-[1100px] px-6 pb-20 pt-[100px] md:px-10">
-      {/* Header */}
-      <div className="flex flex-col gap-5 border-b border-ink/[0.06] pb-8 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-ink text-xl font-black text-white">
-            {initials || <User className="h-6 w-6" />}
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-plum-600">
-              Tilet3D Member
-            </p>
-            <h1 className="display text-3xl font-semibold text-ink">
-              {displayName}
-            </h1>
-            <p className="text-sm text-ink/45">{user.email}</p>
-          </div>
-        </div>
-        <div className="flex gap-2.5 self-start sm:self-auto">
-          {onEditProfile && (
-            <button
-              onClick={onEditProfile}
-              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-4 py-2 text-xs font-semibold text-ink/70 transition-colors hover:bg-ink/[0.03]"
-            >
-              Edit Profile
-            </button>
-          )}
-          <button
-            onClick={async () => {
-              await onSignOut();
-              onNavigate("/");
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-4 py-2 text-xs font-semibold text-ink/70 transition-colors hover:bg-ink/[0.03]"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Sign Out
-          </button>
-        </div>
-      </div>
-
-      {/* Cards */}
-      <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+    <div className="p-6">
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {/* Avatar Settings */}
         <Card
           icon={<Ruler className="h-5 w-5" />}
           title="Avatar Settings"
@@ -160,36 +131,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut, onNavigat
             action={() => onNavigate("/orders")}
             actionLabel="View all"
           >
-            {orders.length === 0 ? (
+            {!orders || orders.length === 0 ? (
               <Empty text="No bespoke orders yet." />
             ) : (
               <div className="space-y-3">
-                {orders.slice(0, 3).map((o) => (
+                {orders.slice(0, 3).map((o: OrderListType) => (
                   <div
                     key={o.id}
                     className="flex items-center gap-4 rounded-2xl border border-ink/[0.06] bg-neutral-50 p-3"
                   >
-                    <div className="h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-neutral-200">
-                      {o.clothing.image && (
-                        <img
-                          src={o.clothing.image}
-                          alt={o.clothing.name}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
+                    {/* Placeholder icon since OrderListType doesn't include an image */}
+                    <div className="flex h-14 w-11 shrink-0 items-center justify-center rounded-lg bg-neutral-200/60 text-ink/30">
+                      <Package className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-mono text-[11px] font-bold text-plum-600">
-                        {o.id}
+                        {o.order_number}
                       </p>
                       <p className="truncate font-serif text-sm font-semibold text-ink">
-                        {o.clothing.name}
+                        {o.item_count} Item{o.item_count !== 1 ? 's' : ''}
                       </p>
-                      <p className="text-[11px] text-ink/45">{o.date}</p>
+                      <p className="text-[11px] text-ink/45">
+                        {new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
                     </div>
-                    <p className="text-sm font-bold text-ink">
-                      ETB {o.clothing.price.toLocaleString()}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-ink">
+                        ETB {Number(o.total).toLocaleString()}
+                      </p>
+                      <p className={`text-[9px] font-bold uppercase tracking-wider ${o.status === 'cancelled' ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {o.status}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -261,15 +234,15 @@ const EngagementGrid: React.FC<{
     {products.slice(0, 6).map((p) => {
       const displayMedia = p.media.find((m) => m.is_primary) || p.media[0];
       const displayPrice = p.variants[0]?.price || 0;
-      
+
       return (
         <button key={p.id} onClick={() => onTryOn(p)} className="group text-left">
           <div className="aspect-[3/4] overflow-hidden rounded-xl bg-neutral-100">
             {displayMedia?.media_type === "video" ? (
-              <video 
-                src={displayMedia.file} 
-                muted 
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+              <video
+                src={displayMedia.file}
+                muted
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
               <img

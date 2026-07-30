@@ -10,19 +10,21 @@ const CategoryDetailPage = lazy(
   () => import("../../features/products/pages/CategoryDetailPage"),
 );
 
-// Lazy load the Product Detail Page
 const ProductDetailPage = lazy(
   () => import("../../features/products/pages/ProductDetailPage"),
 );
 
-const AvatarPage = lazy(() =>
-  import("@/features/avatar/pages/AvatarPage").then((m) => ({
-    default: m.AvatarPage,
-  })),
+// FIXED: Removed the .then() block and matched the path style of other routes
+const AvatarPage = lazy(
+  () => import("../../features/avatar/pages/AvatarPage"),
 );
 
 const OrderHistoryPage = lazy(
   () => import("../../features/orders/pages/OrderHistoryPage"),
+);
+
+const OrderDetailPage = lazy(
+  () => import("../../features/orders/pages/OrderDetailPage"),
 );
 
 const AccountPage = lazy(
@@ -48,8 +50,13 @@ const AppRoutes = () => {
         {/* Product Detail Page */}
         <Route path="/products/:id" element={<ProductDetailPage />} />
         
+        {/* Avatar Studio */}
         <Route path="/avatar" element={<AvatarPage />} />
+        
+        {/* Orders */}
         <Route path="/orders" element={<OrderHistoryPage />} />
+        <Route path="/orders/:id" element={<OrderDetailPage />} />
+        
         <Route path="/account" element={<AccountPage />} />
       </Routes>
     </Suspense>

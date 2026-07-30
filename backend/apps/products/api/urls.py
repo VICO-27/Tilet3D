@@ -7,13 +7,15 @@ from .views import (
     AddCommentView,
     ShareProductView,
     ProductCommentsListView,
+    UserLikedProductsAPIView,
 )
 
 urlpatterns = [
     # =========================
-    # PRODUCT LIST
+    # PRODUCT LIST & LIKED
     # =========================
     path("", ProductListAPIView.as_view(), name="product-list"),
+    path("liked/", UserLikedProductsAPIView.as_view(), name="user-liked-products"),
 
     # =========================
     # SOCIAL ACTIONS
@@ -21,11 +23,10 @@ urlpatterns = [
     path("like/", ToggleLikeView.as_view(), name="like-toggle"),
     path("comment/", AddCommentView.as_view(), name="comment-add"),
     path("share/", ShareProductView.as_view(), name="share"),
-
-
     path("<uuid:id>/comments/", ProductCommentsListView.as_view(), name="product-comments"),
 
     # =========================
-    # PRODUCT DETAIL (LAST)
+    # PRODUCT DETAIL (KEEP AT BOTTOM)
     # =========================
-path("<uuid:id>/", ProductDetailAPIView.as_view(), name="product-detail"),]
+    path("<uuid:id>/", ProductDetailAPIView.as_view(), name="product-detail"),
+]

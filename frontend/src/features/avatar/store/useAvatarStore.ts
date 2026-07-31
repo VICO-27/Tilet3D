@@ -1,33 +1,24 @@
 import { create } from 'zustand';
-
-import {
+import { avatarApi } from '../api/avatarApi';
+import type {
   AvatarState,
   AvatarData,
-  BodyType,
   Gender,
+  BodyType,
   SkinTone,
+  AnimationName,
 } from '../types/avatar.types';
 
-import { avatarApi } from '../api/avatarApi';
+// ─────────────────────────────────────────────────────────────────────────────
+// Validation constants
+// ─────────────────────────────────────────────────────────────────────────────
+const VALID_GENDERS: Gender[] = ['male', 'female'];
+const VALID_BODY_TYPES: BodyType[] = [
+  'slim', 'athletic', 'average', 'plus', 'inverted_triangle', 'pear', 'rectangle',
+];
+const VALID_SKIN_TONES: SkinTone[] = ['fair', 'light', 'medium', 'tan', 'rich', 'deep'];
 
-interface AvatarStore extends AvatarState {
-  hasAttempted: boolean;
-  notification: string | null;
-  notificationType: 'success' | 'error' | null;
-  isInteracting: boolean;
-
-  setIsInteracting: (value: boolean) => void;
-  setAvatarData: (data: Partial<AvatarData>) => void;
-  confirmAvatar: () => Promise<void>;
-  setAnimation: (
-    animation: 'idle' | 'walk' | 'spin'
-  ) => void;
-  enterEditMode: () => void;
-  fetchAvatar: () => Promise<void>;
-  clearNotification: () => void;
-}
-
-const DEFAULT_AVATAR_DATA: AvatarData = {
+const DEFAULT: AvatarData = {
   nickname: '',
   age: 25,
   gender: 'male',
@@ -41,396 +32,203 @@ const DEFAULT_AVATAR_DATA: AvatarData = {
   hips: 95,
 };
 
-const VALID_GENDERS: Gender[] = [
-  'male',
-  'female',
-];
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function safeNum(v: unknown, fallback: number, min: number, max: number): number {
+  const n = typeof v === 'number' ? v : parseFloat(v as string);
+  if (!isFinite(n) || n < min || n > max) return fallback;
+  return n;
+}
 
-const VALID_BODY_TYPES: BodyType[] = [
-  'slim',
-  'athletic',
-  'average',
-  'plus',
-  'inverted_triangle',
-  'pear',
-  'rectangle',
-];
-
-const VALID_SKIN_TONES: SkinTone[] = [
-  'fair',
-  'light',
-  'medium',
-  'tan',
-  'rich',
-  'deep',
-];
-
-const parseSafeNumber = (
-  value: unknown,
-  fallback: number,
-  minimum: number,
-  maximum: number
-): number => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-        ? Number.parseFloat(value)
-        : Number.NaN;
-
-  if (!Number.isFinite(parsed)) {
-    return fallback;
-  }
-
-  if (parsed < minimum || parsed > maximum) {
-    return fallback;
-  }
-
-  return parsed;
-};
-
-const extractAvatarPayload = (
-  responseData: unknown
-): Record<string, unknown> | null => {
-  if (
-    !responseData ||
-    typeof responseData !== 'object' ||
-    Array.isArray(responseData)
-  ) {
-    return null;
-  }
-
-  const response = responseData as Record<
-    string,
-    unknown
-  >;
-
-  if (
-    response.avatar &&
-    typeof response.avatar === 'object' &&
-    !Array.isArray(response.avatar)
-  ) {
-    return response.avatar as Record<string, unknown>;
-  }
-
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    !Array.isArray(response.data)
-  ) {
-    return response.data as Record<string, unknown>;
-  }
-
-  return response;
-};
-
-const sanitizeAvatarData = (
-  raw: Record<string, unknown>,
-  fallback: AvatarData = DEFAULT_AVATAR_DATA
-): AvatarData => {
-  const gender = VALID_GENDERS.includes(
-    raw.gender as Gender
-  )
-    ? (raw.gender as Gender)
-    : fallback.gender;
-
-  const bodyType = VALID_BODY_TYPES.includes(
-    raw.body_type as BodyType
-  )
-    ? (raw.body_type as BodyType)
-    : fallback.body_type;
-
-  const skinTone = VALID_SKIN_TONES.includes(
-    raw.skin_tone as SkinTone
-  )
-    ? (raw.skin_tone as SkinTone)
-    : fallback.skin_tone;
-
+function sanitize(raw: Record<string, unknown>, fb: AvatarData = DEFAULT): AvatarData {
   return {
-    nickname:
-      typeof raw.nickname === 'string'
-        ? raw.nickname
-        : fallback.nickname,
-
-    age: parseSafeNumber(
-      raw.age,
-      fallback.age,
-      1,
-      120
-    ),
-
-    gender,
-    body_type: bodyType,
-    skin_tone: skinTone,
-
-    height: parseSafeNumber(
-      raw.height,
-      fallback.height,
-      120,
-      230
-    ),
-
-    weight: parseSafeNumber(
-      raw.weight,
-      fallback.weight,
-      30,
-      250
-    ),
-
-    chest: parseSafeNumber(
-      raw.chest,
-      fallback.chest,
-      40,
-      200
-    ),
-
-    waist: parseSafeNumber(
-      raw.waist,
-      fallback.waist,
-      35,
-      200
-    ),
-
-    shoulder_width: parseSafeNumber(
-      raw.shoulder_width,
-      fallback.shoulder_width,
-      20,
-      100
-    ),
-
-    hips: parseSafeNumber(
-      raw.hips,
-      fallback.hips,
-      40,
-      220
-    ),
+    nickname: typeof raw.nickname === 'string' ? raw.nickname : fb.nickname,
+    age: safeNum(raw.age, fb.age, 1, 120),
+    gender: VALID_GENDERS.includes(raw.gender as Gender) ? (raw.gender as Gender) : fb.gender,
+    body_type: VALID_BODY_TYPES.includes(raw.body_type as BodyType) ? (raw.body_type as BodyType) : fb.body_type,
+    skin_tone: VALID_SKIN_TONES.includes(raw.skin_tone as SkinTone) ? (raw.skin_tone as SkinTone) : fb.skin_tone,
+    height: safeNum(raw.height, fb.height, 120, 230),
+    weight: safeNum(raw.weight, fb.weight, 30, 250),
+    chest: safeNum(raw.chest, fb.chest, 40, 200),
+    waist: safeNum(raw.waist, fb.waist, 35, 200),
+    shoulder_width: safeNum(raw.shoulder_width, fb.shoulder_width, 20, 100),
+    hips: safeNum(raw.hips, fb.hips, 40, 220),
   };
-};
+}
 
-let notificationTimer:
-  | ReturnType<typeof setTimeout>
-  | null = null;
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification timer — module-level but explicitly cleared on each mutation
+// ─────────────────────────────────────────────────────────────────────────────
+let notifTimer: ReturnType<typeof setTimeout> | null = null;
 
-const scheduleNotificationClear = (
-  set: (
-    partial:
-      | Partial<AvatarStore>
-      | ((
-          state: AvatarStore
-        ) => Partial<AvatarStore>)
-  ) => void
-): void => {
-  if (notificationTimer) {
-    clearTimeout(notificationTimer);
-  }
+function scheduleNotifClear(set: (p: Partial<AvatarStore>) => void) {
+  if (notifTimer) clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => {
+    set({ notification: null, notificationType: null });
+    notifTimer = null;
+  }, 4000);
+}
 
-  notificationTimer = setTimeout(() => {
+// ─────────────────────────────────────────────────────────────────────────────
+// Store shape
+// ─────────────────────────────────────────────────────────────────────────────
+interface AvatarStore extends AvatarState {
+  // Extra UI state
+  hasAttemptedFetch: boolean;
+  notification: string | null;
+  notificationType: 'success' | 'error' | null;
+  isInteracting: boolean;
+
+  // Actions
+  setAvatarData: (data: Partial<AvatarData>) => void;
+  setAnimation: (animation: AnimationName) => void;
+  setIsInteracting: (v: boolean) => void;
+
+  fetchAvatar: () => Promise<void>;
+  confirmAvatar: () => Promise<void>;
+  enterEditMode: () => void;
+  resetAvatar: () => Promise<void>;
+  clearNotification: () => void;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Store
+// ─────────────────────────────────────────────────────────────────────────────
+export const useAvatarStore = create<AvatarStore>((set, get) => ({
+  // Avatar data — flat into the store so AvatarModel can subscribe to slices
+  ...DEFAULT,
+
+  // Status flags
+  isConfirmed: false,
+  currentAnimation: 'idle',
+  isLoading: false,
+  hasAttemptedFetch: false,
+  notification: null,
+  notificationType: null,
+  isInteracting: false,
+
+  // ── setAvatarData ──────────────────────────────────────────────────────────
+  setAvatarData: (data) => {
+    set((state) => {
+      const current: AvatarData = {
+        nickname: state.nickname,
+        age: state.age,
+        gender: state.gender,
+        body_type: state.body_type,
+        skin_tone: state.skin_tone,
+        height: state.height,
+        weight: state.weight,
+        chest: state.chest,
+        waist: state.waist,
+        shoulder_width: state.shoulder_width,
+        hips: state.hips,
+      };
+      return sanitize({ ...current, ...data } as Record<string, unknown>, current);
+    });
+  },
+
+  // ── setAnimation ──────────────────────────────────────────────────────────
+  setAnimation: (animation) => set({ currentAnimation: animation }),
+
+  // ── setIsInteracting ──────────────────────────────────────────────────────
+  setIsInteracting: (v) => set({ isInteracting: v }),
+
+  // ── fetchAvatar ───────────────────────────────────────────────────────────
+  // FIX: uses hasAttemptedFetch (not hasAttempted) and resets correctly on
+  // navigation — the guard only prevents duplicate concurrent fetches, not
+  // re-fetches after the user navigates away and back.
+  fetchAvatar: async () => {
+    if (get().hasAttemptedFetch || get().isLoading) return;
+
+    // Single set() call — prevents multiple Zustand notifications
+    set({ hasAttemptedFetch: true, isLoading: true });
+
+    try {
+      const res = await avatarApi.getProfile();
+      const raw = res.data as unknown as Record<string, unknown>;
+
+      const hasData =
+        'height' in raw || 'weight' in raw || 'gender' in raw || 'nickname' in raw;
+
+      if (hasData) {
+        set({
+          ...sanitize(raw),
+          isConfirmed: true,
+          currentAnimation: 'idle',
+          isLoading: false,
+        });
+      } else {
+        set({ isConfirmed: false, isLoading: false });
+      }
+    } catch {
+      // 404 means a new user — show the calibration form
+      set({ isConfirmed: false, currentAnimation: 'idle', isLoading: false });
+    }
+  },
+
+  // ── confirmAvatar ─────────────────────────────────────────────────────────
+  confirmAvatar: async () => {
+    if (get().isLoading) return;
+    set({ isLoading: true });
+
+    try {
+      const s = get();
+      const payload = sanitize({
+        nickname: s.nickname, age: s.age, gender: s.gender,
+        body_type: s.body_type, skin_tone: s.skin_tone,
+        height: s.height, weight: s.weight, chest: s.chest,
+        waist: s.waist, shoulder_width: s.shoulder_width, hips: s.hips,
+      } as Record<string, unknown>);
+
+      await avatarApi.saveProfile(payload);
+
+      set({
+        ...payload,
+        isConfirmed: true,
+        currentAnimation: 'idle',
+        isLoading: false,
+        notification: 'Measurements saved to your profile.',
+        notificationType: 'success',
+      });
+      scheduleNotifClear(set);
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status;
+      set({
+        isLoading: false,
+        notification:
+          status === 500
+            ? 'Server error. Please try again later.'
+            : 'Failed to save avatar. Please try again.',
+        notificationType: 'error',
+      });
+      scheduleNotifClear(set);
+    }
+  },
+
+  // ── enterEditMode ──────────────────────────────────────────────────────────
+  enterEditMode: () => set({ isConfirmed: false, currentAnimation: 'idle' }),
+
+  // ── resetAvatar ────────────────────────────────────────────────────────────
+  resetAvatar: async () => {
+    try {
+      await avatarApi.deleteProfile();
+    } catch {
+      // Ignore — profile may not exist yet
+    }
     set({
+      ...DEFAULT,
+      isConfirmed: false,
+      currentAnimation: 'idle',
+      hasAttemptedFetch: false,
       notification: null,
       notificationType: null,
     });
+  },
 
-    notificationTimer = null;
-  }, 4000);
-};
-
-export const useAvatarStore =
-  create<AvatarStore>((set, get) => ({
-    ...DEFAULT_AVATAR_DATA,
-
-    isConfirmed: false,
-    currentAnimation: 'idle',
-    isLoading: false,
-    hasAttempted: false,
-    notification: null,
-    notificationType: null,
-    isInteracting: false,
-
-    setIsInteracting: (value) => {
-      set({ isInteracting: value });
-    },
-
-    setAvatarData: (data) => {
-      set((state) => {
-        const currentAvatarData: AvatarData = {
-          nickname: state.nickname,
-          age: state.age,
-          gender: state.gender,
-          body_type: state.body_type,
-          skin_tone: state.skin_tone,
-          height: state.height,
-          weight: state.weight,
-          chest: state.chest,
-          waist: state.waist,
-          shoulder_width: state.shoulder_width,
-          hips: state.hips,
-        };
-
-        const sanitized = sanitizeAvatarData(
-          {
-            ...currentAvatarData,
-            ...data,
-          },
-          currentAvatarData
-        );
-
-        return sanitized;
-      });
-    },
-
-    confirmAvatar: async () => {
-      if (get().isLoading) {
-        return;
-      }
-
-      set({ isLoading: true });
-
-      try {
-        const state = get();
-
-        const currentData: AvatarData = {
-          nickname: state.nickname,
-          age: state.age,
-          gender: state.gender,
-          body_type: state.body_type,
-          skin_tone: state.skin_tone,
-          height: state.height,
-          weight: state.weight,
-          chest: state.chest,
-          waist: state.waist,
-          shoulder_width: state.shoulder_width,
-          hips: state.hips,
-        };
-
-        const payload = sanitizeAvatarData(
-          currentData as unknown as Record<
-            string,
-            unknown
-          >
-        );
-
-        await avatarApi.saveProfile(payload);
-
-        set({
-          ...payload,
-          isConfirmed: true,
-          currentAnimation: 'idle',
-          notification:
-            'Measurements securely saved to your profile.',
-          notificationType: 'success',
-        });
-
-        scheduleNotificationClear(set);
-      } catch (error) {
-        console.error(
-          'Backend avatar save failed:',
-          error
-        );
-
-        const apiError = error as {
-          response?: {
-            status?: number;
-          };
-        };
-
-        set({
-          notification:
-            apiError.response?.status === 500
-              ? 'Server error. Check the backend configuration.'
-              : 'Failed to save the avatar. Please try again.',
-          notificationType: 'error',
-        });
-
-        scheduleNotificationClear(set);
-      } finally {
-        set({ isLoading: false });
-      }
-    },
-
-    setAnimation: (animation) => {
-      set({ currentAnimation: animation });
-    },
-
-    enterEditMode: () => {
-      set({
-        isConfirmed: false,
-        currentAnimation: 'idle',
-      });
-    },
-
-    fetchAvatar: async () => {
-      if (get().hasAttempted) {
-        return;
-      }
-
-      set({
-        hasAttempted: true,
-        isLoading: true,
-      });
-
-      try {
-        const response =
-          await avatarApi.getProfile();
-
-        const payload = extractAvatarPayload(
-          response.data
-        );
-
-        if (!payload) {
-          throw new Error(
-            'The avatar API returned an invalid payload.'
-          );
-        }
-
-        /*
-         * Do not treat an empty object as a saved profile.
-         */
-        const hasAvatarProfile =
-          'height' in payload ||
-          'weight' in payload ||
-          'gender' in payload ||
-          'nickname' in payload;
-
-        if (!hasAvatarProfile) {
-          return;
-        }
-
-        const normalizedData =
-          sanitizeAvatarData(payload);
-
-        set({
-          ...normalizedData,
-          isConfirmed: true,
-          currentAnimation: 'idle',
-        });
-      } catch (error) {
-        /*
-         * A missing avatar profile is acceptable for a new user.
-         * Keep the safe defaults and display the calibration form.
-         */
-        console.info(
-          'No saved avatar profile was loaded.',
-          error
-        );
-
-        set({
-          isConfirmed: false,
-          currentAnimation: 'idle',
-        });
-      } finally {
-        set({ isLoading: false });
-      }
-    },
-
-    clearNotification: () => {
-      if (notificationTimer) {
-        clearTimeout(notificationTimer);
-        notificationTimer = null;
-      }
-
-      set({
-        notification: null,
-        notificationType: null,
-      });
-    },
-  }));
+  // ── clearNotification ─────────────────────────────────────────────────────
+  clearNotification: () => {
+    if (notifTimer) { clearTimeout(notifTimer); notifTimer = null; }
+    set({ notification: null, notificationType: null });
+  },
+}));

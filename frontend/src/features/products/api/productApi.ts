@@ -8,9 +8,18 @@ import {
 } from '../types';
 
 export const productApi = {
+
+
+  
+
   // GET /api/products/
-  getProducts: async (): Promise<Product[]> => {
-    const response = await apiClient.get<Product[]>('/products/');
+  getProducts: async (categories?: string): Promise<Product[]> => {
+    const params = new URLSearchParams();
+    if (categories) {
+      params.append('categories', categories);
+    }
+    
+    const response = await apiClient.get<Product[]>(`/products/?${params.toString()}`);
     return response.data;
   },
 

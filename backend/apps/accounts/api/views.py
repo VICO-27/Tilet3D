@@ -227,17 +227,36 @@ class VerifyOTPView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         user = serializer.validated_data["user"]
         otp = serializer.validated_data["otp"]
         purpose = serializer.validated_data["purpose"]
-        
+
+        otp.is_used = True
+        otp.save()
+
         if purpose == OTPPurpose.EMAIL_VERIFY:
             user.is_verified = True
             user.save()
-            otp.is_used = True
-            otp.save()
-            
+
+            # BUG FIX: Return fresh JWT tokens so the user stays authenticated
+            # after email verification. Previously returned no tokens, causing
+            # every subsequent API call (including avatar fetch) to 401.
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "message": "Email verified successfully.",
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "is_verified": True,
+                },
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            }, status=status.HTTP_200_OK)
+
+        # For password_reset purpose — no tokens needed
         return Response({"message": "OTP verified."}, status=status.HTTP_200_OK)
 
 

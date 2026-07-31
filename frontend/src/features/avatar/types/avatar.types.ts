@@ -1,6 +1,17 @@
 export type Gender = 'male' | 'female';
-export type BodyType = 'slim' | 'athletic' | 'average' | 'plus' | 'inverted_triangle' | 'pear' | 'rectangle';
+
+export type BodyType =
+  | 'slim'
+  | 'athletic'
+  | 'average'
+  | 'plus'
+  | 'inverted_triangle'
+  | 'pear'
+  | 'rectangle';
+
 export type SkinTone = 'fair' | 'light' | 'medium' | 'tan' | 'rich' | 'deep';
+
+export type AnimationName = 'idle' | 'walk' | 'spin';
 
 export interface AvatarData {
   nickname: string;
@@ -18,6 +29,6 @@ export interface AvatarData {
 
 export interface AvatarState extends AvatarData {
   isConfirmed: boolean;
-  currentAnimation: 'idle' | 'walk' | 'spin';
+  currentAnimation: AnimationName;
   isLoading: boolean;
 }

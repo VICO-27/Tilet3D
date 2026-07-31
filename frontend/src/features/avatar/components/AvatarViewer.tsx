@@ -1,79 +1,123 @@
-import React, { useRef, useState, useEffect, Suspense } from 'react';
+import React, { Suspense, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Environment, Preload } from '@react-three/drei';
+import {
+  OrbitControls,
+  ContactShadows,
+  Environment,
+  Preload,
+} from '@react-three/drei';
 import * as THREE from 'three';
+import { CheckCircle2, AlertCircle, Ruler, Activity } from 'lucide-react';
+
+
 import { AvatarModel } from './AvatarModel';
 import { AvatarControls } from './AvatarControls';
 import { useAvatarStore } from '../store/useAvatarStore';
-import { CheckCircle2, AlertCircle, Ruler, Activity } from 'lucide-react';
 
-const NotificationToast = () => {
-  const { notification, notificationType } = useAvatarStore();
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification toast
+// ─────────────────────────────────────────────────────────────────────────────
+function NotificationToast() {
+  const notification = useAvatarStore((s) => s.notification);
+  const notificationType = useAvatarStore((s) => s.notificationType);
+
   return (
-    <div className={`absolute top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out ${notification ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'}`}>
-      <div className={`flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl text-white ${notificationType === 'error' ? 'bg-red-900' : 'bg-stone-900'}`}>
-        {notificationType === 'error' ? <AlertCircle className="w-5 h-5 text-red-400" /> : <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-        <span className="text-sm font-medium tracking-wide">{notification}</span>
+    <div
+      className={`absolute top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out pointer-events-none ${
+        notification ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'
+      }`}
+    >
+      <div
+        className={`flex items-center gap-3 px-5 py-3 rounded-full shadow-2xl text-white text-sm font-medium tracking-wide ${
+          notificationType === 'error' ? 'bg-red-900' : 'bg-stone-900'
+        }`}
+      >
+        {notificationType === 'error' ? (
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        ) : (
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        )}
+        {notification}
       </div>
     </div>
   );
-};
+}
 
-const LeftHUD = () => {
-  const { isConfirmed, height, weight, body_type } = useAvatarStore();
+// ─────────────────────────────────────────────────────────────────────────────
+// Left HUD (biometrics)
+// ─────────────────────────────────────────────────────────────────────────────
+function LeftHUD() {
+  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
+  const height = useAvatarStore((s) => s.height);
+  const weight = useAvatarStore((s) => s.weight);
+  const body_type = useAvatarStore((s) => s.body_type);
+
   return (
-    <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 left-8 transition-all duration-1000 delay-300 ${isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12 pointer-events-none'}`}>
+    <div
+      className={`hidden md:block absolute top-1/2 -translate-y-1/2 left-8 transition-all duration-1000 delay-300 ${
+        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12 pointer-events-none'
+      }`}
+    >
       <div className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-xl w-56">
         <div className="flex items-center gap-2 mb-6">
-          <Activity className="w-4 h-4 text-plum-600" />
-          <h3 className="text-xs font-bold tracking-widest text-ink uppercase">Biometrics</h3>
+          <Activity className="w-4 h-4 text-[#a21caf]" />
+          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
         </div>
         <div className="space-y-4">
           <div>
-            <p className="text-[10px] text-ink/50 uppercase font-bold tracking-wider">Height</p>
-            <p className="text-xl font-light text-ink">{height} <span className="text-sm">cm</span></p>
+            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Height</p>
+            <p className="text-xl font-light text-[#161616]">{height} <span className="text-sm">cm</span></p>
           </div>
           <div className="w-full h-px bg-stone-200" />
           <div>
-            <p className="text-[10px] text-ink/50 uppercase font-bold tracking-wider">Weight</p>
-            <p className="text-xl font-light text-ink">{weight} <span className="text-sm">kg</span></p>
+            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Weight</p>
+            <p className="text-xl font-light text-[#161616]">{weight} <span className="text-sm">kg</span></p>
           </div>
           <div className="w-full h-px bg-stone-200" />
           <div>
-            <p className="text-[10px] text-ink/50 uppercase font-bold tracking-wider">Structure</p>
-            <p className="text-lg font-light text-ink capitalize">{body_type.replace('_', ' ')}</p>
+            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Structure</p>
+            <p className="text-lg font-light text-[#161616] capitalize">{body_type.replace('_', ' ')}</p>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-const RightHUD = () => {
-  const { isConfirmed, chest, waist, hips } = useAvatarStore();
+// ─────────────────────────────────────────────────────────────────────────────
+// Right HUD (tailoring measurements)
+// ─────────────────────────────────────────────────────────────────────────────
+function RightHUD() {
+  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
+  const chest = useAvatarStore((s) => s.chest);
+  const waist = useAvatarStore((s) => s.waist);
+  const hips = useAvatarStore((s) => s.hips);
+
   return (
-    <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 right-8 transition-all duration-1000 delay-300 ${isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}>
+    <div
+      className={`hidden md:block absolute top-1/2 -translate-y-1/2 right-8 transition-all duration-1000 delay-300 ${
+        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'
+      }`}
+    >
       <div className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-xl w-56">
         <div className="flex items-center gap-2 mb-6">
-          <Ruler className="w-4 h-4 text-plum-600" />
-          <h3 className="text-xs font-bold tracking-widest text-ink uppercase">Calibration</h3>
+          <Ruler className="w-4 h-4 text-[#a21caf]" />
+          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>
         </div>
-        <div className="space-y-4">
-          <div className="flex justify-between items-end">
-            <p className="text-xs text-ink/60 uppercase font-bold tracking-wider">Chest</p>
-            <p className="text-lg font-light text-ink">{chest}cm</p>
-          </div>
-          <div className="flex justify-between items-end">
-            <p className="text-xs text-ink/60 uppercase font-bold tracking-wider">Waist</p>
-            <p className="text-lg font-light text-ink">{waist}cm</p>
-          </div>
-          <div className="flex justify-between items-end">
-            <p className="text-xs text-ink/60 uppercase font-bold tracking-wider">Hips</p>
-            <p className="text-lg font-light text-ink">{hips}cm</p>
-          </div>
-          <div className="pt-4 mt-4 border-t border-stone-200">
+        <div className="space-y-3">
+          {[
+            { label: 'Chest', value: chest },
+            { label: 'Waist', value: waist },
+            { label: 'Hips', value: hips },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex justify-between items-end">
+              <p className="text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
+              <p className="text-lg font-light text-[#161616]">{value}cm</p>
+            </div>
+          ))}
+          <div className="pt-4 mt-2 border-t border-stone-200">
             <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="text-[10px] font-bold tracking-wider uppercase">Couture Match</span>
             </div>
           </div>
@@ -81,58 +125,56 @@ const RightHUD = () => {
       </div>
     </div>
   );
-};
+}
 
-const BottomControls = () => {
-  const isConfirmed = useAvatarStore(state => state.isConfirmed);
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom controls bar
+// ─────────────────────────────────────────────────────────────────────────────
+function BottomControls() {
+  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
   return (
-    <div className={`absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 transition-all duration-700 delay-300 w-[90%] md:w-auto flex justify-center ${isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+    <div
+      className={`absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 transition-all duration-700 delay-500 ${
+        isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
+      }`}
+    >
       <AvatarControls />
     </div>
   );
-};
+}
 
-const StudioSkeleton = () => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  useFrame((state, delta) => {
-    if (meshRef.current) meshRef.current.rotation.y += delta * 2;
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading spinner shown inside Canvas while the GLB loads
+// ─────────────────────────────────────────────────────────────────────────────
+function StudioSkeleton() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((_, dt) => {
+    if (ref.current) ref.current.rotation.y += dt * 2;
   });
   return (
-    <mesh ref={meshRef} position={[0, 0.8, 0]}>
+    <mesh ref={ref} position={[0, 0.9, 0]}>
       <torusGeometry args={[0.4, 0.02, 16, 100]} />
       <meshStandardMaterial color="#a21caf" emissive="#a21caf" emissiveIntensity={0.5} wireframe />
     </mesh>
   );
-};
+}
 
-const StudioScene = () => {
-  const isConfirmed = useAvatarStore((state) => state.isConfirmed);
-  const groupRef = useRef<THREE.Group>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      const targetX = isConfirmed || isMobile ? 0 : -1.2;
-      
-      // FIXED: damp is mathematically safe. It will never shoot the avatar off-screen.
-      groupRef.current.position.x = THREE.MathUtils.damp(groupRef.current.position.x, targetX, 5, delta);
-    }
-  });
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Studio pedestal + avatar — always centred at x=0.
+// The calibration form is a CSS overlay; it never moves the 3D scene.
+// Translating the group to x=-1.2 caused everything to slide outside the
+// narrow 32° FOV frustum (±1.29 units wide) → Three.js culled it all.
+// ─────────────────────────────────────────────────────────────────────────────
+function StudioScene() {
   return (
-    <group ref={groupRef}>
+    <group>
+      {/* Premium platform */}
       <group position={[0, -0.01, 0]}>
         <mesh receiveShadow castShadow>
           <cylinderGeometry args={[1.4, 1.5, 0.04, 64]} />
           <meshStandardMaterial color="#ffffff" roughness={0.05} metalness={0.1} />
         </mesh>
-        <mesh position={[0, -0.02, 0]} receiveShadow>
+        <mesh position={[0, -0.025, 0]} receiveShadow>
           <cylinderGeometry args={[1.55, 1.55, 0.01, 64]} />
           <meshStandardMaterial color="#e5e5ea" roughness={0.4} metalness={0.5} />
         </mesh>
@@ -141,42 +183,74 @@ const StudioScene = () => {
       <Suspense fallback={<StudioSkeleton />}>
         <AvatarModel />
       </Suspense>
-      
-      <ContactShadows position={[0, 0, 0]} opacity={0.65} scale={8} blur={2.5} far={2} resolution={1024} color="#000000" />
+
+      <ContactShadows
+        position={[0, 0, 0]}
+        opacity={0.6}
+        scale={8}
+        blur={2.5}
+        far={2}
+        resolution={512}
+        color="#000000"
+      />
     </group>
   );
-};
+}
 
-export const AvatarViewer = () => {
-  const setIsInteracting = useAvatarStore(state => state.setIsInteracting);
+// ─────────────────────────────────────────────────────────────────────────────
+// AvatarViewer — the full-screen 3D studio
+// ─────────────────────────────────────────────────────────────────────────────
+export function AvatarViewer() {
+  const setIsInteracting = useAvatarStore((s) => s.setIsInteracting);
 
   return (
     <div className="relative h-full w-full bg-gradient-to-b from-[#f8f8f9] to-[#e8e8ed]">
-      
+
       <NotificationToast />
 
-      <Canvas 
-        shadows 
-        camera={{ position: [0, 3.5, 4.5], fov: 32 }} 
+      {/*
+        FIX: This is the ONLY Canvas in the avatar route.
+        HeroModel (home page) has its own Canvas that is unmounted when
+        we navigate here via React Router — no concurrent renderers.
+      */}
+      <Canvas
+        id="avatar-canvas"
+        shadows
+        camera={{ position: [0, 3.5, 4.5], fov: 40 }}
         className="w-full h-full outline-none"
+        gl={{ powerPreference: 'high-performance', antialias: true }}
+        dpr={[1, 1.5]}
         onPointerDown={() => setIsInteracting(true)}
         onPointerUp={() => setIsInteracting(false)}
         onPointerLeave={() => setIsInteracting(false)}
       >
         <Environment preset="city" />
         <ambientLight intensity={0.6} color="#ffffff" />
-        <spotLight position={[3, 7, 4]} angle={0.5} penumbra={1} intensity={2.5} castShadow shadow-bias={-0.0001} color="#ffffff" />
-        <spotLight position={[-5, 5, -5]} angle={0.5} penumbra={1} intensity={1.5} color="#e0e7ff" />
-        
+        <spotLight
+          position={[3, 7, 4]}
+          angle={0.5}
+          penumbra={1}
+          intensity={2.5}
+          castShadow
+          shadow-bias={-0.0001}
+          color="#ffffff"
+        />
+        <spotLight
+          position={[-5, 5, -5]}
+          angle={0.5}
+          penumbra={1}
+          intensity={1.5}
+          color="#e0e7ff"
+        />
+
         <StudioScene />
 
-        <OrbitControls 
-          enablePan={false} 
-          minDistance={2.5} 
-          maxDistance={7} 
-          target={[0, 0.9, 0]} 
-          maxPolarAngle={Math.PI / 2} 
-          autoRotate={false}           
+        <OrbitControls
+          enablePan={false}
+          minDistance={2.5}
+          maxDistance={7}
+          target={[0, 0.9, 0]}
+          maxPolarAngle={Math.PI / 2}
           makeDefault
         />
         <Preload all />
@@ -185,7 +259,6 @@ export const AvatarViewer = () => {
       <LeftHUD />
       <RightHUD />
       <BottomControls />
-      
     </div>
   );
-};
+}

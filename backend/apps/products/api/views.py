@@ -49,19 +49,30 @@ class ProductCommentsListView(generics.ListAPIView):
 # ==========================================================
 # PRODUCT LIST
 # ==========================================================
+# backend/apps/products/api/views.py
 class ProductListAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return Product.objects.filter(
+        queryset = Product.objects.filter(
             is_active=True
+        ).select_related(
+            "category",  # FIX: category_name reads category.name — without this,
+                         # Django fires one extra query per product to fetch it (N+1).
         ).prefetch_related(
             "media",
             "variants",
             "likes",
             "comments",
         )
+
+        categories_param = self.request.query_params.get("categories", None)
+        if categories_param:
+            category_list = [cat.strip() for cat in categories_param.split(",")]
+            queryset = queryset.filter(category__name__in=category_list)
+
+        return queryset
 
     def get_serializer_context(self):
         return {"request": self.request}

@@ -2,12 +2,14 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class AvatarProfile(models.Model):
+
     GENDER_CHOICES = (
         ('male', 'Male'),
         ('female', 'Female'),
     )
-    
+
     BODY_TYPE_CHOICES = (
         ('slim', 'Slim'),
         ('athletic', 'Athletic'),
@@ -17,7 +19,7 @@ class AvatarProfile(models.Model):
         ('pear', 'Pear'),
         ('rectangle', 'Rectangle'),
     )
-    
+
     SKIN_TONE_CHOICES = (
         ('fair', 'Fair'),
         ('light', 'Light'),
@@ -27,42 +29,71 @@ class AvatarProfile(models.Model):
         ('deep', 'Deep'),
     )
 
-    # Link to the main auth user
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='avatar_profile'
-    )
-    
-    # Basic Info
-    nickname = models.CharField(max_length=50, blank=True)
-    age = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(120)], default=25)
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
-    
-    # Visuals
-    body_type = models.CharField(max_length=20, choices=BODY_TYPE_CHOICES, default='average')
-    skin_tone = models.CharField(max_length=15, choices=SKIN_TONE_CHOICES, default='medium')
-    
-    # Biometrics (Units in CM and KG)
-    height = models.FloatField(
-        help_text="Height in cm", 
-        validators=[MinValueValidator(50), MaxValueValidator(250)], 
-        default=170.0
-    )
-    weight = models.FloatField(
-        help_text="Weight in kg", 
-        validators=[MinValueValidator(20), MaxValueValidator(300)], 
-        default=70.0
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='avatar_profile',
     )
 
-    # Detailed Measurements for Perfect Fit
-    chest = models.FloatField(help_text="Chest circumference in cm", default=90.0)
-    waist = models.FloatField(help_text="Waist circumference in cm", default=80.0)
-    shoulder_width = models.FloatField(help_text="Shoulder to shoulder width in cm", default=45.0)
-    hips = models.FloatField(help_text="Hips circumference in cm", default=95.0, blank=True, null=True)
+    # Identity
+    nickname = models.CharField(max_length=50, blank=True, default='')
+    age = models.PositiveIntegerField(
+        default=25,
+        validators=[MinValueValidator(1), MaxValueValidator(120)],
+    )
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
+
+    # Visual
+    body_type = models.CharField(max_length=20, choices=BODY_TYPE_CHOICES, default='average')
+    skin_tone = models.CharField(max_length=15, choices=SKIN_TONE_CHOICES, default='medium')
+
+    # Biometrics (cm / kg)
+    height = models.FloatField(
+        help_text='Height in cm',
+        default=170.0,
+        validators=[MinValueValidator(50), MaxValueValidator(250)],
+    )
+    weight = models.FloatField(
+        help_text='Weight in kg',
+        default=70.0,
+        validators=[MinValueValidator(20), MaxValueValidator(300)],
+    )
+
+    # Tailoring measurements (cm)
+    chest = models.FloatField(help_text='Chest circumference in cm', default=90.0)
+    waist = models.FloatField(help_text='Waist circumference in cm', default=80.0)
+    shoulder_width = models.FloatField(help_text='Shoulder-to-shoulder width in cm', default=45.0)
+    # FIX: was nullable — made required with a sensible default
+    hips = models.FloatField(help_text='Hips circumference in cm', default=95.0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = 'Avatar Profile'
+        verbose_name_plural = 'Avatar Profiles'
+
     def __str__(self):
-        return f"{self.nickname or self.user.username}'s Avatar ({self.gender})"
+        # BUG FIX: original used self.user.username — User model only has .email
+        label = self.nickname or self.user.email
+        return f"{label}'s Avatar ({self.gender})"
+
+    def as_measurement_snapshot(self) -> dict:
+        """
+        Returns a frozen plain-dict snapshot of the avatar measurements.
+        Called by checkout service so orders permanently record the buyer's
+        exact body dimensions at the time of purchase — even if they later
+        edit the avatar.
+        """
+        return {
+            'nickname': self.nickname,
+            'gender': self.gender,
+            'body_type': self.body_type,
+            'skin_tone': self.skin_tone,
+            'height_cm': self.height,
+            'weight_kg': self.weight,
+            'chest_cm': self.chest,
+            'waist_cm': self.waist,
+            'shoulder_width_cm': self.shoulder_width,
+            'hips_cm': self.hips,
+        }

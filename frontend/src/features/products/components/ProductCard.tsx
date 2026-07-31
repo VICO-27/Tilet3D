@@ -4,6 +4,7 @@ import EngagementBar from './EngagementBar';
 import { useEngagementStore } from '@/app/store/useEngagementStore';
 import { useCartStore } from '@/app/store/useCartStore';
 import { ShoppingBag, Check } from 'lucide-react';
+import PremiumPlanModal from './PremiumPlanModal'; // <-- Import the new modal
 
 interface ProductMedia {
   id: string;
@@ -35,13 +36,16 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
+  
+  // <-- State to control the Premium Modal
+  const [showPremium, setShowPremium] = useState(false); 
+  
   const [localCommentCount, setLocalCommentCount] = useState(product.comment_count);
   const navigate = useNavigate();
 
   useEngagementStore();
   const { addToCart, isAdded } = useCartStore();
 
-  // Safeguard: Check variants or fallback to product id if variants are structured differently
   const variantId = product.variants?.[0]?.id || product.id;
   const alreadyAdded = variantId ? isAdded(variantId) : false;
 
@@ -65,107 +69,121 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
     }
   };
 
+  const handleTryOnAvatar = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Stop the card from navigating to /products/:id
+    setShowPremium(true); // Open the premium plan modal instead
+  };
+
   return (
-    <div
-      className={`relative h-[550px] overflow-hidden group transition-all duration-700 cursor-pointer ${isWide ? 'col-span-2' : 'col-span-1'}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setShowCommentInput(false);
-      }}
-      onClick={() => navigate(`/products/${product.id}`)}
-    >
-      {/* Media Layer */}
-      <div className="absolute inset-0 w-full h-full">
-        {activeMedia?.media_type === 'video' ? (
-          <video src={activeMedia.file} autoPlay muted loop className="w-full h-full object-cover" />
-        ) : (
-          <img
-            src={activeMedia?.file}
-            alt={product.name}
-            loading={index < 5 ? 'eager' : 'lazy'}
-            fetchPriority={index < 5 ? 'high' : 'auto'}
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          />
-        )}
-      </div>
-
-      {/* Shadow Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-10" />
-
-      {/* Engagement Sidebar Wrapper */}
+    <>
       <div
-        className="absolute right-4 bottom-32 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ease-out z-30"
-        onClick={e => e.stopPropagation()}
+        className={`relative h-[550px] overflow-hidden group transition-all duration-700 cursor-pointer ${isWide ? 'col-span-2' : 'col-span-1'}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setShowCommentInput(false);
+        }}
+        onClick={() => navigate(`/products/${product.id}`)}
       >
-        <EngagementBar
-          product={{ ...product, comment_count: localCommentCount }}
-          onOpenComment={() => setShowCommentInput(!showCommentInput)}
-        />
-      </div>
-
-      {/* Combined Lower Control Interface */}
-      <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
-
-        {/* Action Buttons Row */}
-        <div className="grid grid-cols-2 gap-2 w-full">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate('/avatar'); }}
-            className="py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
-          >
-            Try-on Avatar
-          </button>
-
-          <button
-            onClick={handleAddToCart}
-            className={`py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl transition-colors duration-300 flex items-center justify-center gap-1.5 ${
-              alreadyAdded 
-                ? 'bg-emerald-600 text-white' 
-                : 'bg-black/80 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black'
-            }`}
-          >
-            {alreadyAdded ? (
-              <>
-                <Check className="h-3.5 w-3.5" /> Added
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="h-3.5 w-3.5" /> Add to Bag
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Identity & Price (Left Aligned) */}
-        <div className="text-white pl-1">
-          <h3 className="text-lg font-serif leading-tight drop-shadow-md">
-            {product.name}
-          </h3>
-          <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
-            {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : 'Bespoke Order'}
-          </p>
-        </div>
-
-        {/* Luxury Micro-Input Comment Tray */}
-        {showCommentInput && (
-          <div
-            className="w-full animate-fade-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <CommentInputTray
-              productId={product.id}
-              onComplete={() => setShowCommentInput(false)}
-              onPosted={() => setLocalCommentCount((c) => c + 1)}
+        {/* Media Layer */}
+        <div className="absolute inset-0 w-full h-full">
+          {activeMedia?.media_type === 'video' ? (
+            <video src={activeMedia.file} autoPlay muted loop className="w-full h-full object-cover" />
+          ) : (
+            <img
+              src={activeMedia?.file}
+              alt={product.name}
+              loading={index < 5 ? 'eager' : 'lazy'}
+              fetchPriority={index < 5 ? 'high' : 'auto'}
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
-          </div>
-        )}
+          )}
+        </div>
 
+        {/* Shadow Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-10" />
+
+        {/* Engagement Sidebar Wrapper */}
+        <div
+          className="absolute right-4 bottom-32 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ease-out z-30"
+          onClick={e => e.stopPropagation()}
+        >
+          <EngagementBar
+            product={{ ...product, comment_count: localCommentCount }}
+            onOpenComment={() => setShowCommentInput(!showCommentInput)}
+          />
+        </div>
+
+        {/* Combined Lower Control Interface */}
+        <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
+
+          {/* Action Buttons Row */}
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <button
+              onClick={handleTryOnAvatar} // <-- Uses the interceptor function
+              className="py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
+            >
+              Try-on Avatar
+            </button>
+
+            <button
+              onClick={handleAddToCart}
+              className={`py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl transition-colors duration-300 flex items-center justify-center gap-1.5 ${
+                alreadyAdded 
+                  ? 'bg-emerald-600 text-white' 
+                  : 'bg-black/80 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black'
+              }`}
+            >
+              {alreadyAdded ? (
+                <>
+                  <Check className="h-3.5 w-3.5" /> Added
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5" /> Add to Bag
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Identity & Price (Left Aligned) */}
+          <div className="text-white pl-1">
+            <h3 className="text-lg font-serif leading-tight drop-shadow-md">
+              {product.name}
+            </h3>
+            <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
+              {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : 'Bespoke Order'}
+            </p>
+          </div>
+
+          {/* Luxury Micro-Input Comment Tray */}
+          {showCommentInput && (
+            <div
+              className="w-full animate-fade-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CommentInputTray
+                productId={product.id}
+                onComplete={() => setShowCommentInput(false)}
+                onPosted={() => setLocalCommentCount((c) => c + 1)}
+              />
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
+
+      {/* Render the modal OUTSIDE the main relative container so it covers the whole screen */}
+      <PremiumPlanModal 
+        isOpen={showPremium} 
+        onClose={() => setShowPremium(false)} 
+        productName={product.name}
+      />
+    </>
   );
 };
 
-/* Mini Helper Component for a Premium Minimalist Input Feeling */
+/* Mini Helper Component */
 const CommentInputTray: React.FC<{
   productId: string;
   onComplete: () => void;

@@ -11,11 +11,13 @@ import "./i18n"; // Add this line!
 
 
 // --- 3D ASSET PRE-WARMING ---
-const DRACO_URL =
-  "https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/";
+// CRITICAL: import DRACO_URL from AvatarModel so all useGLTF calls share
+// the exact same cache key — prevents loading the GLB twice.
+import { DRACO_URL } from './features/avatar/components/AvatarModel';
 
-useGLTF.preload("/models/femaleAvatar.glb", DRACO_URL);
-useGLTF.preload("/models/maleAvatar.glb", DRACO_URL);
+useGLTF.preload('/models/femaleAvatar.glb', DRACO_URL);
+useGLTF.preload('/models/maleAvatar.glb', DRACO_URL);
+
 
 
 // ==========================================================

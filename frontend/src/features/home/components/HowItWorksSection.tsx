@@ -1,25 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { useTranslation } from "react-i18next";
 
-const steps = [
+const stepData = [
   {
     number: "01",
-    title: "Create your avatar",
-    desc: "Enter a few measurements and Tilet3D builds a realistic 3D version of you for accurate virtual fitting.",
+    key: "step1",
+    defaultTitle: "Create your avatar",
+    defaultDesc: "Enter a few measurements and Tilet3D builds a realistic 3D version of you for accurate virtual fitting.",
   },
   {
     number: "02",
-    title: "Try on Habesha couture",
-    desc: "See authentic handwoven garments on your avatar in real time. Rotate, zoom and inspect every thread.",
+    key: "step2",
+    defaultTitle: "Try on Habesha couture",
+    defaultDesc: "See authentic handwoven garments on your avatar in real time. Rotate, zoom and inspect every thread.",
   },
   {
     number: "03",
-    title: "Order with confidence",
-    desc: "Choose the design you love and order knowing exactly how it looks and fits before tailoring begins.",
+    key: "step3",
+    defaultTitle: "Order with confidence",
+    defaultDesc: "Choose the design you love and order knowing exactly how it looks and fits before tailoring begins.",
   },
 ];
 
 const HowItWorksSection = () => {
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
@@ -27,7 +32,7 @@ const HowItWorksSection = () => {
   const barRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    const total = steps.length;
+    const total = stepData.length;
     const perStep = 5;
 
     const tl = gsap.timeline({
@@ -40,14 +45,15 @@ const HowItWorksSection = () => {
     });
     timelineRef.current = tl;
 
-    steps.forEach((_, i) => {
+    stepData.forEach((_, i) => {
       const el = stepRefs.current[i];
       const bar = barRefs.current[i];
       if (!el || !bar) return;
       const content = el.querySelectorAll(".anim");
+      
       tl.fromTo(
         content,
-        { opacity: 0, y: 22, filter: "blur(6px)" },
+        { opacity: 0, y: 18, filter: "blur(6px)" },
         {
           opacity: 1,
           y: 0,
@@ -70,7 +76,7 @@ const HowItWorksSection = () => {
       );
       tl.to(content, {
         opacity: 0,
-        y: -14,
+        y: -12,
         filter: "blur(4px)",
         duration: 0.5,
         ease: "power2.in",
@@ -93,32 +99,36 @@ const HowItWorksSection = () => {
   }, []);
 
   const jump = (i: number) => {
-    timelineRef.current?.progress(i / steps.length).play();
+    timelineRef.current?.progress(i / stepData.length).play();
   };
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-ink/[0.06] bg-white py-28"
+      className="relative overflow-hidden border-t border-black/[0.06] bg-[#fafafa] py-28 text-zinc-900 select-none"
     >
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-16 px-6 md:grid-cols-12 md:px-10">
+        
+        {/* Left Column Title */}
         <div className="md:col-span-5">
           <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-plum-600">
-            How it works
+            {t("howItWorks.badge", "How it works")}
           </span>
-          <h2 className="display mt-5 text-4xl font-semibold leading-[1.05] text-ink md:text-5xl">
-            From measurement
+          <h2 className="mt-4 text-4xl font-semibold leading-[1.08] tracking-tight text-zinc-950 md:text-5xl">
+            {t("howItWorks.titleLead", "From measurement")}
             <br />
-            to <span className="italic text-plum-600">perfect fit.</span>
+            <span className="font-serif italic text-plum-600 font-light">
+              {t("howItWorks.titleAccent", "to perfect fit.")}
+            </span>
           </h2>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-ink/55">
-            Tilet3D turns traditional Habesha tailoring into an effortless,
-            real-time 3D experience.
+          <p className="mt-5 max-w-md text-base sm:text-lg leading-relaxed text-zinc-600">
+            {t("howItWorks.subtitle", "Tilet3D turns traditional Habesha tailoring into an effortless, real-time 3D experience.")}
           </p>
         </div>
 
+        {/* Right Column Step Stream */}
         <div className="relative flex h-[240px] items-center md:col-span-7">
-          {steps.map((step, i) => (
+          {stepData.map((step, i) => (
             <div
               key={step.number}
               ref={(el) => {
@@ -130,29 +140,30 @@ const HowItWorksSection = () => {
                   : "pointer-events-none opacity-0"
               }`}
             >
-              <div className="anim mb-4 font-mono text-xs font-semibold tracking-[0.3em] text-plum-500">
-                STEP {step.number}
+              <div className="anim mb-3 font-mono text-xs font-semibold tracking-[0.25em] text-plum-600 uppercase">
+                {t("howItWorks.stepLabel", "STEP")} {step.number}
               </div>
-              <h3 className="anim display mb-4 text-3xl font-semibold text-ink md:text-4xl">
-                {step.title}
+              <h3 className="anim mb-3 text-3xl font-semibold tracking-tight text-zinc-950 md:text-4xl">
+                {t(`howItWorks.${step.key}.title`, step.defaultTitle)}
               </h3>
-              <p className="anim max-w-xl text-lg leading-relaxed text-ink/55">
-                {step.desc}
+              <p className="anim max-w-xl text-base sm:text-lg leading-relaxed text-zinc-600">
+                {t(`howItWorks.${step.key}.desc`, step.defaultDesc)}
               </p>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Progress Bar Navigation */}
       <div className="mx-auto mt-12 max-w-[1200px] px-6 md:px-10">
-        <div className="grid grid-cols-3 gap-6 border-t border-ink/10 pt-7">
-          {steps.map((step, i) => (
+        <div className="grid grid-cols-3 gap-6 border-t border-black/10 pt-7">
+          {stepData.map((step, i) => (
             <button
               key={step.number}
               onClick={() => jump(i)}
               className="group text-left outline-none"
             >
-              <div className="mb-3 h-[2px] overflow-hidden rounded-full bg-ink/10">
+              <div className="mb-3 h-[2px] overflow-hidden rounded-full bg-zinc-200">
                 <div
                   ref={(el) => {
                     barRefs.current[i] = el;
@@ -162,13 +173,13 @@ const HowItWorksSection = () => {
                 />
               </div>
               <span
-                className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors ${
+                className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 ${
                   activeIndex === i
                     ? "text-plum-600"
-                    : "text-ink/40 group-hover:text-ink/70"
+                    : "text-zinc-400 group-hover:text-zinc-700"
                 }`}
               >
-                {step.title}
+                {t(`howItWorks.${step.key}.title`, step.defaultTitle)}
               </span>
             </button>
           ))}

@@ -77,11 +77,10 @@ class Category(BaseModel):
         return self.name
 
 
-class Product(BaseModel):
-    """
-    Parent product.
-    """
+# backend/apps/products/models.py — add to Product, following the same
+# pattern already used on Category and ProductMedia in this file
 
+class Product(BaseModel):
     category = models.ForeignKey(
         "products.Category",
         on_delete=models.PROTECT,
@@ -89,37 +88,28 @@ class Product(BaseModel):
     )
 
     name = models.CharField(max_length=150)
-
-    slug = models.SlugField(
-        max_length=180,
-        unique=True,
-        blank=True
-    )
-
+    slug = models.SlugField(max_length=180, unique=True, blank=True)
     description = models.TextField(blank=True)
-
-    brand = models.CharField(
-        max_length=120,
-        blank=True
-    )
-
+    brand = models.CharField(max_length=120, blank=True)
     is_active = models.BooleanField(default=True)
-
     is_featured = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    display_order = models.PositiveIntegerField(
+        default=0,
+        help_text="Manual curation order within a category. Lower shows first.",
+    )
 
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["display_order", "-created_at"]
         verbose_name = "Product"
         verbose_name_plural = "Products"
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(self, self.name)
-
         super().save(*args, **kwargs)
 
     def __str__(self):

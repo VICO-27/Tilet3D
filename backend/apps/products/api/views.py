@@ -1,3 +1,4 @@
+# backend/apps/products/api/views.py
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -49,23 +50,23 @@ class ProductCommentsListView(generics.ListAPIView):
 # ==========================================================
 # PRODUCT LIST
 # ==========================================================
-# backend/apps/products/api/views.py
 class ProductListAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Product.objects.filter(
-            is_active=True
-        ).select_related(
-            "category",  # FIX: category_name reads category.name — without this,
-                         # Django fires one extra query per product to fetch it (N+1).
-        ).prefetch_related(
-            "media",
-            "variants",
-            "likes",
-            "comments",
-        )
+    is_active=True
+).select_related(
+    "category",
+).prefetch_related(
+    "media",
+    "variants",
+    "likes",
+    "comments",
+).order_by(
+    "display_order", "-created_at", "id",
+)
 
         categories_param = self.request.query_params.get("categories", None)
         if categories_param:
@@ -89,7 +90,9 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        return Product.objects.filter(is_active=True).prefetch_related(
+        return Product.objects.filter(is_active=True).select_related(
+            "category"
+        ).prefetch_related(
             "media",
             "variants",
             "likes",

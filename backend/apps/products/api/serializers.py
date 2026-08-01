@@ -1,3 +1,4 @@
+# backend/apps/products/api/serializers.py
 from rest_framework import serializers
 
 from apps.products.models import (
@@ -10,14 +11,7 @@ from apps.products.models import (
 )
 
 
-# ==========================================================
-# PRODUCT MEDIA SERIALIZER
-# ==========================================================
 class ProductMediaSerializer(serializers.ModelSerializer):
-    """
-    Serializes images/videos belonging to a product variant.
-    """
-
     class Meta:
         model = ProductMedia
         fields = (
@@ -29,20 +23,11 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         )
 
 
-# ==========================================================
-# PRODUCT VARIANT SERIALIZER
-# ==========================================================
 class ProductVariantSerializer(serializers.ModelSerializer):
-
-    available_stock = serializers.IntegerField(
-        read_only=True
-    )
-
+    available_stock = serializers.IntegerField(read_only=True)
 
     class Meta:
-
         model = ProductVariant
-
         fields = (
             "id",
             "name",
@@ -53,34 +38,19 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "available_stock",
             "measurements",
         )
-# ==========================================================
-# PRODUCT SERIALIZER
-# ==========================================================
+
+
 class ProductSerializer(serializers.ModelSerializer):
-
-    category_name = serializers.CharField(
-        source="category.name",
-        read_only=True
-    )
-
-    media = ProductMediaSerializer(
-        many=True,
-        read_only=True
-    )
-
-    variants = ProductVariantSerializer(
-        many=True,
-        read_only=True
-    )
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    media = ProductMediaSerializer(many=True, read_only=True)
+    variants = ProductVariantSerializer(many=True, read_only=True)
 
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
 
-
     class Meta:
         model = Product
-
         fields = (
             "id",
             "name",
@@ -88,30 +58,36 @@ class ProductSerializer(serializers.ModelSerializer):
             "description",
             "brand",
             "is_featured",
-
             "category_name",
-
             "media",
             "variants",
-
             "like_count",
             "comment_count",
             "is_liked",
         )
 
-
-    def get_like_count(self,obj):
+    def get_like_count(self, obj):
+        # FIX: use the DB-side annotation from ProductListAPIView when
+        # present. Falls back to the old prefetch-based count for views
+        # that don't annotate (detail view, liked-products view) — those
+        # keep working exactly as before.
+        annotated = getattr(obj, "like_count_annotated", None)
+        if annotated is not None:
+            return annotated
         return len(obj.likes.all())
 
-
-    def get_comment_count(self,obj):
+    def get_comment_count(self, obj):
+        annotated = getattr(obj, "comment_count_annotated", None)
+        if annotated is not None:
+            return annotated
         return len(obj.comments.all())
 
-
-    def get_is_liked(self,obj):
+    def get_is_liked(self, obj):
+        annotated = getattr(obj, "is_liked_annotated", None)
+        if annotated is not None:
+            return annotated
 
         request = self.context.get("request")
-
         if not request or not request.user.is_authenticated:
             return False
 
@@ -120,11 +96,8 @@ class ProductSerializer(serializers.ModelSerializer):
             for like in obj.likes.all()
         )
 
-# ==========================================================
-# PRODUCT LIKE SERIALIZER
-# ==========================================================
-class ProductLikeSerializer(serializers.ModelSerializer):
 
+class ProductLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductLike
         fields = (
@@ -134,15 +107,8 @@ class ProductLikeSerializer(serializers.ModelSerializer):
         )
 
 
-# ==========================================================
-# PRODUCT COMMENT SERIALIZER
-# ==========================================================
 class ProductCommentSerializer(serializers.ModelSerializer):
-
-    user_email = serializers.CharField(
-        source="user.email",
-        read_only=True,
-    )
+    user_email = serializers.CharField(source="user.email", read_only=True)
 
     class Meta:
         model = ProductComment
@@ -154,17 +120,10 @@ class ProductCommentSerializer(serializers.ModelSerializer):
             "text",
             "created_at",
         )
-
-        read_only_fields = (
-            "user",
-        )
+        read_only_fields = ("user",)
 
 
-# ==========================================================
-# PRODUCT SHARE SERIALIZER
-# ==========================================================
 class ProductShareSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ProductShare
         fields = (

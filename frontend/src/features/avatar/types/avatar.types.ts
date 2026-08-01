@@ -9,7 +9,19 @@ export type BodyType =
   | 'pear'
   | 'rectangle';
 
-export type SkinTone = 'fair' | 'light' | 'medium' | 'tan' | 'rich' | 'deep';
+export type SkinTone =
+  | 'ivory'
+  | 'fair'
+  | 'light'
+  | 'honey'
+  | 'medium'
+  | 'caramel'
+  | 'tan'
+  | 'chestnut'
+  | 'rich'
+  | 'espresso'
+  | 'deep'
+  | 'ebony';
 
 export type AnimationName = 'idle' | 'walk' | 'spin';
 

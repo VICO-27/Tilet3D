@@ -226,7 +226,7 @@ const FeaturedCollectionSection = () => {
     let scrollLeft: number;
     
     // SMOOTH SPEED: 3.5 moving right to left
-    const speed = 3.5; 
+    const speed = 6; 
 
     const autoScroll = () => {
       if (!isDown && !isHovering.current) {

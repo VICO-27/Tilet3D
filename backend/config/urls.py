@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/orders/", include("apps.orders.api.urls")),
     path("api/payments/", include("apps.payments.api.urls")),
     path('api/avatars/', include('apps.avatars.api.urls')),
+    path("api/ai/", include("apps.ai.api.urls")),
 
     # API Documentation (Spectacular)
     path(

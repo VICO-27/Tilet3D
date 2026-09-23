@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     "apps.cart",
     "apps.orders",
     "apps.payments",
-    'apps.avatars',  # <-- Add this line
+    'apps.avatars',  
+    "apps.ai",# <-- Add this line
 
 
     # Extensions
@@ -112,6 +113,11 @@ GOOGLE_CLIENT_SECRET = env(
     default=""
 )
 
+GEMINI_API_KEY = env(
+    "GEMINI_API_KEY",
+    default=""
+)
+
 CHAPA_SECRET_KEY = env(
     "CHAPA_SECRET_KEY",
     default=""
@@ -127,7 +133,8 @@ CHAPA_RETURN_URL = env(
     default="http://localhost:3000/checkout/success"
 )
 
-
+# Add anywhere near the other THIRD PARTY KEYS
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 # ==========================================================
 # EMAIL CONFIGURATION (BREVO/GMAIL SMTP)
 # ==========================================================
@@ -180,6 +187,10 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": (
         "drf_spectacular.openapi.AutoSchema"
     ),
+        "DEFAULT_THROTTLE_RATES": {
+        "ai_chat": "15/minute",
+        "ai_search": "30/minute",
+    },
 }
 
 
@@ -198,11 +209,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 SIMPLE_JWT = {
 
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=15
+        minutes=60  # Up from 15 min — reduces visible re-auth prompts for users.
     ),
 
     "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=7
+        days=30  # Up from 7 days — users stay signed in for a full month of normal use.
     ),
 
     "ROTATE_REFRESH_TOKENS": True,

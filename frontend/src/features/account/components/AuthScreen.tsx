@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../app/store/useAuthStore";
 import { OtpInput } from "./OtpInput";
 import { BackButton } from "./BackButton";
+import { GoogleSignInButton } from "./GoogleSignInButton";
 
 type Step = "in" | "up" | "forgot-email" | "forgot-otp" | "forgot-password";
 
@@ -204,6 +205,18 @@ export const AuthScreen: React.FC = () => {
                   {loading ? "Please wait..." : step === "in" ? "Sign In" : "Create Account"}
                   {!loading && <ArrowRight className="h-4 w-4" />}
                 </motion.button>
+
+                {/* ── Google divider + button ── */}
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 h-px bg-ink/[0.07]" />
+                  <span className="text-[11px] font-medium text-ink/35 uppercase tracking-wider">or</span>
+                  <div className="flex-1 h-px bg-ink/[0.07]" />
+                </div>
+
+                <GoogleSignInButton
+                  onSuccess={redirectIfVerified}
+                  label={step === "in" ? "Continue with Google" : "Sign up with Google"}
+                />
               </motion.div>
             )}
 

@@ -11,6 +11,7 @@ import ProductGallery from '../components/ProductGallery';
 import ProductEngagementRow from '../components/ProductEngagementRow';
 import CommentsSection from '../components/CommentsSection';
 import RelatedProducts from '../components/RelatedProducts';
+import { AiRecommendations } from '../../ai/components/AiRecommendations'; // <-- Imported AI Recommendations component
 import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
 
@@ -32,9 +33,7 @@ const ProductDetailPage: React.FC = () => {
     if (!id) return;
     let cancelled = false;
 
-    // Fetch routine encapsulates the states safely away from the immediate synchronous effect lifecycle execution hook
     const fetchProductData = async () => {
-      // Shift out of the immediate execution context frame to bypass the set-state-in-effect check
       setLoading(true);
       setError(null);
 
@@ -99,7 +98,7 @@ const ProductDetailPage: React.FC = () => {
   return (
     <PageLayout>
       <div className="max-w-6xl mx-auto px-6 lg:px-10 pt-20 pb-24">
-        {/* Back button — fixed to viewport, stays put while scrolling */}
+        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
           className="fixed top-28 left-6 md:left-10 z-40 flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 bg-white/90 backdrop-blur-md border border-zinc-200 hover:border-zinc-400 rounded-full px-4 py-2.5 transition-colors shadow-lg"
@@ -173,12 +172,15 @@ const ProductDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* YouTube-style engagement row */}
+            {/* Engagement row */}
             <div className="mt-10">
               <ProductEngagementRow product={product} onScrollToComments={scrollToComments} />
             </div>
           </div>
         </div>
+
+        {/* AI-Powered Semantic Recommendations */}
+        {product?.id && <AiRecommendations productId={product.id} />}
 
         {/* Comments */}
         <CommentsSection ref={commentsRef} productId={product.id} />

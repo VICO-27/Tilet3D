@@ -50,6 +50,36 @@ class AuthService {
   }
 
   // ==========================================================
+  // GOOGLE LOGIN
+  // Accepts a Google ID token (from GIS credential callback).
+  // POSTs to /api/auth/google/ which verifies it server-side.
+  // Returns the same AuthUser shape as email login — no parallel auth path.
+  // NOTE: The Google client SECRET is never referenced here or anywhere in
+  // the frontend — it stays backend-only by design.
+  // ==========================================================
+  async googleLogin(idToken: string): Promise<AuthUser> {
+    const response = await apiClient.post<{ access: string; refresh: string; email: string; created: boolean }>(
+      "/auth/google/",
+      { token: idToken }
+    );
+    const { access, refresh, email } = response.data;
+
+    localStorage.setItem(ACCESS_TOKEN_KEY, access);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+
+    // Build AuthUser from profile — Google-authed users are always verified
+    // since they've authenticated via Google's own account system.
+    const profile = await this.getProfile();
+    const user: AuthUser = {
+      ...profile,
+      email,
+      is_verified: true,
+    };
+
+    return user;
+  }
+
+  // ==========================================================
   // OTP: REQUEST / VERIFY
   // ==========================================================
   async requestOtp(payload: RequestOtpPayload): Promise<void> {
@@ -57,7 +87,19 @@ class AuthService {
   }
 
   async verifyOtp(payload: VerifyOtpPayload): Promise<void> {
-    await apiClient.post("/auth/otp/verify/", payload);
+    const response = await apiClient.post<{
+      message: string;
+      user?: { id: string; email: string; is_verified: boolean };
+      tokens?: { access: string; refresh: string };
+    }>("/auth/otp/verify/", payload);
+
+    // The email_verify endpoint returns fresh JWT tokens so the user's
+    // session starts fresh from verification time (not registration time).
+    // Storing them here prevents the ~15-min stale-token expiry bug.
+    if (response.data.tokens) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, response.data.tokens.access);
+      localStorage.setItem(REFRESH_TOKEN_KEY, response.data.tokens.refresh);
+    }
   }
 
   // ==========================================================

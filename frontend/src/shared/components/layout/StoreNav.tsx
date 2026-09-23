@@ -1,15 +1,24 @@
-import { useState } from "react";
-import { Link, useLocation,  } from "react-router-dom";
-import { ShoppingBag, Package } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ShoppingBag, Package, Search, X, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useCartStore } from "../../../app/store/useCartStore";
 import { CartDrawer } from "../../../features/cart/components/CartDrawer";
+import { useAiSearch } from "../../../features/ai/hooks/useAiSearch";
+import { ProductPreviewCard } from "../../../features/ai/components/ProductPreviewCard";
 
 const StoreNav = () => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [cartOpen, setCartOpen] = useState(false);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { results, isSearching, search } = useAiSearch();
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { cartItems } = useCartStore();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -19,6 +28,49 @@ const StoreNav = () => {
     { to: "/products", label: t("nav.collection", "Collection") },
     { to: "/avatar", label: t("nav.fittingRoom", "Fitting Room") },
   ];
+
+  const handleQueryChange = useCallback(
+    (value: string) => {
+      setQuery(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        search(value);
+      }, 400);
+    },
+    [search]
+  );
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+    setQuery("");
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        closeSearch();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [searchOpen, closeSearch]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeSearch();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [searchOpen, closeSearch]);
+
+  const handleProductSelect = (productId: string) => {
+    closeSearch();
+    navigate(`/products/${productId}`);
+  };
 
   return (
     <>
@@ -57,6 +109,59 @@ const StoreNav = () => {
               );
             })}
 
+            {/* AI-powered search */}
+            <div ref={searchContainerRef} className="relative">
+              {!searchOpen ? (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  aria-label={t("nav.search", "Search")}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 w-56 sm:w-72">
+                  {isSearching ? (
+                    <Loader2 className="h-4 w-4 text-violet-500 animate-spin flex-shrink-0" />
+                  ) : (
+                    <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  )}
+                  <input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => handleQueryChange(e.target.value)}
+                    placeholder={t("nav.searchPlaceholder", "Search styles, colors, occasions...")}
+                    className="flex-1 bg-transparent border-none text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
+                  />
+                  <button onClick={closeSearch} className="text-slate-400 hover:text-slate-700 flex-shrink-0">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {searchOpen && query.trim().length > 0 && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 max-h-[70vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-2xl p-3 z-50">
+                  {isSearching && results.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-400">
+                      {t("nav.searching", "Finding matches...")}
+                    </div>
+                  ) : results.length > 0 ? (
+                    <div className="space-y-2">
+                      {results.map((product) => (
+                        <div key={product.id} onClick={() => handleProductSelect(product.id)}>
+                          <ProductPreviewCard product={product} compact />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-xs text-slate-400">
+                      {t("nav.noResults", "No matches found — try a different phrase.")}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setCartOpen(true)}
               aria-label={t("nav.shoppingBag", "Shopping Bag")}
@@ -87,10 +192,7 @@ const StoreNav = () => {
         </div>
       </header>
 
-      <CartDrawer
-        isOpen={cartOpen}
-        onClose={() => setCartOpen(false)}
-      />
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 };

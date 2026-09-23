@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { SkeletonUtils } from 'three-stdlib';
 import * as THREE from 'three';
 import { useAvatarStore } from '../store/useAvatarStore';
-import { prepareAvatar, applySkinTone } from '../utils/avatarRig';
+import { prepareAvatar, applySkinTone, debugAvatarMeshes } from '../utils/avatarRig';
 import type { Gender } from '../types/avatar.types';
 
 export const DRACO_URL = 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/';
@@ -37,16 +37,35 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), h
 // the initial mount. That's what was causing the flash-then-blank: before,
 // a single AvatarModel switched its useGLTF path on gender change, forcing
 // React to unmount it and show the Suspense fallback mid-session.
+//
+// FIX (double-load / flash):
+// useMemo falls back to `new THREE.Group()` while the GLB is loading.
+// Running prepareAvatar on that empty group is harmless but the memo
+// recomputes when the real scene arrives, creating a new object reference.
+// This caused useAnimations + skin-tone effects to re-fire → visible flash.
+//
+// Guard: only clone when `scene.children.length > 0` (i.e. the GLB has
+// actually resolved). Return null until ready so nothing is mounted into
+// the Three.js scene graph — eliminates the empty→real swap flash.
+// Track preparation state with a ref to avoid double-runs.
 // ─────────────────────────────────────────────────────────────────────────────
 function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolean }) {
   const { scene, animations } = useGLTF(gender === 'male' ? MALE_GLB : FEMALE_GLB, DRACO_URL);
 
+  // Only clone when the real scene has loaded (children > 0).
+  // Returns null while the GLB is still in the cache/network — the caller
+  // renders nothing until this resolves, preventing the empty→full swap flash.
   const clonedScene = useMemo(() => {
-    return scene ? SkeletonUtils.clone(scene) : new THREE.Group();
+    if (!scene || scene.children.length === 0) return null;
+    return SkeletonUtils.clone(scene);
   }, [scene]);
 
   const group = useRef<THREE.Group>(null);
   const { actions, names } = useAnimations(animations, group);
+
+  // Ref-tracked flag: prepareAvatar must run exactly once per cloned scene
+  // instance. Using a ref (not state) avoids triggering a re-render.
+  const preparedRef = useRef<THREE.Object3D | null>(null);
 
   const height = useAvatarStore((s) => s.height);
   const weight = useAvatarStore((s) => s.weight);
@@ -54,16 +73,24 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
   const currentAnimation = useAvatarStore((s) => s.currentAnimation);
   const isInteracting = useAvatarStore((s) => s.isInteracting);
 
+  // Prepare the avatar (shadows, material clone, frustum cull off) — only
+  // once per unique cloned scene. The ref comparison prevents double-runs.
   useEffect(() => {
-    if (clonedScene) prepareAvatar(clonedScene);
-  }, [clonedScene]);
+    if (!clonedScene || preparedRef.current === clonedScene) return;
+    prepareAvatar(clonedScene);
+    debugAvatarMeshes(clonedScene, `${gender} avatar`);
+    preparedRef.current = clonedScene;
+  }, [clonedScene, gender]);
 
+  // Apply skin tone whenever the selection changes or a new scene is ready.
   useEffect(() => {
-    if (clonedScene) applySkinTone(clonedScene, SKIN_HEX[skin_tone] ?? SKIN_HEX.medium);
+    if (!clonedScene) return;
+    applySkinTone(clonedScene, SKIN_HEX[skin_tone] ?? SKIN_HEX.medium);
   }, [skin_tone, clonedScene]);
 
+  // Start / switch animations — only when the scene is ready and active.
   useEffect(() => {
-    if (!active || !names.length) return;
+    if (!clonedScene || !active || !names.length) return;
     const find = (kw: string) => {
       const n = names.find((x) => x.toLowerCase().includes(kw));
       return n ? actions[n] : null;
@@ -75,7 +102,7 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
       Object.values(actions).forEach((a) => a?.fadeOut(0.4));
       target.reset().fadeIn(0.4).play();
     }
-  }, [currentAnimation, actions, names, active]);
+  }, [currentAnimation, actions, names, active, clonedScene]);
 
   useFrame((_, delta) => {
     if (!group.current) return;
@@ -95,6 +122,11 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
       }
     }
   });
+
+  // KEY FIX: Do NOT render the group until the cloned scene is ready.
+  // Previously, an empty THREE.Group was mounted here then swapped for the
+  // real scene when the GLB resolved → that replacement caused the flash.
+  if (!clonedScene) return null;
 
   return (
     <group ref={group} scale={0}>

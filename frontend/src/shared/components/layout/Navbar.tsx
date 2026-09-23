@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, ShoppingBag, User, Menu, X, Package } from "lucide-react";
+import { Search, ShoppingBag, User, Menu, X, Package, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useCartStore } from "../../../app/store/useCartStore";
@@ -25,6 +25,7 @@ const Navbar = () => {
     { to: "/", label: t("nav.home", "Home") },
     { to: "/products", label: t("nav.collection", "Collection") },
     { to: "/avatar", label: t("nav.fittingRoom", "Fitting Room") },
+    { to: "/ai-concierge", label: "Chat" }, // <-- Added Chat link here
   ];
 
   const SUGGESTIONS = [
@@ -82,6 +83,7 @@ const Navbar = () => {
                   isActive(link.to) ? "text-ink" : "text-ink/55 hover:text-ink"
                 }`}
               >
+                {link.to === "/ai-concierge" && <MessageSquare className="inline-block w-3.5 h-3.5 mr-1 text-plum-600" />}
                 {link.label}
                 {isActive(link.to) && (
                   <span className="absolute -bottom-[15px] left-0 right-0 h-px bg-ink" />

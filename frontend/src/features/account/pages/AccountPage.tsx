@@ -35,6 +35,10 @@ const AccountPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>("dashboard");
+  // Controls whether the email verification card is shown for unverified users.
+  // Defaults to true when the user is signed in but unverified.
+  // Setting to false via the Back button dismisses the card without signing out.
+  const [showVerify, setShowVerify] = useState(true);
 
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
@@ -66,10 +70,23 @@ const AccountPage = () => {
   }
 
   if (!user.is_verified) {
+    if (!showVerify) {
+      // User dismissed the verify card — show the auth screen so they can
+      // sign out or navigate away without being locked in a verify loop.
+      return (
+        <div className="min-h-screen bg-white">
+          <Navbar />
+          <AuthScreen />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
-        <VerifyEmailScreen />
+        <VerifyEmailScreen
+          onBack={() => setShowVerify(false)}
+          onDone={() => setShowVerify(true)}
+        />
       </div>
     );
   }

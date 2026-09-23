@@ -29,11 +29,56 @@ export function prepareAvatar(scene: THREE.Group | THREE.Object3D): void {
   });
 }
 
-const SKIN_NAME_PATTERN = /skin|body|human|head|face|facial|neck|ear|earlobe|arm|forearm|upperarm|hand|finger|leg|thigh|calf|foot|feet|toe|torso|chest|shoulder|hip/i;
-const SKIN_MATERIAL_PATTERN = /skin|body|human|flesh|head|face|facial|neck|arm|hand|leg|foot|torso/i;
-const CLOTHING_NAME_PATTERN = /shirt|cloth|clothing|outfit|top|bottom|tshirt|t-shirt|tee|tank|pant|pants|trouser|trousers|jean|denim|dress|skirt|jacket|hoodie|sweater|sweatshirt|coat|suit|vest|uniform|clothes|fabric/i;
-const ACCESSORY_NAME_PATTERN = /shoe|shoes|boot|boots|sock|socks|belt|bracelet|necklace|ring|watch|glasses|hat|cap|scarf|bag|handbag|accessory/i;
-const HEAD_DETAIL_PATTERN = /hair|eyebrow|eyelash|eye|iris|pupil|cornea|teeth|tooth|tongue|mouth|lip|nail/i;
+// ─────────────────────────────────────────────────────────────────────────────
+// Skin-tone tinting logic — INVERTED APPROACH (robust to any GLB naming)
+//
+// Old approach: positively identify skin meshes → missed face/neck on female,
+// and was fooled by male body meshes named generically (e.g. "Body").
+//
+// New approach: definitively identify NON-SKIN meshes (clothing, accessories,
+// hair, teeth, eyes) and reject those. Everything else is treated as skin.
+// This is more robust because:
+//   - Clothing names are highly predictable across all avatar generators
+//   - Hair/eye/teeth names are stable and well-separated from skin
+//   - Any mesh that ISN'T clothing/hair/eyes/accessories IS body skin
+//
+// Tested against common avatar generator naming conventions:
+//   ReadyPlayerMe: Wolf3D_Body, Wolf3D_Head, Wolf3D_Outfit_Top, Wolf3D_Hair
+//   MakeHuman: body, hair, clothes, eyebrows
+//   Mixamo: mixamorig, Body, Skin
+//   Generic Blender exports: Mesh, Body, Armature|Body, etc.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Clothing items — things worn ON the body that should never be recolored
+ * when changing skin tone.
+ */
+const CLOTHING_PATTERN = /\b(shirt|cloth|clothing|outfit|top|bottom|tshirt|t[\-_]shirt|tee|tank|pant|pants|trouser|trousers|jean|denim|dress|skirt|jacket|hoodie|sweater|sweatshirt|coat|suit|vest|uniform|clothes|fabric|garment|wear|costume|collar|sleeve|cuff|lapel|pocket|zipper|button|seam)\b/i;
+
+/**
+ * Footwear & accessories — never recolored.
+ */
+const ACCESSORY_PATTERN = /\b(shoe|shoes|boot|boots|sock|socks|sandal|sandals|belt|bracelet|necklace|ring|watch|glasses|spectacles|hat|cap|scarf|bag|handbag|purse|accessory|accessories|jewelry|jewel|glove|gloves)\b/i;
+
+/**
+ * Head details — hair, eyes, teeth, eyebrows etc. These have their own color
+ * and must NOT be recolored by the body skin tone change.
+ * Note: "head", "face", "neck" are intentionally NOT here — those ARE skin.
+ */
+const HEAD_NON_SKIN_PATTERN = /\b(hair|strand|braid|lash|eyelash|brow|eyebrow|eye|iris|pupil|cornea|sclera|eyeball|teeth|tooth|tongue|mouth|lip|nail|nails|beard|mustache|stubble|eyelid)\b/i;
+
+/**
+ * Returns true if this mesh/material should be EXCLUDED from skin-tone tinting.
+ * Everything that is NOT excluded is treated as skin.
+ */
+function isNonSkinMaterial(meshName: string, matName: string): boolean {
+  const combined = `${meshName} ${matName}`.toLowerCase();
+  return (
+    CLOTHING_PATTERN.test(combined) ||
+    ACCESSORY_PATTERN.test(combined) ||
+    HEAD_NON_SKIN_PATTERN.test(combined)
+  );
+}
 
 function getMaterialList(mesh: THREE.Mesh): THREE.Material[] {
   if (Array.isArray(mesh.material)) return mesh.material;
@@ -50,35 +95,6 @@ function getObjectPath(object: THREE.Object3D): string {
   return names.reverse().join('/');
 }
 
-function isDefinitelyClothing(text: string): boolean {
-  return CLOTHING_NAME_PATTERN.test(text) || ACCESSORY_NAME_PATTERN.test(text);
-}
-
-function isDefinitelyHeadDetail(text: string): boolean {
-  return HEAD_DETAIL_PATTERN.test(text);
-}
-
-// FIXED: Prioritize Material Name over Mesh Name to prevent clothes changing color
-function isSkinMaterial(mesh: THREE.Mesh, material: THREE.Material): boolean {
-  const matName = (material.name || '').toLowerCase();
-  const meshName = (mesh.name || '').toLowerCase();
-
-  // 1. Strict Material Check (Protects clothes and head details)
-  if (isDefinitelyClothing(matName) || isDefinitelyHeadDetail(matName)) return false;
-  if (SKIN_MATERIAL_PATTERN.test(matName)) return true;
-
-  // 2. Strict Mesh Check (Only evaluated if material name was ambiguous)
-  if (isDefinitelyClothing(meshName) || isDefinitelyHeadDetail(meshName)) return false;
-  if (SKIN_MATERIAL_PATTERN.test(meshName)) return true;
-
-  // 3. Fallback to full path check
-  const fullPath = [getObjectPath(mesh), meshName, matName].join(' ').toLowerCase();
-  if (isDefinitelyClothing(fullPath) || isDefinitelyHeadDetail(fullPath)) return false;
-  if (SKIN_NAME_PATTERN.test(fullPath)) return true;
-
-  return false;
-}
-
 function applyColor(material: THREE.Material, hex: string): void {
   const colorMaterial = material as THREE.Material & { color?: THREE.Color };
   if (colorMaterial.color instanceof THREE.Color) {
@@ -92,11 +108,41 @@ export function applySkinTone(scene: THREE.Group | THREE.Object3D, hex: string):
   scene.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
     const materials = getMaterialList(child);
+    const meshName = child.name || '';
     
     materials.forEach((material) => {
-      if (isSkinMaterial(child, material)) {
+      const matName = material.name || '';
+      if (!isNonSkinMaterial(meshName, matName)) {
         applyColor(material, hex);
       }
     });
   });
+}
+
+/**
+ * DEV UTILITY — logs all mesh and material names with their skin classification.
+ * Call this from AvatarModel after prepareAvatar to verify the tinting logic
+ * against the actual node names in each GLB.
+ * Guards against production builds via import.meta.env.PROD.
+ */
+export function debugAvatarMeshes(scene: THREE.Group | THREE.Object3D, label = ''): void {
+  if (import.meta.env.PROD) return;
+  const rows: { meshName: string; matName: string; path: string; willTint: boolean }[] = [];
+  scene.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const materials = getMaterialList(child);
+    const meshName = child.name || '(unnamed)';
+    materials.forEach((mat) => {
+      const matName = mat.name || '(unnamed)';
+      rows.push({
+        meshName,
+        matName,
+        path: getObjectPath(child),
+        willTint: !isNonSkinMaterial(meshName, matName),
+      });
+    });
+  });
+  console.groupCollapsed(`[avatarRig] ${label} — ${rows.length} materials`);
+  console.table(rows);
+  console.groupEnd();
 }

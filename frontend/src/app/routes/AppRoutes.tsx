@@ -14,6 +14,10 @@ const ProductDetailPage = lazy(
   () => import("../../features/products/pages/ProductDetailPage"),
 );
 
+const AiConciergePage = lazy(
+  () => import("../../features/ai/pages/AiConciergePage")
+);
+
 // FIXED: Removed the .then() block and matched the path style of other routes
 const AvatarPage = lazy(
   () => import("../../features/avatar/pages/AvatarPage"),
@@ -49,7 +53,7 @@ const AppRoutes = () => {
         
         {/* Product Detail Page */}
         <Route path="/products/:id" element={<ProductDetailPage />} />
-        
+        <Route path="/ai-concierge" element={<AiConciergePage />} />
         {/* Avatar Studio */}
         <Route path="/avatar" element={<AvatarPage />} />
         

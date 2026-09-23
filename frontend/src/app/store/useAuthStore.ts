@@ -12,6 +12,7 @@ interface AuthState {
 
   signUp: (email: string, password: string, password2: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
+  signInWithGoogle: (idToken: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 
   requestOtp: (email: string, purpose: OTPPurpose) => Promise<string | null>;
@@ -114,6 +115,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return null;
     } catch (err) {
       const message = extractMessage(err, "Invalid email or password.");
+      set({ error: message });
+      return message;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  signInWithGoogle: async (idToken) => {
+    set({ loading: true, error: null });
+    try {
+      const user = await authService.googleLogin(idToken);
+      authService.storeUser(user);
+      set({ user });
+      return null;
+    } catch (err) {
+      const message = extractMessage(err, "Google sign-in failed. Please try again.");
       set({ error: message });
       return message;
     } finally {

@@ -72,20 +72,79 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IdleRig — drives the ambient continuous rotation + breathing of the hero.
+//
+// Motion design:
+//   • Slow continuous rotation: ~0.285 rad/s ≈ 22 s per full revolution.
+//   • Speed varies subtly: ±15% modulation via sin() so it doesn't feel
+//     mechanical. This reads as more alive without being distracting.
+//   • Gentle vertical bob (unchanged from original).
+//   • Micro breathing scale pulse (±0.5%) for premium "alive" feel.
+//
+// Performance:
+//   • Paused via IntersectionObserver when the Canvas is not in viewport.
+//   • Paused when document is backgrounded (visibilitychange).
+//   • Delta-time driven — frame-rate independent at any refresh rate.
+// ─────────────────────────────────────────────────────────────────────────────
 function IdleRig({ children }: { children: React.ReactNode }) {
   const ref = useRef<THREE.Group>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
+  const isPausedRef = useRef(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Set up pause signals: IntersectionObserver + page visibility.
+  useEffect(() => {
+    // Find the Canvas element (nearest ancestor canvas from the group ref's DOM).
+    // R3F mounts the canvas as a sibling of the group's DOM parent.
+    const canvas = document.getElementById("hero-canvas") as HTMLCanvasElement | null;
+    canvasRef.current = canvas;
+
+    const handleVisibility = () => {
+      isPausedRef.current = document.hidden;
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    let observer: IntersectionObserver | null = null;
+    if (canvas) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          isPausedRef.current = !entry.isIntersecting;
+        },
+        { threshold: 0.05 }
+      );
+      observer.observe(canvas);
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!ref.current || isPausedRef.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.y = Math.sin(t * 0.2) * 0.12;
+
+    // Slow continuous rotation with ±15% speed modulation for organic feel.
+    // Base speed 0.285 rad/s ≈ 1 revolution per 22 seconds.
+    const speed = 0.285 * (1 + 0.15 * Math.sin(t * 0.4));
+    ref.current.rotation.y += speed * delta;
+
+    // Gentle vertical bob — unchanged from original.
     ref.current.position.y = Math.sin(t * 1.0) * 0.02;
+
+    // Micro breathing scale pulse (±0.5%) — subtle premium "alive" effect.
+    const breathe = 1 + 0.005 * Math.sin(t * 0.7);
+    ref.current.scale.setScalar(breathe);
   });
+
   return <group ref={ref}>{children}</group>;
 }
 
 const HeroModel = ({ gender, onReady }: { gender: Gender; onReady: () => void }) => {
   return (
     <Canvas
+      id="hero-canvas"
       camera={{ position: [0, 1.05, 3.4], fov: 32 }}
       gl={{
         alpha: true,

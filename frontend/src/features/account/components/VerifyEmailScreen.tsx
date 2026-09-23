@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "../../../app/store/useAuthStore";
 import { OtpInput } from "./OtpInput";
+import { BackButton } from "./BackButton";
 
 interface VerifyEmailScreenProps {
   onDone?: () => void;
+  /** Optional — allows the user to dismiss the verification card and return
+   * to the previous view without signing out or breaking state. */
+  onBack?: () => void;
 }
 
-export const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onDone }) => {
+export const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onDone, onBack }) => {
   const { user, verifyEmailOtp, requestOtp, error, loading, clearError } = useAuthStore();
   const [otp, setOtp] = useState("");
   const [sent, setSent] = useState(false);
@@ -68,6 +72,9 @@ export const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ onDone }) 
             transition={{ duration: 0.25 }}
             className="w-full rounded-[26px] border border-ink/[0.07] bg-white p-8 shadow-2xl shadow-ink/5"
           >
+            {onBack && (
+              <BackButton onClick={onBack} label="Back" />
+            )}
             <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-plum-50 text-plum-600">
               <ShieldCheck className="h-6 w-6" />
             </span>

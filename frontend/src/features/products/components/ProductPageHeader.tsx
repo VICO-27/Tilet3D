@@ -84,12 +84,14 @@ const ProductPageHeader: React.FC<Props> = ({ categories, onCategorySelect }) =>
             max-w-7xl
             mx-auto
             h-14
-            px-8
+            px-5
+            md:px-8
             flex
             justify-start
             md:justify-center
             items-center
-            gap-8
+            gap-5
+            md:gap-8
             overflow-x-auto
             no-scrollbar
           "

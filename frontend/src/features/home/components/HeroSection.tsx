@@ -127,17 +127,17 @@ const HeroSection = () => {
           </p>
 
           {/* Call to Actions */}
-          <div ref={ctaRef} className="mt-8 flex flex-wrap items-center gap-4">
+          <div ref={ctaRef} className="mt-8 flex flex-row items-center gap-3 sm:gap-4 w-full max-w-[400px] sm:max-w-none">
             <button
               onClick={() => navigate("/avatar")}
-              className="group inline-flex items-center gap-3 rounded-full bg-zinc-950 px-8 py-4 text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:bg-plum-600 hover:shadow-xl hover:shadow-plum-500/20 active:scale-[0.98]"
+              className="group flex-1 sm:flex-none inline-flex items-center justify-center gap-2 sm:gap-3 rounded-full bg-zinc-950 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-all duration-300 hover:bg-plum-600 hover:shadow-xl hover:shadow-plum-500/20 active:scale-[0.98]"
             >
               {t("hero.createAvatar", "Create your avatar")}
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </button>
             <button
               onClick={() => navigate("/products")}
-              className="inline-flex items-center rounded-full border border-zinc-200 bg-white/60 px-8 py-4 text-xs sm:text-sm font-semibold text-zinc-800 transition-all duration-300 hover:border-zinc-300 hover:bg-white hover:shadow-sm active:scale-[0.98]"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white/60 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-zinc-800 transition-all duration-300 hover:border-zinc-300 hover:bg-white hover:shadow-sm active:scale-[0.98]"
             >
               {t("hero.explore", "Explore the collection")}
             </button>

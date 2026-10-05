@@ -169,26 +169,11 @@ class Profile(BaseModel):
         null=True,
     )
 
-    gender = models.CharField(
-        max_length=20,
-        choices=Gender.choices,
-        blank=True,
-        null=True,
-    )
-
-    body_type = models.CharField(
-        max_length=20,
-        choices=BodyType.choices,
-        blank=True,
-        null=True,
-    )
-
-    skin_tone = models.CharField(
-        max_length=20,
-        choices=SkinTone.choices,
-        blank=True,
-        null=True,
-    )
+    # Deprecated fields: These are now managed by avatars.AvatarProfile
+    # and should be removed after verifying no data loss is required.
+    # gender = models.CharField(max_length=20, choices=Gender.choices, blank=True, null=True)
+    # body_type = models.CharField(max_length=20, choices=BodyType.choices, blank=True, null=True)
+    # skin_tone = models.CharField(max_length=20, choices=SkinTone.choices, blank=True, null=True)
 
     class Meta:
         verbose_name = "Profile"

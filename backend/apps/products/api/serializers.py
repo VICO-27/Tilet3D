@@ -48,6 +48,7 @@ class ProductSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     comment_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -64,6 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "like_count",
             "comment_count",
             "is_liked",
+            "is_saved",
         )
 
     def get_like_count(self, obj):
@@ -95,6 +97,22 @@ class ProductSerializer(serializers.ModelSerializer):
             like.user_id == request.user.id
             for like in obj.likes.all()
         )
+
+    def get_is_saved(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+
+        # If prefetched
+        if hasattr(obj, 'bookmarks'):
+            return any(
+                bookmark.user_id == request.user.id
+                for bookmark in obj.bookmarks.all()
+            )
+        
+        # Fallback to DB query
+        from apps.products.models import ProductBookmark
+        return ProductBookmark.objects.filter(product=obj, user=request.user).exists()
 
 
 class ProductLikeSerializer(serializers.ModelSerializer):

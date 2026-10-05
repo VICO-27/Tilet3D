@@ -85,9 +85,6 @@ class ProfileAdmin(admin.ModelAdmin):
         "user",
         "full_name",
         "nickname",
-        "gender",
-        "body_type",
-        "skin_tone",
     )
 
     search_fields = (

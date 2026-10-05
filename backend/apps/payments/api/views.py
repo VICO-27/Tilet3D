@@ -84,7 +84,6 @@ class PaymentWebhookView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    @transaction.atomic
     def post(self, request):
 
         payload = request.data

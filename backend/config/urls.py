@@ -7,11 +7,13 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     
     # API App Endpoints
+    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/", include("apps.accounts.api.urls")),
     path("api/products/", include("apps.products.api.urls")),
     path("api/cart/", include("apps.cart.api.urls")),

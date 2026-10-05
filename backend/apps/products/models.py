@@ -274,6 +274,30 @@ class ProductLike(BaseModel):
         return f"{self.user.email} likes {self.product.name}"
 
 
+class ProductBookmark(BaseModel):
+    """
+    Saved / Bookmarked products.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_bookmarks"
+    )
+
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="bookmarks"
+    )
+
+    class Meta:
+        unique_together = ("user", "product")
+
+    def __str__(self):
+        return f"{self.user.email} bookmarked {self.product.name}"
+
+
 class ProductComment(BaseModel):
     """
     Product comments.

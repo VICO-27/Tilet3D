@@ -14,6 +14,14 @@ class OrderStatus(models.TextChoices):
     CANCELLED = 'cancelled', 'Cancelled'
 
 
+class OrderSequence(models.Model):
+    """
+    Used to generate gapless, race-condition-free daily sequence numbers.
+    """
+    date = models.DateField(unique=True)
+    last_value = models.PositiveIntegerField(default=0)
+
+
 class PaymentStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
     PAID = 'paid', 'Paid'

@@ -30,8 +30,8 @@ class ChapaGateway(BaseGateway):
             "return_url": getattr(
                 settings,
                 "CHAPA_RETURN_URL",
-                f"http://localhost:3000/checkout/success?order_id={payment.order.id}" 
-            ),
+                "http://localhost:3000/checkout/success" 
+            ) + f"?order_id={payment.order.id}",
         }
 
         headers = {

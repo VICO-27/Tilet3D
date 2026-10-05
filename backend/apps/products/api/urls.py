@@ -8,6 +8,7 @@ from .views import (
     ShareProductView,
     ProductCommentsListView,
     UserLikedProductsAPIView,
+    ToggleBookmarkView,
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
     # SOCIAL ACTIONS
     # =========================
     path("like/", ToggleLikeView.as_view(), name="like-toggle"),
+    path("bookmark/", ToggleBookmarkView.as_view(), name="bookmark-toggle"),
     path("comment/", AddCommentView.as_view(), name="comment-add"),
     path("share/", ShareProductView.as_view(), name="share"),
     path("<uuid:id>/comments/", ProductCommentsListView.as_view(), name="product-comments"),

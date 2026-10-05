@@ -123,13 +123,23 @@ class CartSerializer(serializers.ModelSerializer):
         )
 
     def get_shipping(self, obj):
-        return 0
+        from decimal import Decimal
+        from apps.orders.services.checkout import CheckoutService
+        
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            default_address = request.user.addresses.filter(is_default=True).first()
+            if default_address:
+                return CheckoutService.calculate_shipping(default_address.region, default_address.city)
+        return Decimal('0.00')
 
     def get_tax(self, obj):
-        return 0
+        from decimal import Decimal
+        return self.get_subtotal(obj) * Decimal('0.15')
 
     def get_discount(self, obj):
-        return 0
+        from decimal import Decimal
+        return Decimal('0.00')
 
     def get_grand_total(self, obj):
         return (

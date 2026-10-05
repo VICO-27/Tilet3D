@@ -13,13 +13,12 @@
 # ==========================================================
 
 from django.utils import timezone
-
-from apps.orders.models import Order
-
+from django.db import transaction
+from apps.orders.models import OrderSequence
 
 class OrderNumberService:
     """
-    Generates unique order numbers.
+    Generates unique order numbers safely under concurrency.
 
     Format:
         TLT-YYYYMMDD-XXXXXX
@@ -33,17 +32,16 @@ class OrderNumberService:
     @classmethod
     def generate(cls):
         today = timezone.localdate()
-
         date_part = today.strftime("%Y%m%d")
 
-        # ==================================================
-        # COUNT TODAY'S ORDERS
-        # ==================================================
+        with transaction.atomic():
+            # Get or create the sequence row for today
+            seq, created = OrderSequence.objects.select_for_update().get_or_create(date=today)
+            
+            # Increment and save
+            seq.last_value += 1
+            seq.save(update_fields=['last_value'])
 
-        today_count = Order.objects.filter(
-            created_at__date=today
-        ).count()
-
-        sequence = today_count + 1
+            sequence = seq.last_value
 
         return f"{cls.PREFIX}-{date_part}-{sequence:06d}"

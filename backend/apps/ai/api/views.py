@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.ai.services.gemini_client import stream_chat_response
 from apps.ai.services.recommend import get_similar_products
@@ -15,6 +16,8 @@ from apps.products.models import Product
 
 class ChatView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'ai_chat'
 
     def post(self, request):
         serializer = ChatMessageSerializer(data=request.data)
@@ -82,6 +85,8 @@ class ProductsByIdsView(APIView):
 
 class SearchView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'ai_search'
 
     def get(self, request):
         query = (request.query_params.get("q") or "").strip()
@@ -90,7 +95,15 @@ class SearchView(APIView):
                 {"detail": "q parameter is required."}, status=status.HTTP_400_BAD_REQUEST
             )
         from apps.ai.services.recommend import semantic_search_products
+        from apps.ai.services.gemini_client import AIOfflineError
 
-        results = semantic_search_products(query, limit=12)
+        try:
+            results = semantic_search_products(query, limit=12)
+        except AIOfflineError:
+            return Response(
+                {"detail": "Semantic search is currently unavailable."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
         serializer = ProductSerializer(results, many=True, context={"request": request})
         return Response({"query": query, "results": serializer.data})

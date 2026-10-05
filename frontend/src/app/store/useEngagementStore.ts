@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useToastStore } from './useToastStore';
+import apiClient from '../../shared/api/apiClient';
 
 export interface ProductComment {
   id: string;
@@ -8,9 +9,6 @@ export interface ProductComment {
   text: string;
   created_at: string;
 }
-
-const API_URL = "http://127.0.0.1:8000/api";
-const ACCESS_TOKEN_KEY = "tilet3d_access_token";
 
 interface EngagementState {
   loading: boolean;
@@ -27,14 +25,6 @@ interface EngagementState {
   addComment: (productId: string, text: string) => Promise<ProductComment | null>;
   trackShare: (productId: string, platform?: string) => Promise<void>;
 }
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
 
 export const useEngagementStore = create<EngagementState>((set, get) => ({
   loading: false,
@@ -60,18 +50,8 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
     }));
 
     try {
-      const response = await fetch(`${API_URL}/products/like/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ product_id: productId }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.detail || "Could not process like");
-      }
-
-      const result = await response.json();
+      const response = await apiClient.post(`/products/like/`, { product_id: productId });
+      const result = response.data;
       
       // Parse backend's boolean payload { liked: true/false }
       const isLikedNow = result.liked === true;
@@ -113,18 +93,8 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
     }));
 
     try {
-      const response = await fetch(`${API_URL}/products/bookmark/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ product_id: productId }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.detail || "Could not process save action");
-      }
-
-      const result = await response.json();
+      const response = await apiClient.post(`/products/bookmark/`, { product_id: productId });
+      const result = response.data;
 
       set((state) => {
         const isSavedNow = result.status === "saved";
@@ -148,14 +118,8 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
     if (!text.trim()) return null;
     set({ loading: true });
     try {
-      const response = await fetch(`${API_URL}/products/comment/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ product_id: productId, text: text.trim() }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Failed to add comment");
+      const response = await apiClient.post(`/products/comment/`, { product_id: productId, text: text.trim() });
+      const data = response.data;
 
       useToastStore.getState().show("Comment posted");
       return data as ProductComment;
@@ -170,11 +134,7 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
 
   trackShare: async (productId: string, platform: string = "link") => {
     try {
-      await fetch(`${API_URL}/products/share/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ product_id: productId, platform }),
-      });
+      await apiClient.post(`/products/share/`, { product_id: productId, platform });
     } catch (err) {
       console.error("Share tracking failed", err);
     }

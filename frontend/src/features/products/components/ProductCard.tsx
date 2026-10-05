@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import EngagementBar from './EngagementBar';
 import { useEngagementStore } from '@/app/store/useEngagementStore';
 import { useCartStore } from '@/app/store/useCartStore';
 import { ShoppingBag, Check } from 'lucide-react';
-import PremiumPlanModal from './PremiumPlanModal'; // <-- Import the new modal
+import PremiumPlanModal from './PremiumPlanModal';
 
 interface ProductMedia {
   id: string;
@@ -34,10 +35,10 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
   
-  // <-- State to control the Premium Modal
   const [showPremium, setShowPremium] = useState(false); 
   
   const [localCommentCount, setLocalCommentCount] = useState(product.comment_count);
@@ -58,20 +59,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
     e.stopPropagation();
     if (!variantId) {
       console.error("Product variants missing:", product);
-      alert("Unable to add item: Variant ID not found.");
+      alert(t("cart.variantError", "Unable to add item: Variant ID not found."));
       return;
     }
 
-    console.log("Adding variant to cart:", variantId);
     const success = await addToCart(variantId, 1);
     if (!success) {
-      alert("Failed to sync with cart. Please ensure you are logged in.");
+      alert(t("cart.syncError", "Failed to sync with cart. Please ensure you are logged in."));
     }
   };
 
   const handleTryOnAvatar = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Stop the card from navigating to /products/:id
-    setShowPremium(true); // Open the premium plan modal instead
+    e.stopPropagation();
+    setShowPremium(true);
   };
 
   return (
@@ -85,7 +85,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
         }}
         onClick={() => navigate(`/products/${product.id}`)}
       >
-        {/* Media Layer */}
         <div className="absolute inset-0 w-full h-full">
           {activeMedia?.media_type === 'video' ? (
             <video src={activeMedia.file} autoPlay muted loop className="w-full h-full object-cover" />
@@ -100,10 +99,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           )}
         </div>
 
-        {/* Shadow Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-10" />
 
-        {/* Engagement Sidebar Wrapper */}
         <div
           className="absolute right-4 bottom-32 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ease-out z-30"
           onClick={e => e.stopPropagation()}
@@ -114,16 +111,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           />
         </div>
 
-        {/* Combined Lower Control Interface */}
         <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
 
-          {/* Action Buttons Row */}
           <div className="grid grid-cols-2 gap-2 w-full">
             <button
-              onClick={handleTryOnAvatar} // <-- Uses the interceptor function
+              onClick={handleTryOnAvatar}
               className="py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
             >
-              Try-on Avatar
+              {t("products.tryOn", "Try-on Avatar")}
             </button>
 
             <button
@@ -136,27 +131,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             >
               {alreadyAdded ? (
                 <>
-                  <Check className="h-3.5 w-3.5" /> Added
+                  <Check className="h-3.5 w-3.5" /> {t("cart.added", "Added")}
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="h-3.5 w-3.5" /> Add to Bag
+                  <ShoppingBag className="h-3.5 w-3.5" /> {t("cart.addToBag", "Add to Bag")}
                 </>
               )}
             </button>
           </div>
 
-          {/* Identity & Price (Left Aligned) */}
           <div className="text-white pl-1">
             <h3 className="text-lg font-serif leading-tight drop-shadow-md">
               {product.name}
             </h3>
             <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
-              {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : 'Bespoke Order'}
+              {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : t("products.bespoke", "Bespoke Order")}
             </p>
           </div>
 
-          {/* Luxury Micro-Input Comment Tray */}
           {showCommentInput && (
             <div
               className="w-full animate-fade-in"
@@ -169,11 +162,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
               />
             </div>
           )}
-
         </div>
       </div>
 
-      {/* Render the modal OUTSIDE the main relative container so it covers the whole screen */}
       <PremiumPlanModal 
         isOpen={showPremium} 
         onClose={() => setShowPremium(false)} 
@@ -183,12 +174,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   );
 };
 
-/* Mini Helper Component */
 const CommentInputTray: React.FC<{
   productId: string;
   onComplete: () => void;
   onPosted: () => void;
 }> = ({ productId, onComplete, onPosted }) => {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
   const { addComment } = useEngagementStore();
@@ -209,7 +200,7 @@ const CommentInputTray: React.FC<{
     <div className="flex items-center space-x-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 w-full">
       <input
         type="text"
-        placeholder="Add note on couture..."
+        placeholder={t("products.addNote", "Add note on couture...")}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handlePost()}
@@ -222,7 +213,7 @@ const CommentInputTray: React.FC<{
         disabled={posting}
         className="text-[10px] font-bold text-white uppercase tracking-wider bg-white/20 hover:bg-white px-3 py-1 rounded-full hover:text-black transition-colors disabled:opacity-50"
       >
-        {posting ? '...' : 'Post'}
+        {posting ? '...' : t("products.post", "Post")}
       </button>
     </div>
   );

@@ -5,7 +5,7 @@ const REFRESH_TOKEN_KEY = "tilet3d_refresh_token";
 const USER_KEY = "tilet3d_user";
 
 const apiClient = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -49,7 +49,8 @@ apiClient.interceptors.response.use(
       if (refreshToken) {
         try {
           // Attempt to fetch a new access token
-          const refreshResponse = await axios.post("http://127.0.0.1:8000/api/auth/token/refresh/", {
+          const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+          const refreshResponse = await axios.post(`${baseURL}/auth/token/refresh/`, {
             refresh: refreshToken,
           });
 

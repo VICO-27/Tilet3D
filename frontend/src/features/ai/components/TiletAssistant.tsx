@@ -1,18 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAiChat } from "../hooks/useAiChat";
 import { ProductPreviewCard } from "./ProductPreviewCard";
 
-const QUICK_PROMPTS = ["What's new?", "Help me pick an outfit", "How does try-on work?"];
-
 export const TiletAssistant: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, isGenerating, send } = useAiChat(
-    "Hi! I'm the Tilet3D assistant. Ask me about products, sizing, or how the site works."
+    t("ai.welcome", "Hi! I'm the Tilet3D assistant. Ask me about products, sizing, or how the site works.")
   );
   const endRef = useRef<HTMLDivElement>(null);
+  
+  const QUICK_PROMPTS = [
+    t("ai.prompt.whatsNew", "What's new?"), 
+    t("ai.prompt.outfit", "Help me pick an outfit"), 
+    t("ai.prompt.tryOn", "How does try-on work?")
+  ];
 
   useEffect(() => {
     if (isOpen) endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,7 +43,7 @@ export const TiletAssistant: React.FC = () => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
           </span>
-          <span className="text-sm font-medium tracking-wide">Ask Tilet3D</span>
+          <span className="text-sm font-medium tracking-wide">{t("ai.ask", "Ask Tilet3D")}</span>
         </button>
       )}
 
@@ -49,9 +55,9 @@ export const TiletAssistant: React.FC = () => {
                 T3
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Tilet Concierge</h3>
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">{t("ai.concierge", "Tilet Concierge")}</h3>
                 <button onClick={() => navigate("/ai-concierge")} className="text-[11px] text-amber-600 hover:underline">
-                  Open full chat →
+                  {t("ai.openFull", "Open full chat →")}
                 </button>
               </div>
             </div>
@@ -100,7 +106,7 @@ export const TiletAssistant: React.FC = () => {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a quick question..."
+              placeholder={t("ai.placeholder", "Ask a quick question...")}
               className="flex-1 bg-neutral-100 dark:bg-neutral-800 border-none rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
             <button
@@ -108,7 +114,7 @@ export const TiletAssistant: React.FC = () => {
               disabled={isGenerating || !input.trim()}
               className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-5 rounded-xl font-medium text-sm disabled:opacity-40"
             >
-              Send
+              {t("ai.send", "Send")}
             </button>
           </form>
         </div>

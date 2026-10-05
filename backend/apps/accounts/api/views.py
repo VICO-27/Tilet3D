@@ -138,10 +138,14 @@ class AddressDetailView(generics.RetrieveUpdateDestroyAPIView):
 # -------------------------
 # REGISTER
 # -------------------------
+from rest_framework.throttling import ScopedRateThrottle
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -155,6 +159,8 @@ class RegisterView(generics.CreateAPIView):
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -203,6 +209,8 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 class RequestOTPView(generics.GenericAPIView):
     serializer_class = RequestOTPSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -223,6 +231,8 @@ class RequestOTPView(generics.GenericAPIView):
 class VerifyOTPView(generics.GenericAPIView):
     serializer_class = VerifyOTPSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -266,6 +276,8 @@ class VerifyOTPView(generics.GenericAPIView):
 class PasswordResetView(generics.GenericAPIView):
     serializer_class = PasswordResetSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

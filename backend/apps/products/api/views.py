@@ -28,7 +28,7 @@ class UserLikedProductsAPIView(generics.ListAPIView):
         return Product.objects.filter(
             likes__user=self.request.user,
             is_active=True
-        ).prefetch_related("media", "variants", "likes", "comments")
+        ).prefetch_related("media", "variants", "likes", "comments", "bookmarks")
 
     def get_serializer_context(self):
         return {"request": self.request}
@@ -64,6 +64,7 @@ class ProductListAPIView(generics.ListAPIView):
     "variants",
     "likes",
     "comments",
+    "bookmarks",
 ).order_by(
     "display_order", "-created_at", "id",
 )
@@ -97,6 +98,7 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
             "variants",
             "likes",
             "comments",
+            "bookmarks",
         )
 
     def get_serializer_context(self):
@@ -142,6 +144,28 @@ class AddCommentView(APIView):
 
         serializer = ProductCommentSerializer(comment)
         return Response(serializer.data)
+
+# ==========================================================
+# BOOKMARK TOGGLE
+# ==========================================================
+from apps.products.models import ProductBookmark
+
+class ToggleBookmarkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        product_id = request.data.get("product_id")
+
+        bookmark, created = ProductBookmark.objects.get_or_create(
+            user=request.user,
+            product_id=product_id
+        )
+
+        if not created:
+            bookmark.delete()
+            return Response({"status": "unsaved"})
+
+        return Response({"status": "saved"})
 
 
 # ==========================================================

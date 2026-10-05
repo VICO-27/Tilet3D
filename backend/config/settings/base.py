@@ -25,6 +25,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # CORE SETTINGS
 # ==========================================================
 
+# Provide a default for local dev, but production should override or fail
 SECRET_KEY = env(
     "SECRET_KEY",
     default="django-insecure-change-this-later"
@@ -187,7 +188,16 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": (
         "drf_spectacular.openapi.AutoSchema"
     ),
-        "DEFAULT_THROTTLE_RATES": {
+
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/minute",
+        "user": "1000/minute",
+        "auth": "10/minute",
         "ai_chat": "15/minute",
         "ai_search": "30/minute",
     },

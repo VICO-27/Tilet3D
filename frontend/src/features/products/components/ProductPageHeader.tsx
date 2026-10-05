@@ -86,7 +86,8 @@ const ProductPageHeader: React.FC<Props> = ({ categories, onCategorySelect }) =>
             h-14
             px-8
             flex
-            justify-center
+            justify-start
+            md:justify-center
             items-center
             gap-8
             overflow-x-auto

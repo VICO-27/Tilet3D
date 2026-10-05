@@ -1,5 +1,26 @@
 import React, { Suspense, useRef, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+
+function ResponsiveCamera() {
+  const { camera, size } = useThree();
+  
+  useEffect(() => {
+    const aspect = size.width / size.height;
+    if (aspect < 0.75) {
+      // Mobile portrait
+      camera.position.set(0, 3.5, 6.5);
+    } else if (aspect < 1.2) {
+      // Tablet
+      camera.position.set(0, 3.5, 5.5);
+    } else {
+      // Desktop
+      camera.position.set(0, 3.5, 4.5);
+    }
+    camera.updateProjectionMatrix();
+  }, [camera, size]);
+
+  return null;
+}
 import {
   OrbitControls,
   ContactShadows,
@@ -242,6 +263,7 @@ export function AvatarViewer() {
           intensity={1.5}
           color="#e0e7ff"
         />
+        <ResponsiveCamera />
 
         <StudioScene />
 

@@ -1,6 +1,5 @@
-// frontend/src/features/home/components/HeroModel.tsx
 import { Suspense, useMemo, useRef, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, ContactShadows, Preload } from "@react-three/drei";
 import * as THREE from "three";
 import { prepareAvatar } from "../../avatar/utils/avatarRig";
@@ -12,6 +11,28 @@ const DRACO_URL = "https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/"
 
 useGLTF.preload(MALE, DRACO_URL);
 useGLTF.preload(FEMALE, DRACO_URL);
+
+function ResponsiveCamera() {
+  const { camera, size } = useThree();
+  
+  useEffect(() => {
+    // If screen is narrow (mobile), pull the camera back so the avatar isn't huge/cut-off
+    const aspect = size.width / size.height;
+    if (aspect < 0.75) {
+      // Mobile portrait
+      camera.position.set(0, 1.1, 5.5);
+    } else if (aspect < 1.2) {
+      // Tablet / small square
+      camera.position.set(0, 1.05, 4.2);
+    } else {
+      // Desktop
+      camera.position.set(0, 1.05, 3.4);
+    }
+    camera.updateProjectionMatrix();
+  }, [camera, size]);
+
+  return null;
+}
 
 // Use a WeakSet to track posed scenes safely without violating React immutability linter rules
 const posedScenes = new WeakSet<THREE.Group>();
@@ -160,6 +181,7 @@ const HeroModel = ({ gender, onReady }: { gender: Gender; onReady: () => void })
       <directionalLight position={[4, 8, 5]} intensity={2.2} color="#fff8f0" />
       <directionalLight position={[-4, 5, -3]} intensity={1.3} color="#d8b4fe" />
       <spotLight position={[0, 9, 3]} angle={0.4} penumbra={1} intensity={1.1} color="#ffffff" />
+      <ResponsiveCamera />
 
       <Suspense fallback={null}>
         <AssetManager onReady={onReady} />

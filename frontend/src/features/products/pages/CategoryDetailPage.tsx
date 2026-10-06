@@ -45,7 +45,7 @@ function CategoryDetailPage() {
       `}</style>
 
       {/* MINIMAL NAV UTILITY STRIP */}
-      <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
+      <nav className="fixed inset-x-0 top-0 z-50 bg-white/70 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
           className="group flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 hover:text-black transition-colors duration-300"
@@ -62,7 +62,7 @@ function CategoryDetailPage() {
       </nav>
 
       {/* HERO EDITORIAL SECTION */}
-      <header className="max-w-[1600px] mx-auto px-6 pt-16 md:pt-24 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-end border-b border-zinc-100">
+      <header className="max-w-[1600px] mx-auto px-6 pt-32 md:pt-40 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-end border-b border-zinc-100">
         <div className="lg:col-span-7 space-y-6 animate-apple-fadeup">
           <span className="text-[11px] font-black uppercase tracking-[0.4em] text-purple-600 block">
             Exclusively Tailored

@@ -23,21 +23,25 @@ const AvatarPage = () => {
           <AvatarViewer />
         </div>
 
-        {/* Calibration panel — slides right on confirm */}
+        {/* Calibration panel — slides right on desktop, slides down on mobile on confirm */}
         <div
           className={`
-            absolute top-0 right-0 h-full
+            absolute bottom-0 md:top-0 right-0
+            h-[55%] md:h-full
             w-full md:w-[35%] md:min-w-[400px]
-            bg-white/95 md:bg-white/88
+            bg-white/90 md:bg-white/88
             backdrop-blur-3xl
-            border-l border-stone-200/60
-            shadow-[-20px_0_60px_rgba(0,0,0,0.04)]
+            rounded-t-3xl md:rounded-none
+            border-t md:border-t-0 md:border-l border-stone-200/60
+            shadow-[0_-20px_60px_rgba(0,0,0,0.08)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.04)]
             transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]
             z-10 overflow-y-auto
-            ${isConfirmed ? 'translate-x-full' : 'translate-x-0'}
+            ${isConfirmed ? 'translate-y-full md:translate-y-0 md:translate-x-full' : 'translate-y-0 md:translate-x-0'}
           `}
         >
           <div className="p-6 md:p-10 pb-28 max-w-lg mx-auto">
+            {/* Mobile drag handle indicator */}
+            <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-6 md:hidden" />
             <AvatarForm />
           </div>
         </div>

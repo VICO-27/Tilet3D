@@ -20,11 +20,16 @@ export default {
           "0%": { transform: "translateX(0%)" },
           "100%": { transform: "translateX(-100%)" },
         },
+        waveform: {
+          "0%, 100%": { height: "4px" },
+          "50%": { height: "14px" },
+        },
       },
       animation: {
         // Slowed down to 60s for Row 1 to be elegant, not dizzying
         "marquee": "marquee 60s linear infinite",
         "spin-slow": "spin-slow 1.4s linear infinite",
+        "waveform": "waveform 0.8s ease-in-out infinite",
       },
     },
   },

@@ -12,10 +12,7 @@ interface Props {
 
 const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { scrollDirection, scrollY } = useScrollDirection();
-  
-  // When top navbar is hidden (scrolling down), category nav should slide up to top-0
-  const isNavHidden = scrollDirection === 'down' && scrollY > 50;
+  const { navbarOffset } = useScrollDirection();
 
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
@@ -25,18 +22,17 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
     <>
       {/* ================= CATEGORY NAV (FIXED AT TOP) ================= */}
       <nav
-        className={`
+        style={{ transform: `translateY(${navbarOffset}px)` }}
+        className="
           fixed
+          top-[48px]
           inset-x-0
           z-40
           bg-white/85
           backdrop-blur-2xl
           border-y
           border-black/5
-          transition-all
-          duration-300
-          ${isNavHidden ? 'top-0' : 'top-[48px]'}
-        `}
+        "
       >
         <div className="max-w-[1400px] mx-auto flex items-center justify-center px-4 md:px-8 h-11 w-full">
           <div

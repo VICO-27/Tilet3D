@@ -1,29 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-export function useScrollDirection() {
+export function useScrollDirection(maxOffset = 48) {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
   const [scrollY, setScrollY] = useState(0);
+  const [navbarOffset, setNavbarOffset] = useState(0);
+  
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    let lastScrollY = window.pageYOffset;
+    // Initialize
+    lastScrollY.current = window.pageYOffset;
 
-    const updateScrollDirection = () => {
+    const updateScroll = () => {
       const currentScrollY = window.pageYOffset;
-      const direction = currentScrollY > lastScrollY ? 'down' : 'up';
+      const dy = currentScrollY - lastScrollY.current;
+      const direction = dy > 0 ? 'down' : 'up';
       
+      setScrollY(currentScrollY);
+
       if (
         direction !== scrollDirection &&
-        (currentScrollY - lastScrollY > 10 || currentScrollY - lastScrollY < -10)
+        (dy > 10 || dy < -10)
       ) {
         setScrollDirection(direction);
       }
-      lastScrollY = currentScrollY > 0 ? currentScrollY : 0;
-      setScrollY(currentScrollY);
+
+      setNavbarOffset(prev => {
+        if (currentScrollY <= 0) return 0;
+        let next = prev - dy;
+        if (next > 0) next = 0;
+        if (next < -maxOffset) next = -maxOffset;
+        return next;
+      });
+
+      lastScrollY.current = currentScrollY > 0 ? currentScrollY : 0;
     };
 
-    window.addEventListener('scroll', updateScrollDirection, { passive: true });
-    return () => window.removeEventListener('scroll', updateScrollDirection);
-  }, [scrollDirection]);
+    window.addEventListener('scroll', updateScroll, { passive: true });
+    return () => window.removeEventListener('scroll', updateScroll);
+  }, [scrollDirection, maxOffset]);
 
-  return { scrollDirection, scrollY };
+  return { scrollDirection, scrollY, navbarOffset };
 }

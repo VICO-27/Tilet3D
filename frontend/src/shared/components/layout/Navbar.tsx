@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, ShoppingBag, Package, User, MessageSquare } from "lucide-react";
+import { Search, ShoppingBag, Package, User, MessageSquare, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useCartStore } from "../../../app/store/useCartStore";
 import { CartDrawer } from "../../../features/cart/components/CartDrawer";
 import { MobileDock } from "./MobileDock";
+import { useScrollDirection } from "../../hooks/useScrollDirection";
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -18,6 +19,9 @@ const Navbar = () => {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { scrollDirection, scrollY } = useScrollDirection();
+  const isHidden = scrollDirection === 'down' && scrollY > 50 && !searchOpen && !cartOpen;
+
   const { cartItems, fetchCart } = useCartStore();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -25,7 +29,7 @@ const Navbar = () => {
     { to: "/", label: t("nav.home", "Home") },
     { to: "/products", label: t("nav.collection", "Collection") },
     { to: "/avatar", label: t("nav.fittingRoom", "Fitting Room") },
-    { to: "/ai-concierge", label: "Chat" }, // <-- Added Chat link here
+    { to: "/ai-concierge", label: "Chat" },
   ];
 
   const SUGGESTIONS = [
@@ -72,9 +76,18 @@ const Navbar = () => {
     }
   };
 
+  const openFilters = () => {
+    setSearchOpen(false);
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set('open_filters', 'true');
+    navigate(`/products?${newParams.toString()}`);
+  };
+
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-ink/[0.06] bg-white/80 backdrop-blur-xl">
+      <header 
+        className={`fixed inset-x-0 top-0 z-50 border-b border-ink/[0.06] bg-white/80 backdrop-blur-xl transition-transform duration-300 ${isHidden ? '-translate-y-full' : 'translate-y-0'}`}
+      >
         <div className="mx-auto flex h-[48px] max-w-[1400px] items-center justify-between px-6 md:px-10">
           
           <Link to="/" className="flex items-center gap-2">
@@ -162,7 +175,7 @@ const Navbar = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setSearchOpen(false)}
-                className="fixed inset-0 top-[48px] z-40 bg-ink/20 backdrop-blur-xs"
+                className="fixed inset-0 top-[48px] z-40 bg-ink/20 backdrop-blur-xs h-screen"
               />
               <motion.div
                 initial={{ opacity: 0, y: -12 }}
@@ -183,8 +196,15 @@ const Navbar = () => {
                       className="w-full bg-transparent text-lg text-ink placeholder-ink/35 focus:outline-none"
                     />
                     <button
+                      onClick={openFilters}
+                      className="flex shrink-0 items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-plum-50 hover:text-plum-700 transition-colors"
+                    >
+                      <SlidersHorizontal size={14} />
+                      Filters
+                    </button>
+                    <button
                       onClick={() => setSearchOpen(false)}
-                      className="text-[11px] font-bold uppercase tracking-wider text-ink/40 hover:text-ink"
+                      className="text-[11px] font-bold uppercase tracking-wider text-ink/40 hover:text-ink ml-2"
                     >
                       {t("nav.esc", "Esc")}
                     </button>

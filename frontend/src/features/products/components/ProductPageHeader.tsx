@@ -2,6 +2,7 @@ import React from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
 import { SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useScrollDirection } from "../../../shared/hooks/useScrollDirection";
 
 interface Props {
   categories: string[];
@@ -11,6 +12,11 @@ interface Props {
 
 const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { scrollDirection, scrollY } = useScrollDirection();
+  
+  // When top navbar is hidden (scrolling down), category nav should slide up to top-0
+  const isNavHidden = scrollDirection === 'down' && scrollY > 50;
+
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
   );
@@ -19,28 +25,32 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
     <>
       {/* ================= CATEGORY NAV (FIXED AT TOP) ================= */}
       <nav
-        className="
+        className={`
           fixed
-          top-[48px]
           inset-x-0
           z-40
           bg-white/85
           backdrop-blur-2xl
           border-y
           border-black/5
-        "
+          transition-all
+          duration-300
+          ${isNavHidden ? 'top-0' : 'top-[48px]'}
+        `}
       >
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-5 md:px-8 h-11">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-center px-4 md:px-8 h-11 w-full">
           <div
             className="
               flex
               justify-start
+              md:justify-center
               items-center
               gap-5
               md:gap-8
               overflow-x-auto
               no-scrollbar
-              flex-1
+              w-full
+              md:w-auto
             "
           >
             {navbarCategories.map((category) => {
@@ -66,26 +76,25 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
                 </button>
               );
             })}
-          </div>
-          
-          <div className="pl-6 border-l border-black/10 shrink-0 ml-4">
-            <button
-               onClick={() => {
-                 const newParams = new URLSearchParams(searchParams);
-                 newParams.set('open_filters', 'true');
-                 setSearchParams(newParams);
-               }}
-               className="flex items-center gap-2 text-[12px] font-bold text-ink/70 hover:text-plum-600 transition-colors"
-            >
-              <SlidersHorizontal size={14} />
-              <span className="hidden md:inline">Filters</span>
-            </button>
+            
+            <div className="pl-2 md:pl-4 border-l border-black/10 shrink-0 flex items-center">
+              <button
+                 onClick={() => {
+                   const newParams = new URLSearchParams(searchParams);
+                   newParams.set('open_filters', 'true');
+                   setSearchParams(newParams);
+                 }}
+                 className="flex items-center gap-1.5 text-[12px] font-bold text-ink/70 hover:text-plum-600 transition-colors"
+              >
+                <SlidersHorizontal size={14} />
+                <span className="inline">Filters</span>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* ================= HERO ================= */}
-      {/* Increased padding-top to account for the fixed 44px category nav + 48px main navbar */}
       <section className="pt-32 pb-16 px-8 md:px-10 relative overflow-hidden select-none w-full max-w-[100vw]">
         
         {/* GIANT BACKGROUND WATERMARK TEXT (AMHARIC FORM) */}

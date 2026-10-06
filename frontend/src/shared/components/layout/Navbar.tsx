@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, ShoppingBag, Package, User, MessageSquare, SlidersHorizontal } from "lucide-react";
+import { Search, ShoppingBag, User, MessageSquare, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useCartStore } from "../../../app/store/useCartStore";
@@ -145,19 +145,6 @@ const Navbar = () => {
             >
               <Search className="h-[15px] w-[15px]" />
             </button>
-
-            <Link
-              to="/orders"
-              aria-label={t("nav.orderHistory", "Order History")}
-              title={t("nav.orderHistory", "Order History")}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                isActive("/orders")
-                  ? "bg-plum-50 text-plum-600"
-                  : "text-ink/70 hover:bg-ink/[0.04] hover:text-ink"
-              }`}
-            >
-              <Package className="h-[15px] w-[15px]" />
-            </Link>
 
             <Link
               to="/account"

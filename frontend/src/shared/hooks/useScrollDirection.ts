@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export function useScrollDirection(maxOffset = 48) {
+export function useScrollDirection(maxOffset = 92) {
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
   const [scrollY, setScrollY] = useState(0);
   const [navbarOffset, setNavbarOffset] = useState(0);

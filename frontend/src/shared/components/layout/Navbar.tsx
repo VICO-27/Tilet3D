@@ -19,7 +19,8 @@ const Navbar = () => {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { navbarOffset } = useScrollDirection();
+  const isProductsPage = pathname === '/products' || pathname.startsWith('/products/');
+  const { navbarOffset } = useScrollDirection(isProductsPage ? 92 : 48);
   const offset = (searchOpen || cartOpen) ? 0 : navbarOffset;
 
   const { cartItems, fetchCart } = useCartStore();

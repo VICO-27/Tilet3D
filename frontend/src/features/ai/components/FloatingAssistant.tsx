@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, FormEvent } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Mic, ArrowUp, ChevronDown, Sparkles } from "lucide-react";
+import { Mic, ArrowUp, ChevronDown, Sparkles, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAssistantStore } from "../store/useAssistantStore";
 import { useAiChat } from "../hooks/useAiChat";
@@ -350,12 +350,22 @@ export const FloatingAssistant: React.FC = () => {
                 flex items-center gap-3
                 bg-[#1c1c1e]/92 backdrop-blur-2xl
                 border border-white/[0.10]
-                rounded-[28px] px-5 py-3.5
+                rounded-[28px] px-4 py-3.5
                 shadow-[0_4px_32px_rgba(0,0,0,0.65)]
                 min-h-[56px]
               "
             >
-              {/* AI orb — left */}
+              {/* ✕ Close button — always reachable */}
+              <button
+                type="button"
+                onClick={handleClose}
+                aria-label="Close AI assistant"
+                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+              >
+                <X size={15} />
+              </button>
+
+              {/* AI orb */}
               <AIOrb state={aiState} />
 
               {/* Input */}

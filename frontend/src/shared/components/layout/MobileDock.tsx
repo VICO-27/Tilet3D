@@ -15,7 +15,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const itemCount = useCartStore((state) => state.cartItems?.reduce((total, item) => total + item.quantity, 0) || 0);
-  const { openAssistant } = useAssistantStore();
+  const { openAssistant, closeAssistant, toggleAssistant } = useAssistantStore();
 
   // Close on route change
   useEffect(() => {
@@ -37,7 +37,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
     { name: t("nav.avatar", "Avatar"), path: '/avatar', icon: Sparkles, isAction: false },
     { name: t("nav.bag", "Bag"), path: '#', icon: ShoppingBag, isAction: true, action: () => { setIsOpen(false); onOpenCart(); } },
     { name: t("nav.orders", "Orders"), path: '/orders', icon: Package, isAction: false },
-    { name: t("nav.chat", "Chat"), path: '#', icon: MessageSquare, isAction: true, action: () => { setIsOpen(false); openAssistant(); } },
+    { name: t("nav.chat", "Chat"), path: '#', icon: MessageSquare, isAction: true, action: () => { setIsOpen(false); toggleAssistant(); } },
   ];
 
   return (

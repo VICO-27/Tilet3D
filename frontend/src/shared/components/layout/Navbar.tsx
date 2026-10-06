@@ -108,8 +108,8 @@ const Navbar = () => {
                   <button
                     key={link.to}
                     onClick={() => {
-                      const { openAssistant } = useAssistantStore.getState();
-                      openAssistant();
+                      const { toggleAssistant } = useAssistantStore.getState();
+                      toggleAssistant();
                     }}
                     className={`relative flex items-center gap-1 text-[12px] font-medium tracking-wide transition-colors text-ink/55 hover:text-ink`}
                   >

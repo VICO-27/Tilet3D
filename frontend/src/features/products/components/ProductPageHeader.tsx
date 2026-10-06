@@ -1,13 +1,13 @@
-// src/features/products/components/ProductPageHeader.tsx
 import React from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
 
 interface Props {
   categories: string[];
+  activeCategory?: string;
   onCategorySelect: (category: string) => void;
 }
 
-const ProductPageHeader: React.FC<Props> = ({ categories, onCategorySelect }) => {
+const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
   );
@@ -96,27 +96,29 @@ const ProductPageHeader: React.FC<Props> = ({ categories, onCategorySelect }) =>
             no-scrollbar
           "
         >
-          {navbarCategories.map((category) => (
-            <button
-              key={category}
-              onClick={() => onCategorySelect(category)}
-              style={{
-                fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
-              }}
-              className="
-                shrink-0
-                text-[13px]
-                font-medium
-                tracking-normal
-                text-ink/55
-                hover:text-ink
-                transition-colors
-                duration-300
-              "
-            >
-              {category}
-            </button>
-          ))}
+          {navbarCategories.map((category) => {
+            const isActive = activeCategory.toLowerCase() === category.toLowerCase();
+            return (
+              <button
+                key={category}
+                onClick={() => onCategorySelect(category)}
+                style={{
+                  fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
+                }}
+                className={`
+                  shrink-0
+                  text-[13px]
+                  font-bold
+                  tracking-wide
+                  transition-colors
+                  duration-300
+                  ${isActive ? 'text-plum-600' : 'text-ink/55 hover:text-plum-500'}
+                `}
+              >
+                {category}
+              </button>
+            );
+          })}
         </div>
       </nav>
     </>

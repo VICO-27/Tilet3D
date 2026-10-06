@@ -79,6 +79,7 @@ const ProductsPage: React.FC = () => {
   const [viewContext, setViewContext] = useState<string>('normal');
   const [loadDeferredBatch, setLoadDeferredBatch] = useState(false);
   const [showBrandLoader, setShowBrandLoader] = useState(true);
+  const [activeScrollCategory, setActiveScrollCategory] = useState<string>("All");
 
   // 1. Brand Loader takes over for the first 800ms to build suspense
   useEffect(() => {
@@ -87,6 +88,30 @@ const ProductsPage: React.FC = () => {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (viewContext !== 'normal' || searchQuery) return;
+      
+      let current = "All";
+      // We will look for elements with id category-{cat}
+      // and determine the one most visible at the top.
+      const elements = document.querySelectorAll('[id^="category-"]');
+      elements.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 200) {
+          current = el.id.replace('category-', '');
+        }
+      });
+      
+      if (window.scrollY < 200) current = "All";
+      setActiveScrollCategory(current);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [viewContext, searchQuery]);
 
   const allProducts = useMemo(() => {
     const list: Product[] = [];
@@ -241,6 +266,7 @@ const ProductsPage: React.FC = () => {
     <PageLayout>
       <ProductPageHeader
         categories={categories}
+        activeCategory={activeScrollCategory}
         onCategorySelect={handleCategoryNavigation}
       />
 

@@ -91,7 +91,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               aria-label="Mobile Navigation"
-              className="mr-1.5 w-[64px] py-4 bg-white/95 backdrop-blur-2xl border border-plum-100/50 shadow-[0_8px_32px_rgba(107,33,168,0.12)] rounded-3xl flex flex-col items-center gap-5 touch-pan-y"
+              className="mr-1.5 w-[64px] py-4 bg-white/60 backdrop-blur-2xl border border-white/40 shadow-[0_8px_32px_rgba(107,33,168,0.12)] rounded-3xl flex flex-col items-center gap-5 touch-pan-y"
             >
               {navItems.map((item) => {
                 const isActive = !item.isAction && location.pathname === item.path;

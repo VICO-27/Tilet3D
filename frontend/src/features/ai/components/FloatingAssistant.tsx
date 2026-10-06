@@ -81,8 +81,8 @@ const ThinkingDots: React.FC = () => (
 //  backdrop 55 | card 60 | pill 65 | minimise 70 | MobileDock 100 (no conflict, dock is side)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Pill height ~64px + 8px gap = 72px offset for the card bottom
-const PILL_H = 72; // px — approximate pill outer height + gap
+// Pill height ~64px + 20px gap = 84px offset for the card bottom
+const PILL_H = 84; // px — pill outer height + comfortable gap
 
 export const FloatingAssistant: React.FC = () => {
   const { isOpen, isMinimized, closeAssistant, minimizeAssistant, openAssistant } =

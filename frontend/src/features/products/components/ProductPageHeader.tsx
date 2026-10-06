@@ -12,7 +12,7 @@ interface Props {
 
 const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { navbarOffset } = useScrollDirection();
+  const { navbarHidden, categoryHidden } = useScrollDirection();
 
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
@@ -22,8 +22,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
     <>
       {/* ================= CATEGORY NAV (FIXED AT TOP) ================= */}
       <nav
-        style={{ transform: `translateY(${navbarOffset}px)` }}
-        className="
+        className={`
           fixed
           top-[48px]
           inset-x-0
@@ -32,7 +31,14 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           backdrop-blur-2xl
           border-y
           border-black/5
-        "
+          transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+          ${categoryHidden 
+            ? '-translate-y-[92px]' 
+            : navbarHidden 
+              ? '-translate-y-[48px]' 
+              : 'translate-y-0'
+          }
+        `}
       >
         <div className="max-w-[1400px] mx-auto flex items-center justify-center px-4 md:px-8 h-11 w-full">
           <div

@@ -19,9 +19,8 @@ const Navbar = () => {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isProductsPage = pathname === '/products' || pathname.startsWith('/products/');
-  const { navbarOffset } = useScrollDirection(isProductsPage ? 92 : 48);
-  const offset = (searchOpen || cartOpen) ? 0 : navbarOffset;
+  const { navbarHidden } = useScrollDirection();
+  const isHidden = (navbarHidden && !searchOpen && !cartOpen);
 
   const { cartItems, fetchCart } = useCartStore();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -87,8 +86,7 @@ const Navbar = () => {
   return (
     <>
       <header 
-        style={{ transform: `translateY(${offset}px)` }}
-        className="fixed inset-x-0 top-0 z-50 border-b border-ink/[0.06] bg-white/80 backdrop-blur-xl transition-none"
+        className={`fixed inset-x-0 top-0 z-50 border-b border-ink/[0.06] bg-white/80 backdrop-blur-xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isHidden ? '-translate-y-full' : 'translate-y-0'}`}
       >
         <div className="mx-auto flex h-[48px] max-w-[1400px] items-center justify-between px-6 md:px-10">
           

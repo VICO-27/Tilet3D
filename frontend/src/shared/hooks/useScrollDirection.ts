@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 
-export function useScrollDirection(maxOffset = 92) {
-  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up');
+export function useScrollDirection() {
+  const [scrollPhase, setScrollPhase] = useState(0); 
+  // 0: fully visible, 1: navbar hidden, 2: both hidden
   const [scrollY, setScrollY] = useState(0);
-  const [navbarOffset, setNavbarOffset] = useState(0);
-  
+
   const lastScrollY = useRef(0);
-  const scrollPhase = useRef(0); // 0: can hide main navbar, 1: can hide category nav
+  const phaseRef = useRef(0);
   const scrollTimeout = useRef<any>(null);
 
   useEffect(() => {
-    // Initialize
     lastScrollY.current = window.pageYOffset;
 
     const updateScroll = () => {
@@ -20,56 +19,29 @@ export function useScrollDirection(maxOffset = 92) {
       
       setScrollY(currentScrollY);
 
-      if (
-        direction !== scrollDirection &&
-        (dy > 10 || dy < -10)
-      ) {
-        setScrollDirection(direction);
-      }
-
-      if (direction === 'up') {
-        // When scrolling up, reset phase to 0 so they both slide down seamlessly
-        scrollPhase.current = 0;
-        setNavbarOffset(prev => {
-          if (currentScrollY <= 0) return 0;
-          let next = prev - dy;
-          if (next > 0) next = 0;
-          return next;
-        });
-      } else {
-        // Scrolling down
-        if (currentScrollY <= 0) {
-          scrollPhase.current = 0;
-          setNavbarOffset(0);
-        } else {
-          setNavbarOffset(prev => {
-            let next = prev - dy;
-            
-            // Phase 0: Lock offset at -48 so the Category Nav stays pinned to top
-            if (scrollPhase.current === 0) {
-              if (next <= -48) next = -48;
-            } else {
-              // Phase 1: Allow offset to drop to maxOffset (-92) to hide Category Nav
-              if (next <= -maxOffset) next = -maxOffset;
-            }
-            return next;
-          });
-        }
+      if (direction === 'up' && dy < -5) {
+         // Smoothly reveal both
+         phaseRef.current = 0;
+         setScrollPhase(0);
+      } else if (direction === 'down' && dy > 5 && currentScrollY > 50) {
+         if (phaseRef.current === 0) {
+            phaseRef.current = 1;
+            setScrollPhase(1);
+         } else if (phaseRef.current === 1.5) {
+            // "1.5" means the pause after Phase 1 has finished, so we can hide category nav
+            phaseRef.current = 2;
+            setScrollPhase(2);
+         }
       }
 
       lastScrollY.current = currentScrollY > 0 ? currentScrollY : 0;
 
-      // Handle swipe end detection
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
       scrollTimeout.current = setTimeout(() => {
-        // Swipe ended. If we are currently locked at -48, advance to phase 1
-        // so the NEXT swipe down can hide the category nav.
-        setNavbarOffset(currentOffset => {
-          if (currentOffset <= -48 && scrollPhase.current === 0) {
-            scrollPhase.current = 1;
-          }
-          return currentOffset;
-        });
+         if (phaseRef.current === 1) {
+            // Advance internal phase to 1.5 after pause
+            phaseRef.current = 1.5; 
+         }
       }, 150);
     };
 
@@ -78,7 +50,11 @@ export function useScrollDirection(maxOffset = 92) {
       window.removeEventListener('scroll', updateScroll);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-  }, [scrollDirection, maxOffset]);
+  }, []);
 
-  return { scrollDirection, scrollY, navbarOffset };
+  return { 
+    scrollY, 
+    navbarHidden: scrollPhase >= 1, 
+    categoryHidden: scrollPhase >= 2 
+  };
 }

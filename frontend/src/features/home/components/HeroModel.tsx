@@ -79,7 +79,7 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
   // Apple-grade butter-smooth scale and opacity dissolve transition
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    const targetScale = active ? transform.scale : 0;
+    const targetScale = active ? transform.scale : 0.001;
     const targetY = active ? transform.position[1] : transform.position[1] - 0.1;
 
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 7);
@@ -87,7 +87,7 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
   });
 
   return (
-    <group ref={groupRef} position={transform.position} scale={0}>
+    <group ref={groupRef} position={transform.position} scale={0.001} visible={active}>
       <primitive object={scene} />
     </group>
   );

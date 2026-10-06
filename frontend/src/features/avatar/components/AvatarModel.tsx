@@ -108,8 +108,8 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
     if (!group.current) return;
     const h = isFinite(height) && height > 0 ? height : 170;
     const w = isFinite(weight) && weight > 0 ? weight : 70;
-    const targetSy = active ? clamp(h / 170, 0.5, 2.0) : 0;
-    const targetSxz = active ? clamp(0.85 + w / 120, 0.5, 2.0) : 0;
+    const targetSy = active ? clamp(h / 170, 0.5, 2.0) : 0.001;
+    const targetSxz = active ? clamp(0.85 + w / 120, 0.5, 2.0) : 0.001;
 
     // Same butter-smooth lerp dissolve HeroModel uses when swapping genders.
     group.current.scale.lerp(new THREE.Vector3(targetSxz, targetSy, targetSxz), delta * 7);
@@ -129,7 +129,7 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
   if (!clonedScene) return null;
 
   return (
-    <group ref={group} scale={0}>
+    <group ref={group} scale={0.001} visible={active}>
       {/* dispose={null} prevents R3F from disposing our clone on unmount */}
       <primitive object={clonedScene} dispose={null} />
     </group>

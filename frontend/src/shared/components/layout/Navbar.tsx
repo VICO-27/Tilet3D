@@ -8,6 +8,7 @@ import { useCartStore } from "../../../app/store/useCartStore";
 import { CartDrawer } from "../../../features/cart/components/CartDrawer";
 import { MobileDock } from "./MobileDock";
 import { useScrollDirection } from "../../hooks/useScrollDirection";
+import { useAssistantStore } from "../../../features/ai/store/useAssistantStore";
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -100,21 +101,39 @@ const Navbar = () => {
           </Link>
 
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex">
-            {LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`relative text-[12px] font-medium tracking-wide transition-colors ${
-                  isActive(link.to) ? "text-ink" : "text-ink/55 hover:text-ink"
-                }`}
-              >
-                {link.to === "/ai-concierge" && <MessageSquare className="inline-block w-3.5 h-3.5 mr-1 text-plum-600" />}
-                {link.label}
-                {isActive(link.to) && (
-                  <span className="absolute -bottom-[15px] left-0 right-0 h-px bg-ink" />
-                )}
-              </Link>
-            ))}
+            {LINKS.map((link) => {
+              const isAssistant = link.to === "/ai-concierge";
+              if (isAssistant) {
+                return (
+                  <button
+                    key={link.to}
+                    onClick={() => {
+                      const { openAssistant } = useAssistantStore.getState();
+                      openAssistant();
+                    }}
+                    className={`relative flex items-center gap-1 text-[12px] font-medium tracking-wide transition-colors text-ink/55 hover:text-ink`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-plum-600" />
+                    {link.label}
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative text-[12px] font-medium tracking-wide transition-colors ${
+                    isActive(link.to) ? "text-ink" : "text-ink/55 hover:text-ink"
+                  }`}
+                >
+                  {link.label}
+                  {isActive(link.to) && (
+                    <span className="absolute -bottom-[15px] left-0 right-0 h-px bg-ink" />
+                  )}
+                </Link>
+              );
+            })}
 
             <button
               onClick={() => setCartOpen(true)}

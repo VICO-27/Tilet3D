@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Shirt, Sparkles, ShoppingBag, Package, MessageSquare } from 'lucide-react';
 import { useCartStore } from '../../../app/store/useCartStore';
+import { useAssistantStore } from '../../../features/ai/store/useAssistantStore';
 import { useTranslation } from 'react-i18next';
 
 interface MobileDockProps {
@@ -14,6 +15,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const itemCount = useCartStore((state) => state.cartItems?.reduce((total, item) => total + item.quantity, 0) || 0);
+  const { openAssistant } = useAssistantStore();
 
   // Close on route change
   useEffect(() => {
@@ -35,7 +37,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
     { name: t("nav.avatar", "Avatar"), path: '/avatar', icon: Sparkles, isAction: false },
     { name: t("nav.bag", "Bag"), path: '#', icon: ShoppingBag, isAction: true, action: () => { setIsOpen(false); onOpenCart(); } },
     { name: t("nav.orders", "Orders"), path: '/orders', icon: Package, isAction: false },
-    { name: t("nav.chat", "Chat"), path: '/ai-concierge', icon: MessageSquare, isAction: false },
+    { name: t("nav.chat", "Chat"), path: '#', icon: MessageSquare, isAction: true, action: () => { setIsOpen(false); openAssistant(); } },
   ];
 
   return (

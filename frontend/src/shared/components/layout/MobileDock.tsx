@@ -91,7 +91,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
               exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               aria-label="Mobile Navigation"
-              className="mr-1.5 w-[64px] py-4 bg-white/60 backdrop-blur-md border border-white/40 shadow-[0_8px_32px_rgba(107,33,168,0.12)] rounded-3xl flex flex-col items-center gap-5 touch-pan-y"
+              className="mr-1.5 w-[64px] py-4 bg-white/75 backdrop-blur-lg backdrop-saturate-150 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.08)] rounded-3xl flex flex-col items-center gap-5 touch-pan-y"
             >
               {navItems.map((item) => {
                 const isActive = !item.isAction && location.pathname === item.path;
@@ -99,7 +99,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
 
                 const content = (
                   <>
-                    <Icon className={`w-[22px] h-[22px] transition-colors duration-300 ${isActive ? 'text-plum-700' : 'text-plum-500 group-hover:text-plum-700'}`} strokeWidth={isActive ? 2.5 : 2} />
+                    <Icon className={`w-[22px] h-[22px] transition-colors duration-300 drop-shadow-sm ${isActive ? 'text-plum-700' : 'text-plum-600 group-hover:text-plum-800'}`} strokeWidth={isActive ? 2.5 : 2.2} />
                     {item.name === t("nav.bag", "Bag") && itemCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-plum-600 px-1 text-[10px] font-bold text-white shadow-sm border-2 border-white">
                         {itemCount}

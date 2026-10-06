@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, ShoppingBag, User, Menu, X, Package, MessageSquare } from "lucide-react";
+import { Search, ShoppingBag, Package, User, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useCartStore } from "../../../app/store/useCartStore";
 import { CartDrawer } from "../../../features/cart/components/CartDrawer";
+import { MobileDock } from "./MobileDock";
 
 const Navbar = () => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -139,14 +139,6 @@ const Navbar = () => {
               <User className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("nav.account", "Account")}</span>
             </Link>
-
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Menu"
-              className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:bg-ink/[0.04] md:hidden"
-            >
-              {menuOpen ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
-            </button>
           </div>
         </div>
 
@@ -206,49 +198,9 @@ const Navbar = () => {
             </>
           )}
         </AnimatePresence>
-
-        {menuOpen && (
-          <div className="border-t border-ink/[0.06] bg-white md:hidden">
-            <nav className="flex flex-col px-6 py-3">
-              {LINKS.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMenuOpen(false)}
-                  className={`py-3 text-sm font-medium ${
-                    isActive(link.to) ? "text-plum-600" : "text-ink/70"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  setCartOpen(true);
-                }}
-                className="flex items-center justify-between py-3 text-sm font-medium text-ink/70"
-              >
-                <span>{t("nav.shoppingBag", "Shopping Bag")}</span>
-                {itemCount > 0 && (
-                  <span className="rounded-full bg-plum-600 px-2 py-0.5 text-xs text-white">
-                    {itemCount}
-                  </span>
-                )}
-              </button>
-              <Link
-                to="/orders"
-                onClick={() => setMenuOpen(false)}
-                className={`py-3 text-sm font-medium ${
-                  isActive("/orders") ? "text-plum-600" : "text-ink/70"
-                }`}
-              >
-                {t("nav.orders", "Orders")}
-              </Link>
-            </nav>
-          </div>
-        )}
       </header>
+
+      <MobileDock onOpenCart={() => setCartOpen(true)} />
 
       <CartDrawer
         isOpen={cartOpen}

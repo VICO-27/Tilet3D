@@ -87,7 +87,12 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
   });
 
   return (
-    <group ref={groupRef} position={transform.position} scale={0.001} visible={active}>
+    <group 
+      ref={groupRef} 
+      position={transform.position} 
+      scale={0.001} 
+      visible={active || (groupRef.current ? groupRef.current.scale.y > 0.01 : false)}
+    >
       <primitive object={scene} />
     </group>
   );

@@ -55,8 +55,10 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
   // Only clone when the real scene has loaded (children > 0).
   // Returns null while the GLB is still in the cache/network — the caller
   // renders nothing until this resolves, preventing the empty→full swap flash.
+  // Clone the scene once. SkeletonUtils.clone is required so we can have independent
+  // skeletons/materials for male and female at the same time if needed.
   const clonedScene = useMemo(() => {
-    if (!scene || scene.children.length === 0) return null;
+    if (!scene) return null;
     return SkeletonUtils.clone(scene);
   }, [scene]);
 
@@ -124,13 +126,15 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
   });
 
   // KEY FIX: Do NOT render the group until the cloned scene is ready.
-  // Previously, an empty THREE.Group was mounted here then swapped for the
-  // real scene when the GLB resolved → that replacement caused the flash.
   if (!clonedScene) return null;
 
   return (
-    <group ref={group} scale={0.001} visible={active}>
-      {/* dispose={null} prevents R3F from disposing our clone on unmount */}
+    <group 
+      ref={group} 
+      scale={0.001} 
+      // Only hide completely when inactive AND fully shrunk down, so the shrink animation is visible
+      visible={active || (group.current ? group.current.scale.y > 0.01 : false)}
+    >
       <primitive object={clonedScene} dispose={null} />
     </group>
   );

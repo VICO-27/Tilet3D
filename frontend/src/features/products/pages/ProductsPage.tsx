@@ -1,15 +1,15 @@
-/* cspell:disable */
-// src/features/products/pages/ProductsPage.tsx
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
+import { useProductSearch } from '../hooks/useProductSearch';
 import ProductPageHeader from '../components/ProductPageHeader';
 import CategoryBlock from '../components/CategoryBlock';
 import BlockDivider from '../components/BlockDivider';
 import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
 import ProductCard, { Product } from '../components/ProductCard';
-import { Search, X, ArrowRight } from 'lucide-react';
+import { Search, X, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { FilterDrawer } from '../components/FilterDrawer';
 
 const STORY_VARIATIONS = [
   { title: "Every pattern tells a story", subtitle: "For centuries, Ethiopian weavers have encoded geography, faith, and family into the Tilet — the woven border that crowns every garment.", variant: "light" as const, align: "left" as const, watermark: "TILET" },
@@ -74,7 +74,23 @@ const ProductsPage: React.FC = () => {
   const searchQuery = searchParams.get("q") || "";
   const navigate = useNavigate();
 
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Normal view full catalog
   const { groupedProducts, categories, isLoading, error } = useProducts();
+  
+  // Search and filter view
+  const { data: searchData, isLoading: isSearchLoading, hasFilters } = useProductSearch(searchParams);
+
+  // Auto-open filter drawer if requested
+  useEffect(() => {
+    if (searchParams.get('open_filters') === 'true') {
+      setIsFilterOpen(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('open_filters');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [viewContext, setViewContext] = useState<string>('normal');
   const [loadDeferredBatch, setLoadDeferredBatch] = useState(false);
@@ -123,25 +139,9 @@ const ProductsPage: React.FC = () => {
     return list;
   }, [groupedProducts]);
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return allProducts.filter((p) => {
-      const matchesName = p.name.toLowerCase().includes(q);
-      const matchesVariant = p.variants?.some((v) => {
-        const variant = v as { color?: string; name?: string };
-        return (
-          variant.color?.toLowerCase().includes(q) ||
-          variant.name?.toLowerCase().includes(q)
-        );
-      });
-      return matchesName || matchesVariant;
-    });
-  }, [searchQuery, allProducts]);
-
   const clearSearch = () => {
-    searchParams.delete("q");
-    setSearchParams(searchParams);
+    // Clear all filters and search
+    setSearchParams(new URLSearchParams());
   };
 
   const activeCategories = useMemo(() => {
@@ -274,7 +274,7 @@ const ProductsPage: React.FC = () => {
         {/* 2. If STILL loading after BrandLoader finishes, show Skeleton */}
         {isLoading ? (
           <ProductsSkeleton />
-        ) : searchQuery ? (
+        ) : hasFilters ? (
           <div className="mx-auto max-w-[1400px] px-6 md:px-10 pt-8 animate-fade-in">
             <div className="flex items-center justify-between mb-10 pb-6 border-b border-stone-200">
               <div className="flex items-center gap-3">
@@ -283,28 +283,77 @@ const ProductsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold">Search Filter Active</p>
-                  <h1 className="font-serif text-2xl font-medium text-stone-900">Results for "{searchQuery}"</h1>
+                  <h1 className="font-serif text-2xl font-medium text-stone-900">
+                    {searchQuery ? `Results for "${searchQuery}"` : "Filtered Results"}
+                  </h1>
                 </div>
               </div>
-              <button
-                onClick={clearSearch}
-                className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-stone-700 hover:bg-stone-900 hover:text-white transition-colors"
-              >
-                <X className="h-4 w-4" /> Clear Search
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-stone-700 hover:bg-stone-900 hover:text-white transition-colors"
+                >
+                  <SlidersHorizontal size={14} /> Filters
+                </button>
+                <button
+                  onClick={clearSearch}
+                  className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-stone-700 hover:bg-stone-900 hover:text-white transition-colors"
+                >
+                  <X className="h-4 w-4" /> Clear All
+                </button>
+              </div>
             </div>
 
-            {searchResults.length === 0 ? (
+            {isSearchLoading ? (
+               <ProductsSkeleton />
+            ) : !searchData || searchData.results.length === 0 ? (
               <div className="py-24 text-center space-y-3">
                 <p className="font-serif text-2xl text-stone-900">No matching pieces found</p>
-                <p className="text-xs text-stone-400">Try searching for another name like "Kemis", "Netela", or color.</p>
+                <p className="text-xs text-stone-400">Try searching for another name like "Kemis", "Netela", or adjusting your filters.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {searchResults.map((product, index) => (
-                  <ProductCard key={`${product.id}-${index}`} product={product} index={index} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {searchData.results.map((product, index) => (
+                    <ProductCard key={`${product.id}-${index}`} product={product} index={index} />
+                  ))}
+                </div>
+                
+                {/* Pagination Controls */}
+                <div className="flex justify-center items-center gap-6 mt-16">
+                   {searchData.previous && (
+                      <button 
+                         onClick={() => {
+                           const newParams = new URLSearchParams(searchParams);
+                           const pageMatch = searchData.previous?.match(/page=(\d+)/);
+                           if (pageMatch) newParams.set('page', pageMatch[1]);
+                           else newParams.delete('page');
+                           setSearchParams(newParams);
+                           window.scrollTo({ top: 0, behavior: 'smooth' });
+                         }}
+                         className="px-6 py-2 border border-zinc-200 rounded-full text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50"
+                      >
+                         Previous
+                      </button>
+                   )}
+                   <span className="text-xs text-zinc-400 font-medium">Page {searchParams.get('page') || 1}</span>
+                   {searchData.next && (
+                      <button 
+                         onClick={() => {
+                           const newParams = new URLSearchParams(searchParams);
+                           const pageMatch = searchData.next?.match(/page=(\d+)/);
+                           if (pageMatch) newParams.set('page', pageMatch[1]);
+                           else newParams.set('page', '2'); // if next exists but no page param, it's page 2
+                           setSearchParams(newParams);
+                           window.scrollTo({ top: 0, behavior: 'smooth' });
+                         }}
+                         className="px-6 py-2 border border-zinc-200 rounded-full text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50"
+                      >
+                         Next
+                      </button>
+                   )}
+                </div>
+              </>
             )}
           </div>
         ) : (
@@ -383,6 +432,8 @@ const ProductsPage: React.FC = () => {
           </div>
         )}
       </main>
+      
+      <FilterDrawer isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
     </PageLayout>
   );
 };

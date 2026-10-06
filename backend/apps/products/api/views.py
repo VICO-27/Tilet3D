@@ -81,6 +81,42 @@ class ProductListAPIView(generics.ListAPIView):
 
 
 # ==========================================================
+# UNIFIED PRODUCT SEARCH (PAGINATED)
+# ==========================================================
+from rest_framework.pagination import PageNumberPagination
+from apps.products.services.search import search_products
+
+class ProductSearchPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+class ProductSearchAPIView(generics.ListAPIView):
+    """
+    Unified search endpoint that supports query strings for filtering,
+    sorting, and returns paginated results.
+    """
+    serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+    pagination_class = ProductSearchPagination
+
+    def get_queryset(self):
+        return search_products(
+            query=self.request.query_params.get("q"),
+            category=self.request.query_params.get("category"),
+            min_price=self.request.query_params.get("min_price"),
+            max_price=self.request.query_params.get("max_price"),
+            color=self.request.query_params.get("color"),
+            gender=self.request.query_params.get("gender"),
+            availability=self.request.query_params.get("availability"),
+            sort=self.request.query_params.get("sort"),
+        )
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+
+# ==========================================================
 # PRODUCT DETAIL
 # ==========================================================
 class ProductDetailAPIView(generics.RetrieveAPIView):

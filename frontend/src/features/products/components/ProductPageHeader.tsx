@@ -1,5 +1,7 @@
 import React from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
+import { SlidersHorizontal } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 interface Props {
   categories: string[];
@@ -8,6 +10,7 @@ interface Props {
 }
 
 const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
   );
@@ -27,46 +30,57 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           border-black/5
         "
       >
-        <div
-          className="
-            max-w-7xl
-            mx-auto
-            h-11
-            px-5
-            md:px-8
-            flex
-            justify-start
-            md:justify-center
-            items-center
-            gap-5
-            md:gap-8
-            overflow-x-auto
-            no-scrollbar
-          "
-        >
-          {navbarCategories.map((category) => {
-            const isActive = activeCategory.toLowerCase() === category.toLowerCase();
-            return (
-              <button
-                key={category}
-                onClick={() => onCategorySelect(category)}
-                style={{
-                  fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
-                }}
-                className={`
-                  shrink-0
-                  text-[12px]
-                  font-bold
-                  tracking-wide
-                  transition-colors
-                  duration-300
-                  ${isActive ? 'text-plum-600' : 'text-ink/55 hover:text-plum-500'}
-                `}
-              >
-                {category}
-              </button>
-            );
-          })}
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-5 md:px-8 h-11">
+          <div
+            className="
+              flex
+              justify-start
+              items-center
+              gap-5
+              md:gap-8
+              overflow-x-auto
+              no-scrollbar
+              flex-1
+            "
+          >
+            {navbarCategories.map((category) => {
+              const isActive = activeCategory.toLowerCase() === category.toLowerCase();
+              return (
+                <button
+                  key={category}
+                  onClick={() => onCategorySelect(category)}
+                  style={{
+                    fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
+                  }}
+                  className={`
+                    shrink-0
+                    text-[12px]
+                    font-bold
+                    tracking-wide
+                    transition-colors
+                    duration-300
+                    ${isActive ? 'text-plum-600' : 'text-ink/55 hover:text-plum-500'}
+                  `}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
+          
+          <div className="pl-6 border-l border-black/10 shrink-0 ml-4">
+            <button
+               onClick={() => {
+                 const newParams = new URLSearchParams(searchParams);
+                 newParams.set('open_filters', 'true');
+                 setSearchParams(newParams);
+               }}
+               className="flex items-center gap-2 text-[12px] font-bold text-ink/70 hover:text-plum-600 transition-colors"
+            >
+              <SlidersHorizontal size={14} />
+              <span className="hidden md:inline">Filters</span>
+            </button>
+          </div>
         </div>
       </nav>
 

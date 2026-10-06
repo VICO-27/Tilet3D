@@ -57,7 +57,19 @@ const Navbar = () => {
     const term = (q ?? query).trim();
     setSearchOpen(false);
     setQuery("");
-    navigate(`/products${term ? `?q=${encodeURIComponent(term)}` : ""}`);
+    
+    if (pathname === '/products') {
+      const newParams = new URLSearchParams(window.location.search);
+      if (term) {
+        newParams.set('q', term);
+      } else {
+        newParams.delete('q');
+      }
+      newParams.delete('page');
+      navigate(`/products?${newParams.toString()}`);
+    } else {
+      navigate(`/products${term ? `?q=${encodeURIComponent(term)}` : ""}`);
+    }
   };
 
   return (

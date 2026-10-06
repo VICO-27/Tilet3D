@@ -91,7 +91,7 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Category</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['Women', 'Men', 'Dresses', 'Shirts', 'Accessories', 'Bridal'].map(cat => (
+                  {['Kemis', 'Netela', 'Gabi', 'Shash', 'Tilf', 'Mens', 'Kaba'].map(cat => (
                     <button
                       key={cat}
                       onClick={() => updateParam('category', currentCategory === cat ? null : cat)}
@@ -100,6 +100,42 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       }`}
                     >
                       {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* GENDER */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Gender</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['Women', 'Men', 'Unisex'].map(g => (
+                    <button
+                      key={g}
+                      onClick={() => updateParam('gender', searchParams.get('gender') === g ? null : g)}
+                      className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-colors ${
+                        searchParams.get('gender') === g ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* COLOR */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Color</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['White', 'Black', 'Gold', 'Red', 'Blue', 'Green'].map(c => (
+                    <button
+                      key={c}
+                      onClick={() => updateParam('color', searchParams.get('color') === c ? null : c)}
+                      className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-colors ${
+                        searchParams.get('color') === c ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                      }`}
+                    >
+                      {c}
                     </button>
                   ))}
                 </div>

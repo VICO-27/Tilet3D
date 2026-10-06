@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, F
 from apps.products.models import Product
 
 def search_products(
@@ -38,26 +38,41 @@ def search_products(
         qs = qs.filter(category_query)
 
     if min_price is not None:
-        qs = qs.filter(variants__price__gte=min_price)
+        try:
+            min_val = float(min_price)
+            if min_val >= 0:
+                qs = qs.filter(variants__price__gte=min_val)
+        except ValueError:
+            pass
 
     if max_price is not None:
-        qs = qs.filter(variants__price__lte=max_price)
+        try:
+            max_val = float(max_price)
+            if max_val >= 0:
+                qs = qs.filter(variants__price__lte=max_val)
+        except ValueError:
+            pass
 
     if color:
-        qs = qs.filter(variants__color__icontains=color)
+        colors = [c.strip() for c in color.split(',')]
+        color_query = Q()
+        for c in colors:
+            color_query |= Q(variants__color__icontains=c)
+        qs = qs.filter(color_query)
 
     if gender:
-        # Match gender usually found in category or description
-        qs = qs.filter(
-            Q(category__name__icontains=gender) |
-            Q(description__icontains=gender) |
-            Q(name__icontains=gender)
-        )
+        genders = [g.strip() for g in gender.split(',')]
+        gender_query = Q()
+        for g in genders:
+            # Use regex word boundaries to prevent 'men' from matching 'women'
+            pattern = r'\b' + g + r'\b'
+            gender_query |= Q(category__name__iregex=pattern) | Q(description__iregex=pattern) | Q(name__iregex=pattern)
+        qs = qs.filter(gender_query)
 
     if availability == "in_stock":
-        # Check if any variant has stock > reserved_stock
-        qs = qs.filter(variants__stock__gt=0) # simplistic approximation
-        
+        # Ensure available_stock (stock - reserved_stock) > 0
+        qs = qs.filter(variants__stock__gt=F('variants__reserved_stock'))
+
     # Make sure we don't return duplicates if multiple variants match
     qs = qs.distinct()
 

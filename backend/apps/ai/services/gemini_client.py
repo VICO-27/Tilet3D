@@ -29,11 +29,11 @@ def search_store(
     
     Args:
         query: General text search term.
-        category: Product category (e.g., 'dresses', 'shirts').
-        min_price: Minimum price in ETB.
+        category: Product category (e.g., 'Kemis', 'Netela', 'Gabi', 'Shash', 'Tilf', 'Mens', 'Kaba').
+        min_price: Minimum price in ETB. (Budget: <2000, Mid: 2000-6000, Premium: >6000)
         max_price: Maximum price in ETB.
-        color: Product color.
-        gender: Target gender (e.g., 'men', 'women').
+        color: Product color (e.g., 'White', 'Black', 'Gold', 'Red', 'Blue', 'Green').
+        gender: Target gender (e.g., 'Women', 'Men', 'Unisex').
         availability: Set to 'in_stock' for available items.
         sort: Sort order ('price_asc', 'price_desc', 'newest').
     """

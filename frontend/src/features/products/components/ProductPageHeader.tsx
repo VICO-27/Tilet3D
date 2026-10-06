@@ -83,7 +83,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           className="
             max-w-7xl
             mx-auto
-            h-14
+            h-11
             px-5
             md:px-8
             flex
@@ -107,7 +107,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
                 }}
                 className={`
                   shrink-0
-                  text-[13px]
+                  text-[12px]
                   font-bold
                   tracking-wide
                   transition-colors

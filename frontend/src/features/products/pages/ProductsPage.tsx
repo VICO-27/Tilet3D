@@ -99,7 +99,7 @@ const ProductsPage: React.FC = () => {
       const elements = document.querySelectorAll('[id^="category-"]');
       elements.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top <= 200) {
+        if (rect.top <= 140) {
           current = el.id.replace('category-', '');
         }
       });

@@ -75,29 +75,29 @@ function LeftHUD() {
 
   return (
     <div
-      className={`hidden md:block absolute top-1/2 -translate-y-1/2 left-8 transition-all duration-1000 delay-300 ${
-        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12 pointer-events-none'
+      className={`absolute top-1/2 -translate-y-1/2 left-3 md:left-8 transition-all duration-1000 delay-300 pointer-events-none ${
+        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-xl w-56">
-        <div className="flex items-center gap-2 mb-6">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[90px] md:w-56">
+        <div className="hidden md:flex items-center gap-2 mb-6">
           <Activity className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4">
           <div>
-            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Height</p>
-            <p className="text-xl font-light text-[#161616]">{height} <span className="text-sm">cm</span></p>
+            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Height</p>
+            <p className="text-sm md:text-xl font-light text-[#161616]">{height} <span className="text-[9px] md:text-sm">cm</span></p>
           </div>
-          <div className="w-full h-px bg-stone-200" />
+          <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
-            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Weight</p>
-            <p className="text-xl font-light text-[#161616]">{weight} <span className="text-sm">kg</span></p>
+            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Weight</p>
+            <p className="text-sm md:text-xl font-light text-[#161616]">{weight} <span className="text-[9px] md:text-sm">kg</span></p>
           </div>
-          <div className="w-full h-px bg-stone-200" />
+          <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
-            <p className="text-[10px] text-[#161616]/50 uppercase font-bold tracking-wider">Structure</p>
-            <p className="text-lg font-light text-[#161616] capitalize">{body_type.replace('_', ' ')}</p>
+            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Structure</p>
+            <p className="text-sm md:text-lg font-light text-[#161616] capitalize truncate">{body_type.replace('_', ' ')}</p>
           </div>
         </div>
       </div>
@@ -116,27 +116,27 @@ function RightHUD() {
 
   return (
     <div
-      className={`hidden md:block absolute top-1/2 -translate-y-1/2 right-8 transition-all duration-1000 delay-300 ${
-        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'
+      className={`absolute top-1/2 -translate-y-1/2 right-3 md:right-8 transition-all duration-1000 delay-300 pointer-events-none ${
+        isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-xl w-56">
-        <div className="flex items-center gap-2 mb-6">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[90px] md:w-56">
+        <div className="hidden md:flex items-center gap-2 mb-6">
           <Ruler className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {[
             { label: 'Chest', value: chest },
             { label: 'Waist', value: waist },
             { label: 'Hips', value: hips },
           ].map(({ label, value }) => (
-            <div key={label} className="flex justify-between items-end">
-              <p className="text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
-              <p className="text-lg font-light text-[#161616]">{value}cm</p>
+            <div key={label} className="flex flex-col md:flex-row md:justify-between md:items-end">
+              <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
+              <p className="text-sm md:text-lg font-light text-[#161616]">{value}<span className="text-[9px] md:hidden">cm</span><span className="hidden md:inline">cm</span></p>
             </div>
           ))}
-          <div className="pt-4 mt-2 border-t border-stone-200">
+          <div className="hidden md:block pt-4 mt-2 border-t border-stone-200">
             <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="text-[10px] font-bold tracking-wider uppercase">Couture Match</span>

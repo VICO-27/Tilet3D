@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, FormEvent } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Sparkles, Send, X, Minus, ArrowUp } from "lucide-react";
+import { Sparkles, Send, X, ArrowUp } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAssistantStore } from "../store/useAssistantStore";
 import { useAiChat } from "../hooks/useAiChat";
@@ -54,32 +54,13 @@ export const FloatingAssistant: React.FC = () => {
 
   const handleDragEnd = (e: any, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 500) {
-      minimizeAssistant();
+      closeAssistant();
     }
   };
 
   return (
     <>
       <AnimatePresence>
-        {/* ======================= MINIMIZED FLOATING PILL ======================= */}
-        {(!isOpen || isMinimized) && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-50"
-          >
-            <button
-              onClick={openAssistant}
-              className="group flex items-center gap-3 px-5 py-3.5 bg-[#161616] hover:bg-black text-white rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-stone-800 transition-all active:scale-95"
-            >
-              <Sparkles className="w-4 h-4 text-plum-400 group-hover:text-plum-300" />
-              <span className="text-sm font-medium tracking-wide">Ask Tilet3D</span>
-            </button>
-          </motion.div>
-        )}
-
         {/* ======================= EXPANDED BOTTOM SHEET ======================= */}
         {isOpen && !isMinimized && (
           <>
@@ -88,7 +69,7 @@ export const FloatingAssistant: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={minimizeAssistant}
+              onClick={closeAssistant}
               className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm"
             />
 
@@ -113,9 +94,6 @@ export const FloatingAssistant: React.FC = () => {
                     Tilet3D AI
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={minimizeAssistant} className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-colors">
-                      <Minus className="w-4 h-4" />
-                    </button>
                     <button onClick={closeAssistant} className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:bg-white/10 rounded-full transition-colors">
                       <X className="w-4 h-4" />
                     </button>

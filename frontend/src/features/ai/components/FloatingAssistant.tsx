@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, FormEvent } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Mic, ArrowUp, ChevronDown, Sparkles, X } from "lucide-react";
+import { Mic, ArrowUp, ChevronDown, Sparkles, X, History } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAssistantStore } from "../store/useAssistantStore";
 import { useAiChat } from "../hooks/useAiChat";
@@ -81,8 +81,7 @@ const ThinkingDots: React.FC = () => (
 //  backdrop 55 | card 60 | pill 65 | minimise 70 | MobileDock 100 (no conflict, dock is side)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Pill height ~64px + 20px gap = 84px offset for the card bottom
-const PILL_H = 84; // px — pill outer height + comfortable gap
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const FloatingAssistant: React.FC = () => {
   const { isOpen, isMinimized, closeAssistant, minimizeAssistant, openAssistant } =
@@ -227,10 +226,10 @@ export const FloatingAssistant: React.FC = () => {
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={{ top: 0.05, bottom: 0.3 }}
                 onDragEnd={handleCardDragEnd}
-                style={{ bottom: `${PILL_H}px` }}
                 className="
                   fixed left-3 right-3 z-[60]
                   md:left-auto md:right-8 md:w-[400px]
+                  bottom-[90px] md:bottom-[108px]
                   max-h-[58vh] md:max-h-[500px]
                   bg-neutral-950/95 backdrop-blur-2xl
                   border border-white/[0.07]
@@ -241,9 +240,22 @@ export const FloatingAssistant: React.FC = () => {
                   cursor-grab active:cursor-grabbing
                 "
               >
-                {/* Drag handle */}
-                <div className="shrink-0 pt-2.5 pb-1.5 flex justify-center">
+                {/* Header / Drag handle */}
+                <div className="shrink-0 pt-3 pb-1.5 px-5 flex items-center justify-between">
+                  <div className="w-16" /> {/* Spacer to keep handle centered */}
                   <div className="w-8 h-[3px] bg-white/15 rounded-full" />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      handleClose();
+                      navigate('/account');
+                    }}
+                    className="w-16 flex items-center justify-end gap-1.5 text-white/40 hover:text-white/80 transition-colors text-[11px] font-semibold tracking-wide uppercase"
+                    aria-label="View Chat History"
+                  >
+                    <History size={12} />
+                    <span>Log</span>
+                  </button>
                 </div>
 
                 {/* Chat scroll area — touch-pan-y so scrolling isn't hijacked */}

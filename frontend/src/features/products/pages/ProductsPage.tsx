@@ -77,7 +77,7 @@ const ProductsPage: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Normal view full catalog
-  const { groupedProducts, categories, isLoading, error } = useProducts();
+  const { groupedProducts, categories, isLoading, error, hasNextPage, isFetchingNext, loadMore } = useProducts();
   
   // Search and filter view
   const { data: searchData, isLoading: isSearchLoading, hasFilters } = useProductSearch(searchParams);
@@ -426,6 +426,18 @@ const ProductsPage: React.FC = () => {
                   className="px-8 py-4 border-2 border-black text-[12px] font-black tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-all duration-300 rounded-full shadow-lg"
                 >
                   ← Back to All Collections
+                </button>
+              </div>
+            )}
+            
+            {viewContext === 'normal' && hasNextPage && (
+              <div className="w-full flex justify-center mt-12 mb-24 relative z-10 px-6">
+                <button
+                  onClick={loadMore}
+                  disabled={isFetchingNext}
+                  className="px-10 py-4 bg-black text-white text-[12px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  {isFetchingNext ? "Loading..." : "Load More"}
                 </button>
               </div>
             )}

@@ -145,7 +145,7 @@ const FeaturedCollectionSection = () => {
     const fetchFeatured = async () => {
       try {
         const data = await productApi.getProducts();
-        const featured = data.filter(p => p.is_featured);
+        const featured = data.results.filter((p: Product) => p.is_featured);
         setProducts(featured);
       } catch (error) {
         console.error("Failed to fetch featured products", error);

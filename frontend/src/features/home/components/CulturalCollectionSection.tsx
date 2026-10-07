@@ -29,7 +29,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       if (entry.isIntersecting && !hasFetched) {
         setHasFetched(true);
         productApi.getProducts(dbCategory).then(data => {
-          setProducts(data);
+          setProducts(data.results);
           setIsLoading(false);
         }).catch(err => {
           console.error(`Failed to fetch ${dbCategory}`, err);

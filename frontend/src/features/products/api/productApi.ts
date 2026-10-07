@@ -13,14 +13,19 @@ export const productApi = {
   
 
   // GET /api/products/
-  getProducts: async (categories?: string): Promise<Product[]> => {
+  getProducts: async (categories?: string, page: number = 1): Promise<{ results: Product[], next: string | null }> => {
     const params = new URLSearchParams();
     if (categories) {
       params.append('categories', categories);
     }
+    params.append('page', page.toString());
     
-    const response = await apiClient.get<Product[]>(`/products/?${params.toString()}`);
-    return response.data;
+    const response = await apiClient.get<any>(`/products/?${params.toString()}`);
+    // Support both paginated and unpaginated for safety
+    if (Array.isArray(response.data)) {
+        return { results: response.data, next: null };
+    }
+    return { results: response.data.results, next: response.data.next };
   },
 
   // GET /api/products/:id/ - for the detail page

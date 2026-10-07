@@ -52,8 +52,14 @@ class ProductCommentsListView(generics.ListAPIView):
 # ==========================================================
 # PRODUCT LIST
 # ==========================================================
+class ProductSearchPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
 class ProductListAPIView(generics.ListAPIView):
     serializer_class = ProductListSerializer
+    pagination_class = ProductSearchPagination
     permission_classes = [AllowAny]
 
     def get_queryset(self):
@@ -111,10 +117,6 @@ class ProductListAPIView(generics.ListAPIView):
 from rest_framework.pagination import PageNumberPagination
 from apps.products.services.search import search_products
 
-class ProductSearchPagination(PageNumberPagination):
-    page_size = 12
-    page_size_query_param = 'page_size'
-    max_page_size = 50
 
 class ProductSearchAPIView(generics.ListAPIView):
     """

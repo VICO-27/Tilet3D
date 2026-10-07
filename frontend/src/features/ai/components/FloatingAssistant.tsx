@@ -186,7 +186,7 @@ export const FloatingAssistant: React.FC = () => {
                 transition={{ type: "spring", stiffness: 420, damping: 32 }}
                 onClick={handleMinimise}
                 aria-label="Minimise assistant"
-                className="fixed top-[56px] right-3 z-[70] flex items-center gap-1.5 px-4 py-2 bg-[#0a0a0c]/96 backdrop-blur-xl border border-white/10 rounded-full text-white/80 text-[13px] font-medium shadow-lg select-none"
+                className="fixed top-[56px] right-3 z-[70] flex items-center gap-1.5 px-4 py-2 bg-neutral-950/95 backdrop-blur-xl border border-white/10 rounded-full text-white/80 text-[13px] font-medium shadow-lg select-none"
               >
                 <ChevronDown size={13} className="opacity-60" />
                 Minimise
@@ -232,7 +232,7 @@ export const FloatingAssistant: React.FC = () => {
                   fixed left-3 right-3 z-[60]
                   md:left-auto md:right-8 md:w-[400px]
                   max-h-[58vh] md:max-h-[500px]
-                  bg-[#0a0a0c]/96 backdrop-blur-2xl
+                  bg-neutral-950/95 backdrop-blur-2xl
                   border border-white/[0.07]
                   rounded-[24px]
                   shadow-[0_-4px_40px_rgba(0,0,0,0.55)]
@@ -348,7 +348,7 @@ export const FloatingAssistant: React.FC = () => {
               onSubmit={handleSubmit}
               className="
                 flex items-center gap-3
-                bg-[#0a0a0c]/96 backdrop-blur-2xl
+                bg-neutral-950/95 backdrop-blur-2xl
                 border border-white/[0.10]
                 rounded-[28px] px-4 py-3.5
                 shadow-[0_4px_32px_rgba(0,0,0,0.65)]

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productApi } from "../../products/api/productApi";
@@ -299,7 +300,11 @@ const FeaturedCollectionSection = () => {
   };
 
   return (
-    <section 
+    <motion.section 
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 180, damping: 22 }}
       className="relative bg-black text-white h-[85vh] min-h-[650px] w-full flex flex-col justify-center overflow-hidden"
       onMouseEnter={() => (isHovering.current = true)}
       onMouseLeave={() => (isHovering.current = false)}
@@ -398,7 +403,7 @@ const FeaturedCollectionSection = () => {
       )}
 
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60vw] h-[100px] bg-plum-900/10 blur-[100px] rounded-full pointer-events-none" />
-    </section>
+    </motion.section>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
@@ -221,7 +222,13 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 // ==========================================
 const CulturalCollectionSection = () => {
   return (
-    <section className="relative bg-[#F5F5F7] text-gray-900 pt-32 pb-16 w-full flex flex-col justify-center overflow-hidden">
+    <motion.section 
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 180, damping: 22 }}
+      className="relative bg-[#F5F5F7] text-gray-900 pt-32 pb-16 w-full flex flex-col justify-center overflow-hidden"
+    >
       
       <style>{`
         .smooth-scroll-container {
@@ -273,7 +280,7 @@ const CulturalCollectionSection = () => {
         direction="right"
         topText="Timeless grace. Celebrating the distinct beauty and enduring spirit of Ethiopian artistry in every stitch."
       />
-    </section>
+    </motion.section>
   );
 };
 

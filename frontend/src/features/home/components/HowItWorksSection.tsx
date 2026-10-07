@@ -23,6 +23,8 @@ const stepData = [
   },
 ];
 
+import { motion } from "framer-motion";
+
 const HowItWorksSection = () => {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -103,8 +105,12 @@ const HowItWorksSection = () => {
   };
 
   return (
-    <section
+    <motion.section
       ref={sectionRef}
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 180, damping: 22 }}
       className="relative overflow-hidden border-t border-black/[0.06] bg-[#fafafa] py-28 text-zinc-900 select-none"
     >
       <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-16 px-6 md:grid-cols-12 md:px-10">
@@ -185,7 +191,7 @@ const HowItWorksSection = () => {
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

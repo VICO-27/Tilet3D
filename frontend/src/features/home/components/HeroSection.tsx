@@ -1,10 +1,8 @@
-// frontend/src/features/home/components/HeroSection.tsx
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
 import { AnimatePresence, motion } from "framer-motion";
 import { useProgress } from "@react-three/drei";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Star, Sparkles, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Gender } from "../../avatar/types/avatar.types";
 import HeroModel from "./HeroModel";
@@ -13,21 +11,85 @@ const LOGO = "TILET3D";
 const APPLE_FONT =
   "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif";
 
+import type { Variants } from "framer-motion";
+
+// ─── Motion Language: Tumble & Fun ───────────────────────────────────────────
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1, // Wait for aura to start
+    },
+  },
+};
+
+const tumbleVariants: Variants = {
+  hidden: { opacity: 0, y: 40, rotate: -4, scale: 0.94 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    rotate: 0, 
+    scale: 1,
+    transition: { type: "spring", stiffness: 220, damping: 20, mass: 0.8 }
+  }
+};
+
+const fadeUpVariants: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  visible: {
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: "spring", stiffness: 200, damping: 20 }
+  }
+};
+
+const visualVariants: Variants = {
+  hidden: { opacity: 0, y: 40, scale: 0.9, rotate: 2 },
+  visible: {
+    opacity: 1, y: 0, scale: 1, rotate: 0,
+    transition: { type: "spring", stiffness: 180, damping: 22, delay: 0.65 }
+  }
+};
+
+// ─── Living Aura ─────────────────────────────────────────────────────────────
+const TiletAura = () => (
+  <motion.div 
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 1.2, ease: "easeOut" }}
+    className="absolute left-1/2 top-1/2 -z-10 h-full w-full -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-80 mix-blend-multiply dark:mix-blend-screen"
+  >
+    {/* Layer 1: Large atmospheric glow */}
+    <motion.div
+      animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.50, 0.35] }}
+      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute left-1/2 top-1/2 h-[75%] w-[75%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-200/50 blur-[100px]"
+    />
+    {/* Layer 2: Brighter core */}
+    <motion.div
+      animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.4, 0.65, 0.4], x: ["-50%", "-48%", "-52%", "-50%"], y: ["-50%", "-52%", "-48%", "-50%"] }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute left-1/2 top-1/2 h-[45%] w-[45%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-plum-300/60 blur-[80px]"
+    />
+    {/* Layer 3: Secondary offset glow */}
+    <motion.div
+      animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2], x: ["-30%", "-20%", "-30%"] }}
+      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute left-[40%] top-[60%] h-[55%] w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-100/40 blur-[90px]"
+    />
+  </motion.div>
+);
+
 const HeroSection = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const line1Ref = useRef<HTMLSpanElement>(null);
-  const line2Ref = useRef<HTMLSpanElement>(null);
-  const line3Ref = useRef<HTMLSpanElement>(null);
-  const subRef = useRef<HTMLParagraphElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
 
   const [heroGender, setHeroGender] = useState<Gender>("female");
   const interactingRef = useRef(false);
   const [is3DReady, setIs3DReady] = useState(false);
 
-  // Defer mounting the WebGL canvas by two frames so it never competes with
-  // the headline's entrance animation for the main thread on first paint.
+  // Defer mounting WebGL canvas by two frames to prevent main thread blocking during entrance
   const [mount3D, setMount3D] = useState(false);
   useEffect(() => {
     const raf1 = requestAnimationFrame(() => {
@@ -37,7 +99,6 @@ const HeroSection = () => {
     return () => cancelAnimationFrame(raf1);
   }, []);
 
-  // Real load progress from Three.js's loading manager (via drei), not a guess.
   const { progress } = useProgress();
 
   useEffect(() => {
@@ -53,112 +114,136 @@ const HeroSection = () => {
   const endInteracting = () => { setTimeout(() => (interactingRef.current = false), 2000); };
   const swapGender = (g: Gender) => { markInteracting(); endInteracting(); setHeroGender(g); };
 
-  useEffect(() => {
-    let ctx: gsap.Context | undefined;
-
-    const play = () => {
-      ctx = gsap.context(() => {
-        gsap.timeline({ defaults: { ease: "power3.out", duration: 1.0, force3D: true } })
-          .fromTo(
-            [line1Ref.current, line2Ref.current, line3Ref.current],
-            { opacity: 0, y: 30, filter: "blur(6px)" },
-            {
-              opacity: 1,
-              y: 0,
-              filter: "blur(0px)",
-              stagger: 0.1,
-              onComplete: () => {
-                gsap.set([line1Ref.current, line2Ref.current, line3Ref.current], {
-                  clearProps: "filter,willChange",
-                });
-              },
-            }
-          )
-          .fromTo(subRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.55")
-          .fromTo(ctaRef.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.45");
-      });
-    };
-
-    // Wait for the real font to be ready so nothing reflows mid-animation.
-    if (typeof document !== "undefined" && "fonts" in document) {
-      document.fonts.ready.then(play);
-    } else {
-      play();
-    }
-
-    return () => ctx?.revert();
-  }, []);
+  // Only run animations if the user hasn't requested reduced motion
+  const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#fafafa] pt-[56px] text-zinc-900 select-none">
-      {/* Subtle Apple Ambient Glows */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-16 -top-10 h-[85vh] w-[85vh] rounded-full bg-purple-200/20 blur-[140px]" />
-        <div className="absolute -left-20 bottom-0 h-[65vh] w-[65vh] rounded-full bg-amber-100/25 blur-[140px]" />
-      </div>
-
+      
       <div className="relative grid h-full w-full grid-cols-1 items-center px-6 md:px-16 lg:grid-cols-2 lg:px-20 xl:px-28">
-
-        {/* Left Column: Typography & CTAs */}
-        <div className="z-10 py-8 lg:py-0">
-
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-600 shadow-sm backdrop-blur-md">
+        
+        {/* ─── Left Column: Typography & CTAs ─── */}
+        <motion.div 
+          className="z-10 py-8 lg:py-0"
+          variants={prefersReducedMotion ? undefined : containerVariants as any}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Eyebrow Badge */}
+          <motion.div 
+            variants={prefersReducedMotion ? undefined : tumbleVariants as any}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-600 shadow-sm backdrop-blur-md"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-plum-600 animate-pulse" />
             {t("hero.badge", "Fashion, reimagined in 3D")}
-          </div>
+          </motion.div>
 
-          {/* Heading */}
+          {/* Heading with Tumble sequence */}
           <h1 className="text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold tracking-tight leading-[0.96] text-zinc-950">
-            <span ref={line1Ref} style={{ willChange: "transform, opacity, filter" }} className="block">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block origin-bottom-left">
               {t("hero.title1", "Wear it")}
-            </span>
-            <span ref={line2Ref} style={{ willChange: "transform, opacity, filter" }} className="block italic text-plum-600 font-serif font-light">
+            </motion.span>
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block italic text-plum-600 font-serif font-light origin-bottom-left">
               {t("hero.title2", "before you")}
-            </span>
-            <span ref={line3Ref} style={{ willChange: "transform, opacity, filter" }} className="block">
+            </motion.span>
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block origin-bottom-left">
               {t("hero.title3", "buy it.")}
-            </span>
+            </motion.span>
           </h1>
 
           {/* Subtitle */}
-          <p ref={subRef} className="mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-zinc-600 font-normal">
+          <motion.p 
+            variants={prefersReducedMotion ? undefined : fadeUpVariants as any}
+            className="mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-zinc-600 font-normal"
+          >
             {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.")}
-          </p>
+          </motion.p>
 
           {/* Call to Actions */}
-          <div ref={ctaRef} className="mt-8 flex flex-row items-center gap-3 sm:gap-4 w-full max-w-[400px] sm:max-w-none">
-            <button
+          <motion.div 
+            variants={prefersReducedMotion ? undefined : fadeUpVariants as any}
+            className="mt-8 flex flex-row items-center gap-3 sm:gap-4 w-full max-w-[400px] sm:max-w-none"
+          >
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/avatar")}
-              className="group flex-1 sm:flex-none inline-flex items-center justify-center gap-2 sm:gap-3 rounded-full bg-zinc-950 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-all duration-300 hover:bg-plum-600 hover:shadow-xl hover:shadow-plum-500/20 active:scale-[0.98]"
+              className="group flex-1 sm:flex-none inline-flex items-center justify-center gap-2 sm:gap-3 rounded-full bg-zinc-950 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-plum-600 shadow-lg hover:shadow-plum-500/20"
             >
               {t("hero.createAvatar", "Create your avatar")}
               <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-1" />
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/products")}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white/60 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-zinc-800 transition-all duration-300 hover:border-zinc-300 hover:bg-white hover:shadow-sm active:scale-[0.98]"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white/60 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-zinc-800 transition-colors duration-300 hover:border-zinc-300 hover:bg-white hover:shadow-sm"
             >
               {t("hero.explore", "Explore the collection")}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Testimonial Stream */}
-          <div className="mt-10 pt-4">
+          <motion.div variants={prefersReducedMotion ? undefined : fadeUpVariants as any} className="mt-10 pt-4">
             <Testimonials />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        {/* Right Column: Interactive 3D Stage */}
-        <div
+        {/* ─── Right Column: Interactive 3D Stage ─── */}
+        <motion.div
+          variants={prefersReducedMotion ? undefined : visualVariants as any}
+          initial="hidden"
+          animate="visible"
           className="relative h-full w-full lg:translate-x-6"
           onPointerDown={markInteracting}
           onPointerUp={endInteracting}
         >
-          {/* Backdrop Glow */}
-          <div className="absolute left-1/2 top-1/2 -z-0 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-100/35 blur-[120px]" />
+          {/* Living Aura Background */}
+          {!prefersReducedMotion && <TiletAura />}
 
-          {mount3D && <HeroModel gender={heroGender} onReady={() => setIs3DReady(true)} />}
+          {/* Idle floating motion for the 3D visual */}
+          <motion.div
+            animate={prefersReducedMotion ? {} : { y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="h-full w-full relative"
+          >
+            {mount3D && <HeroModel gender={heroGender} onReady={() => setIs3DReady(true)} />}
+            
+            {/* Playful Floating Badges */}
+            {!prefersReducedMotion && is3DReady && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
+                  animate={{ opacity: 1, scale: 1, rotate: [-2, 2, -2], y: [0, -6, 0] }}
+                  transition={{ 
+                    opacity: { duration: 0.5, delay: 1.2 },
+                    scale: { type: "spring", stiffness: 200, delay: 1.2 },
+                    rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+                    y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                  className="absolute top-1/4 right-8 md:right-16 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white shadow-sm flex items-center gap-1.5 z-20"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-plum-500" />
+                  <span className="text-[10px] font-bold tracking-wider text-zinc-700 uppercase">AI Fitted</span>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, rotate: 10 }}
+                  animate={{ opacity: 1, scale: 1, rotate: [2, -2, 2], y: [0, 8, 0] }}
+                  transition={{ 
+                    opacity: { duration: 0.5, delay: 1.4 },
+                    scale: { type: "spring", stiffness: 200, delay: 1.4 },
+                    rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+                    y: { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                  className="absolute bottom-1/3 left-4 md:left-12 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white shadow-sm flex items-center gap-1.5 z-20"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  <span className="text-[10px] font-bold tracking-wider text-zinc-700 uppercase">True Size</span>
+                </motion.div>
+              </>
+            )}
+          </motion.div>
 
           {/* Cinematic Loader Overlay */}
           <AnimatePresence>
@@ -169,7 +254,7 @@ const HeroSection = () => {
           <HeroSwitch side="left" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
           <HeroSwitch side="right" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
 
-          {/* Apple Glassmorphic Segment Control */}
+          {/* Gender Segment Control */}
           <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
@@ -190,7 +275,7 @@ const HeroSection = () => {
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -221,10 +306,8 @@ const LoaderOverlay = ({ progress = 0 }: { progress?: number }) => {
       `}</style>
 
       <div className="relative flex flex-col items-center justify-center">
-        {/* Ambient glow */}
         <div className="absolute h-[260px] w-[260px] sm:h-[340px] sm:w-[340px] rounded-full bg-plum-200/25 blur-[90px]" />
-
-        {/* Slow orbiting ring — distinct from BrandLoader's static corner frame */}
+        
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
@@ -233,7 +316,6 @@ const LoaderOverlay = ({ progress = 0 }: { progress?: number }) => {
           <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-plum-500 shadow-[0_0_14px_4px_rgba(162,28,175,0.35)]" />
         </motion.div>
 
-        {/* Wordmark: bigger, Apple-style geometric sans, shimmer sweep */}
         <div className="flex" style={{ fontFamily: APPLE_FONT }}>
           {letters.map((char, i) => (
             <motion.span
@@ -248,7 +330,6 @@ const LoaderOverlay = ({ progress = 0 }: { progress?: number }) => {
           ))}
         </div>
 
-        {/* Tagline */}
         <motion.span
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -258,7 +339,6 @@ const LoaderOverlay = ({ progress = 0 }: { progress?: number }) => {
           {"Preparing your fitting room"}
         </motion.span>
 
-        {/* Real progress */}
         <div className="mt-8 w-44 sm:w-52 h-[2px] bg-zinc-200 rounded-full overflow-hidden relative">
           <motion.div
             animate={{ width: `${Math.max(progress, 4)}%` }}

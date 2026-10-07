@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../../../shared/components/layout/Navbar';
 import { AvatarViewer } from '../components/AvatarViewer';
 import { AvatarForm } from '../components/AvatarForm';
@@ -7,10 +7,24 @@ import { useAvatarStore } from '../store/useAvatarStore';
 const AvatarPage = () => {
   const fetchAvatar = useAvatarStore((s) => s.fetchAvatar);
   const isConfirmed = useAvatarStore((s) => s.isConfirmed);
+  const hasAttemptedFetch = useAvatarStore((s) => s.hasAttemptedFetch);
+  const isLoading = useAvatarStore((s) => s.isLoading);
+
+  // Prevent the measurement card from flashing before the initial fetch completes
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     fetchAvatar();
   }, [fetchAvatar]);
+
+  useEffect(() => {
+    if (hasAttemptedFetch && !isLoading) {
+      const t = setTimeout(() => setIsInitializing(false), 100);
+      return () => clearTimeout(t);
+    }
+  }, [hasAttemptedFetch, isLoading]);
+
+  const isHidden = isInitializing || isConfirmed;
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#f8f8f9] overflow-hidden">
@@ -36,7 +50,7 @@ const AvatarPage = () => {
             shadow-[0_-20px_60px_rgba(0,0,0,0.08)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.04)]
             transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]
             z-10 overflow-y-auto
-            ${isConfirmed ? 'translate-y-full md:translate-y-0 md:translate-x-full' : 'translate-y-0 md:translate-x-0'}
+            ${isHidden ? 'translate-y-full md:translate-y-0 md:translate-x-full' : 'translate-y-0 md:translate-x-0'}
           `}
         >
           <div className="p-6 md:p-10 pb-28 max-w-lg mx-auto">

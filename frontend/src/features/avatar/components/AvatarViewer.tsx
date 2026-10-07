@@ -3,7 +3,11 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 function ResponsiveCamera() {
   const { camera, size } = useThree();
+  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
   
+  // Store target offset
+  const targetOffset = useRef({ x: 0, y: 0 });
+
   useEffect(() => {
     const aspect = size.width / size.height;
     if (aspect < 0.75) {
@@ -18,6 +22,40 @@ function ResponsiveCamera() {
     }
     camera.updateProjectionMatrix();
   }, [camera, size]);
+
+  useEffect(() => {
+    if (!isConfirmed) {
+      if (size.width > 768) {
+        const formWidth = Math.max(400, size.width * 0.35);
+        targetOffset.current = { x: formWidth / 2, y: 0 };
+      } else {
+        const formHeight = size.height * 0.55;
+        targetOffset.current = { x: 0, y: -formHeight / 2 };
+      }
+    } else {
+      targetOffset.current = { x: 0, y: 0 };
+    }
+  }, [isConfirmed, size]);
+
+  useFrame((_, dt) => {
+    // Current offset is stored in camera.view if it exists
+    const currentX = camera.view?.offsetX || 0;
+    const currentY = camera.view?.offsetY || 0;
+    
+    // Lerp towards target
+    const newX = THREE.MathUtils.lerp(currentX, targetOffset.current.x, dt * 4);
+    const newY = THREE.MathUtils.lerp(currentY, targetOffset.current.y, dt * 4);
+
+    // Only update if there is a meaningful difference
+    if (Math.abs(newX - targetOffset.current.x) > 0.5 || Math.abs(newY - targetOffset.current.y) > 0.5 || camera.view?.offsetX !== undefined) {
+      if (Math.abs(newX) < 1 && Math.abs(newY) < 1 && isConfirmed) {
+        camera.clearViewOffset();
+      } else {
+        camera.setViewOffset(size.width, size.height, newX, newY, size.width, size.height);
+      }
+      camera.updateProjectionMatrix();
+    }
+  });
 
   return null;
 }

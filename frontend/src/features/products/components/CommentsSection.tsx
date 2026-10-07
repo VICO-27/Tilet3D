@@ -45,7 +45,7 @@ const CommentsSection = React.forwardRef<HTMLDivElement, Props>(({ productId }, 
     setPosting(false);
     if (result) {
       // Backend now returns the full serialized comment, so this is safe to prepend directly
-      setComments((prev) => [result, ...prev]);
+      setComments((prev) => [{ ...result, product: productId } as ProductCommentDTO, ...prev]);
       setText('');
     }
   };

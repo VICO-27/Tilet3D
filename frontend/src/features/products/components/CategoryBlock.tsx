@@ -110,15 +110,6 @@ const CategoryBlock: React.FC<Props> = ({
     };
   }, [hasRow2, hasRow3]);
 
-  const hasVideoAsset = (p: Product) => {
-    const media = p.media || [];
-    return media.some(m => 
-      m.media_type === 'video' || 
-      m.file?.toLowerCase().endsWith('.mp4') || 
-      m.url?.toLowerCase().endsWith('.mp4') ||
-      p.video_url
-    );
-  };
 
   // If there are zero items in this whole category block, render nothing to avoid empty whitespace
   if (products.length === 0) return null;
@@ -158,7 +149,7 @@ const CategoryBlock: React.FC<Props> = ({
                 delayMs={(i % 10) * 15}
                 className="min-w-[400px] shrink-0"
               >
-                <ProductCard product={p} index={i} preferVideo={hasVideoAsset(p)} />
+                <ProductCard product={p} index={i} />
               </RevealOnScroll>
             ))}
             {row1Products.map((p, i) => (
@@ -167,7 +158,7 @@ const CategoryBlock: React.FC<Props> = ({
                 delayMs={(i % 10) * 15}
                 className="min-w-[400px] shrink-0"
               >
-                <ProductCard product={p} index={i} preferVideo={hasVideoAsset(p)} />
+                <ProductCard product={p} index={i} />
               </RevealOnScroll>
             ))}
           </div>
@@ -188,7 +179,7 @@ const CategoryBlock: React.FC<Props> = ({
                 delayMs={i * 15}
                 className="min-w-[300px] shrink-0"
               >
-                <ProductCard product={p} index={i + 1} preferVideo={hasVideoAsset(p)} />
+                <ProductCard product={p} index={i + 1} />
               </RevealOnScroll>
             ))}
           </div>
@@ -207,7 +198,7 @@ const CategoryBlock: React.FC<Props> = ({
                   delayMs={i * 15}
                   className="min-w-[300px] shrink-0"
                 >
-                  <ProductCard product={p} index={i + 2} preferVideo={hasVideoAsset(p)} />
+                  <ProductCard product={p} index={i + 2} />
                 </RevealOnScroll>
               ))}
               {hasMoreThan30 && <div className="min-w-[320px] shrink-0" />}

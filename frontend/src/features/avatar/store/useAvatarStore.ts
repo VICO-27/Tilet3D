@@ -218,6 +218,7 @@ interface AvatarStore extends AvatarState {
   notificationType:
     | 'success'
     | 'error'
+    | 'info'
     | null;
 
   isInteracting: boolean;

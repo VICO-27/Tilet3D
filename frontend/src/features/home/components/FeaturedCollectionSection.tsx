@@ -47,19 +47,17 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  // LAZY LOADING STATE: Prevents stacking and lagging
   const [hasEntered, setHasEntered] = useState(false);
+  const [mediaLoaded, setMediaLoaded] = useState(false); // SKELETON STATE
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      // Look ahead by 1000px so it loads *just* before the user sees it
       if (entry.isIntersecting) {
         setHasEntered(true); 
         if (videoRef.current) {
           videoRef.current.play().catch(() => {});
         }
       } else {
-        // Automatically pause videos when they leave the screen to save GPU
         if (videoRef.current) {
           videoRef.current.pause();
         }
@@ -84,27 +82,32 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
       className="group relative w-[260px] md:w-[360px] h-[380px] md:h-[520px] rounded-[24px] md:rounded-[32px] overflow-hidden border border-white/[0.05] bg-neutral-950 will-change-transform shrink-0 cursor-pointer"
     >
       <div className="absolute inset-0 z-0 bg-neutral-900">
+        {/* SKELETON PLACEHOLDER */}
+        {!mediaLoaded && hasEntered && (
+          <div className="absolute inset-0 z-10 bg-neutral-800 overflow-hidden">
+             <div className="shimmer-effect absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+          </div>
+        )}
+
         {isVideo ? (
           <video
             ref={videoRef}
-            // ONLY LOAD SRC IF IT IS CLOSE TO THE SCREEN (Fixes lag)
             src={hasEntered ? item.mediaUrl : undefined}
             autoPlay
             loop
             muted
             playsInline
             preload="auto"
-            // FORCE IMMEDIATE PLAYBACK ONCE LOADED
-            onCanPlay={(e) => e.currentTarget.play()}
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            onCanPlay={(e) => { e.currentTarget.play(); setMediaLoaded(true); }}
+            className={`w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
         ) : (
           <img
-            // LAZY LOAD IMAGES TOO FOR MAXIMUM SPEED
             src={hasEntered ? item.mediaUrl : undefined}
             alt={item.product.name}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            onLoad={() => setMediaLoaded(true)}
+            className={`w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
         )}
       </div>
@@ -156,7 +159,6 @@ const FeaturedCollectionSection = () => {
     fetchFeatured();
   }, []);
 
-  // MAGIC SHUFFLER V3: Fully Typed Category Round-Robin + Interleaving
   const displayItems = useMemo(() => {
     if (products.length === 0) return [];
     
@@ -183,34 +185,50 @@ const FeaturedCollectionSection = () => {
       });
     });
 
-    const mixCategories = (grouped: Record<string, DisplayItem[]>) => {
-      const result: DisplayItem[] = [];
-      const keys = Object.keys(grouped);
-      let hasMore = true;
-      let depthIndex = 0;
-      
-      while (hasMore) {
-        hasMore = false;
-        for (const key of keys) {
-          if (depthIndex < grouped[key].length) {
-            result.push(grouped[key][depthIndex]);
-            hasMore = true; 
-          }
-        }
-        depthIndex++;
-      }
-      return result;
+    const pullNextItem = (source: Record<string, DisplayItem[]>, bannedCategory: string | null): DisplayItem | null => {
+      const availableCategories = Object.keys(source).filter(cat => source[cat].length > 0);
+      if (availableCategories.length === 0) return null;
+      let pickedCat = availableCategories.find(cat => cat !== bannedCategory);
+      if (!pickedCat) pickedCat = availableCategories[0];
+      return source[pickedCat].shift() || null;
     };
 
-    const mixedVideos = mixCategories(videosByCategory);
-    const mixedImages = mixCategories(imagesByCategory);
-
     const interleaved: DisplayItem[] = [];
-    const maxLen = Math.max(mixedVideos.length, mixedImages.length);
-    
-    for (let i = 0; i < maxLen; i++) {
-      if (i < mixedVideos.length) interleaved.push(mixedVideos[i]);
-      if (i < mixedImages.length) interleaved.push(mixedImages[i]);
+    let lastCategory: string | null = null;
+    let expectedType = 'video';
+
+    while (true) {
+      if (expectedType === 'video') {
+        const item = pullNextItem(videosByCategory, lastCategory);
+        if (item) {
+          interleaved.push(item);
+          lastCategory = getCategoryName(item.product);
+          expectedType = 'image';
+        } else {
+          const fallback = pullNextItem(imagesByCategory, lastCategory);
+          if (fallback) {
+            interleaved.push(fallback);
+            lastCategory = getCategoryName(fallback.product);
+          } else {
+            break;
+          }
+        }
+      } else {
+        const item = pullNextItem(imagesByCategory, lastCategory);
+        if (item) {
+          interleaved.push(item);
+          lastCategory = getCategoryName(item.product);
+          expectedType = 'video';
+        } else {
+          const fallback = pullNextItem(videosByCategory, lastCategory);
+          if (fallback) {
+            interleaved.push(fallback);
+            lastCategory = getCategoryName(fallback.product);
+          } else {
+            break;
+          }
+        }
+      }
     }
 
     return [...interleaved, ...interleaved, ...interleaved]; 
@@ -226,12 +244,14 @@ const FeaturedCollectionSection = () => {
     let startX: number;
     let scrollLeft: number;
     
-    // SMOOTH SPEED: 3.5 moving right to left
-    const speed = 6; 
+    // SMOOTH SPEED
+    const speed = 2.5; 
 
     const autoScroll = () => {
-      if (!isDown && !isHovering.current) {
-        track.scrollLeft += speed;
+      if (!isDown) {
+        // Slow down significantly on hover instead of stopping
+        const currentSpeed = isHovering.current ? speed * 0.25 : speed;
+        track.scrollLeft += currentSpeed;
         const singleSetWidth = track.scrollWidth / 3;
         
         if (track.scrollLeft >= singleSetWidth) {
@@ -301,10 +321,10 @@ const FeaturedCollectionSection = () => {
 
   return (
     <motion.section 
-      initial={{ opacity: 0, y: 30, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ type: "spring", stiffness: 180, damping: 22 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "100px" }}
+      transition={{ duration: 1.2, ease: "easeOut" }}
       className="relative bg-black text-white h-[85vh] min-h-[650px] w-full flex flex-col justify-center overflow-hidden"
       onMouseEnter={() => (isHovering.current = true)}
       onMouseLeave={() => (isHovering.current = false)}

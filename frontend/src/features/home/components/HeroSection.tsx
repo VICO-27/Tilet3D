@@ -169,6 +169,14 @@ const HeroSection = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/products")}
+              onMouseEnter={() => {
+                import('../../products/pages/ProductsPage'); // prefetch route chunk
+                import('../../products/hooks/useProducts').then(m => m.prefetchProducts()); // prefetch API data
+              }}
+              onTouchStart={() => {
+                import('../../products/pages/ProductsPage'); // prefetch route chunk for mobile
+                import('../../products/hooks/useProducts').then(m => m.prefetchProducts()); // prefetch API data
+              }}
               className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-plum-600 px-3 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-plum-700 shadow-lg hover:shadow-plum-600/30"
             >
               {t("hero.shopNow", "Shop Now")}
@@ -183,9 +191,8 @@ const HeroSection = () => {
 
         {/* ─── Right Column: Interactive Static Image Stage ─── */}
         <motion.div
-          variants={prefersReducedMotion ? undefined : visualVariants as any}
-          initial="hidden"
-          animate="visible"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
           className="relative h-[50vh] lg:h-full w-full lg:translate-x-6 flex items-center justify-center"
         >
           {/* Living Aura Background */}

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
 import { useTranslation } from "react-i18next";
 
 const stepData = [
@@ -29,74 +28,86 @@ const HowItWorksSection = () => {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement | null>(null);
-  const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const timelineRef = useRef<any>(null);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const barRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    const total = stepData.length;
-    const perStep = 5;
+    let tl: any = null;
+    let obs: IntersectionObserver | null = null;
+    
+    // Dynamic import GSAP when visible
+    obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          import("gsap").then((gsapModule) => {
+            const gsap = gsapModule.default;
+            if (tl) return; // Already initialized
+            
+            const total = stepData.length;
+            const perStep = 5;
 
-    const tl = gsap.timeline({
-      repeat: -1,
-      paused: true,
-      onUpdate: () => {
-        const p = tl.progress();
-        setActiveIndex(Math.min(Math.floor(p * total), total - 1));
+            tl = gsap.timeline({
+              repeat: -1,
+              onUpdate: () => {
+                const p = tl.progress();
+                setActiveIndex(Math.min(Math.floor(p * total), total - 1));
+              },
+            });
+            timelineRef.current = tl;
+
+            stepData.forEach((_, i) => {
+              const el = stepRefs.current[i];
+              const bar = barRefs.current[i];
+              if (!el || !bar) return;
+              const content = el.querySelectorAll(".anim");
+              
+              tl.fromTo(
+                content,
+                { opacity: 0, y: 18, filter: "blur(6px)" },
+                {
+                  opacity: 1,
+                  y: 0,
+                  filter: "blur(0px)",
+                  stagger: 0.08,
+                  duration: 0.6,
+                  ease: "power3.out",
+                },
+              );
+              tl.fromTo(
+                bar,
+                { scaleX: 0 },
+                {
+                  scaleX: 1,
+                  duration: perStep - 0.6,
+                  ease: "none",
+                  transformOrigin: "left center",
+                },
+                "<",
+              );
+              tl.to(content, {
+                opacity: 0,
+                y: -12,
+                filter: "blur(4px)",
+                duration: 0.5,
+                ease: "power2.in",
+              });
+            });
+            
+            if (entries[0].isIntersecting) tl.play();
+          });
+        } else {
+          tl?.pause();
+        }
       },
-    });
-    timelineRef.current = tl;
-
-    stepData.forEach((_, i) => {
-      const el = stepRefs.current[i];
-      const bar = barRefs.current[i];
-      if (!el || !bar) return;
-      const content = el.querySelectorAll(".anim");
-      
-      tl.fromTo(
-        content,
-        { opacity: 0, y: 18, filter: "blur(6px)" },
-        {
-          opacity: 1,
-          y: 0,
-          filter: "blur(0px)",
-          stagger: 0.08,
-          duration: 0.6,
-          ease: "power3.out",
-        },
-      );
-      tl.fromTo(
-        bar,
-        { scaleX: 0 },
-        {
-          scaleX: 1,
-          duration: perStep - 0.6,
-          ease: "none",
-          transformOrigin: "left center",
-        },
-        "<",
-      );
-      tl.to(content, {
-        opacity: 0,
-        y: -12,
-        filter: "blur(4px)",
-        duration: 0.5,
-        ease: "power2.in",
-      });
-    });
-
-    const obs = new IntersectionObserver(
-      ([entry]) =>
-        entry.isIntersecting
-          ? timelineRef.current?.play()
-          : timelineRef.current?.pause(),
-      { threshold: 0.35 },
+      { threshold: 0.35 }
     );
+    
     if (sectionRef.current) obs.observe(sectionRef.current);
 
     return () => {
-      obs.disconnect();
-      tl.kill();
+      obs?.disconnect();
+      tl?.kill();
     };
   }, []);
 

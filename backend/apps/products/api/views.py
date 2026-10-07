@@ -1,3 +1,5 @@
+from django.db.models import Min
+from django.db.models import Count, Exists, OuterRef, Subquery
 # backend/apps/products/api/views.py
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,7 +13,7 @@ from apps.products.models import (
     ProductShare,
 )
 
-from .serializers import ProductSerializer, ProductCommentSerializer
+from .serializers import ProductSerializer, ProductListSerializer, ProductCommentSerializer
 
 
 # ==========================================================
@@ -21,7 +23,7 @@ class UserLikedProductsAPIView(generics.ListAPIView):
     """
     Returns a list of all active products liked by the current authenticated user.
     """
-    serializer_class = ProductSerializer
+    serializer_class = ProductListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -51,28 +53,51 @@ class ProductCommentsListView(generics.ListAPIView):
 # PRODUCT LIST
 # ==========================================================
 class ProductListAPIView(generics.ListAPIView):
-    serializer_class = ProductSerializer
+    serializer_class = ProductListSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Product.objects.filter(
-    is_active=True
-).select_related(
-    "category",
-).prefetch_related(
-    "media",
-    "variants",
-    "likes",
-    "comments",
-    "bookmarks",
-).order_by(
-    "display_order", "-created_at", "id",
-)
+            is_active=True
+        ).select_related(
+            "category",
+        ).prefetch_related(
+            "media",
+        ).order_by(
+            "display_order", "-created_at", "id",
+        )
 
         categories_param = self.request.query_params.get("categories", None)
         if categories_param:
             category_list = [cat.strip() for cat in categories_param.split(",")]
             queryset = queryset.filter(category__name__in=category_list)
+
+        user_id = self.request.user.id if self.request.user.is_authenticated else None
+        
+        queryset = queryset.annotate(
+            like_count_annotated=Count('likes', distinct=True),
+            min_price=Min('variants__price'),
+            comment_count_annotated=Count('comments', distinct=True),
+        )
+        from apps.products.models import ProductVariant
+        default_var = ProductVariant.objects.filter(product=OuterRef('pk')).order_by('id').values('id')[:1]
+        queryset = queryset.annotate(
+            default_variant_id_annotated=Subquery(default_var)
+        )
+
+        
+        if user_id:
+            from apps.products.models import ProductLike, ProductBookmark
+            queryset = queryset.annotate(
+                is_liked_annotated=Exists(ProductLike.objects.filter(product=OuterRef('pk'), user_id=user_id)),
+                is_saved_annotated=Exists(ProductBookmark.objects.filter(product=OuterRef('pk'), user_id=user_id)),
+            )
+        else:
+            from django.db.models import Value, BooleanField
+            queryset = queryset.annotate(
+                is_liked_annotated=Value(False, output_field=BooleanField()),
+                is_saved_annotated=Value(False, output_field=BooleanField()),
+            )
 
         return queryset
 
@@ -96,12 +121,12 @@ class ProductSearchAPIView(generics.ListAPIView):
     Unified search endpoint that supports query strings for filtering,
     sorting, and returns paginated results.
     """
-    serializer_class = ProductSerializer
+    serializer_class = ProductListSerializer
     permission_classes = [AllowAny]
     pagination_class = ProductSearchPagination
 
     def get_queryset(self):
-        return search_products(
+        qs = search_products(
             query=self.request.query_params.get("q"),
             category=self.request.query_params.get("category"),
             min_price=self.request.query_params.get("min_price"),
@@ -111,6 +136,29 @@ class ProductSearchAPIView(generics.ListAPIView):
             availability=self.request.query_params.get("availability"),
             sort=self.request.query_params.get("sort"),
         )
+        
+        user_id = self.request.user.id if self.request.user.is_authenticated else None
+        
+        qs = qs.annotate(
+            like_count_annotated=Count('likes', distinct=True),
+            min_price=Min('variants__price'),
+            comment_count_annotated=Count('comments', distinct=True),
+        )
+        
+        if user_id:
+            from apps.products.models import ProductLike, ProductBookmark
+            qs = qs.annotate(
+                is_liked_annotated=Exists(ProductLike.objects.filter(product=OuterRef('pk'), user_id=user_id)),
+                is_saved_annotated=Exists(ProductBookmark.objects.filter(product=OuterRef('pk'), user_id=user_id)),
+            )
+        else:
+            from django.db.models import Value, BooleanField
+            qs = qs.annotate(
+                is_liked_annotated=Value(False, output_field=BooleanField()),
+                is_saved_annotated=Value(False, output_field=BooleanField()),
+            )
+            
+        return qs
 
     def get_serializer_context(self):
         return {"request": self.request}

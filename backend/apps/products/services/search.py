@@ -16,11 +16,7 @@ def search_products(
     Used by both the REST API (frontend) and AI Assistant.
     """
     qs = Product.objects.filter(is_active=True).select_related("category").prefetch_related(
-        "media",
-        "variants",
-        "likes",
-        "comments",
-        "bookmarks"
+        "media"
     )
 
     if query:

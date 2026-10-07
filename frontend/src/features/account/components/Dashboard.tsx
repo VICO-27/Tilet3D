@@ -56,7 +56,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   // Transform the Product structure into clothing parameters for the avatar canvas context
   const tryOn = (p: Product) => {
     const primaryMedia = p.media.find((m) => m.is_primary) || p.media[0];
-    const targetVariant = p.variants[0];
+    const targetVariant = p.variants?.[0] || { id: p.default_variant_id, price: p.price };
 
     onNavigate("/avatar", {
       state: {
@@ -233,7 +233,7 @@ const EngagementGrid: React.FC<{
   <div className="grid grid-cols-3 gap-2.5">
     {products.slice(0, 6).map((p) => {
       const displayMedia = p.media.find((m) => m.is_primary) || p.media[0];
-      const displayPrice = p.variants[0]?.price || 0;
+      const displayPrice = p.price || p.variants?.[0]?.price || 0;
 
       return (
         <button key={p.id} onClick={() => onTryOn(p)} className="group text-left">

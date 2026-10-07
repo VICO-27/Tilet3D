@@ -204,7 +204,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
                       {item.product.name}
                     </h4>
                     <span className="text-sm font-light text-white/80 block mt-1">
-                      ETB {item.product.variants[0]?.price}
+                      ETB {item.product.price || item.product.variants?.[0]?.price}
                     </span>
                   </div>
                 </div>

@@ -18,6 +18,8 @@ export interface ProductVariant {
 }
 
 export interface Product {
+  price?: string | number;
+  default_variant_id?: string;
   id: string;
   name: string;
   slug: string;

@@ -45,7 +45,7 @@ const RelatedProducts: React.FC<Props> = ({ products, currentProductId, category
               </div>
               <p className="text-sm font-medium text-zinc-800 mt-3 truncate">{p.name}</p>
               <p className="text-[13px] text-zinc-500">
-                {p.variants[0]?.price ? `${p.variants[0].price} ETB` : 'Bespoke'}
+                {(p.price || p.variants?.[0]?.price) ? `${p.price || p.variants?.[0]?.price} ETB` : 'Bespoke'}
               </p>
             </button>
           );

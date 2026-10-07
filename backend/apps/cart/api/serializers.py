@@ -55,11 +55,15 @@ class CartItemSerializer(serializers.ModelSerializer):
         ]
 
     def get_image(self, obj):
-        # Fixed: Access media through product instead of variant directly
         try:
-            media = obj.variant.product.media.filter(is_primary=True).first()
-            if not media:
-                media = obj.variant.product.media.first()
+            # First try the to_attr cache from Prefetch
+            if hasattr(obj.variant.product, 'primary_media'):
+                media_list = obj.variant.product.primary_media
+                media = media_list[0] if media_list else None
+            else:
+                # Fallback if not prefetched
+                media_list = [m for m in obj.variant.product.media.all() if m.is_primary]
+                media = media_list[0] if media_list else (obj.variant.product.media.first() if obj.variant.product.media.all() else None)
         except AttributeError:
             return None
 
@@ -114,7 +118,7 @@ class CartSerializer(serializers.ModelSerializer):
         return sum(item.quantity for item in obj.items.all())
 
     def get_unique_items(self, obj):
-        return obj.items.count()
+        return len(obj.items.all())
 
     def get_subtotal(self, obj):
         return sum(

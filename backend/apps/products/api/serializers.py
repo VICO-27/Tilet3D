@@ -35,14 +35,75 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "color",
             "size",
             "price",
+            "default_variant_id",
             "available_stock",
             "measurements",
+        )
+
+
+
+class ProductListSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    media = ProductMediaSerializer(many=True, read_only=True)
+    price = serializers.SerializerMethodField()
+    default_variant_id = serializers.SerializerMethodField()
+    
+    def get_default_variant_id(self, obj):
+        return getattr(obj, 'default_variant_id_annotated', None)
+
+    
+    def get_price(self, obj):
+        annotated = getattr(obj, "min_price", None)
+        if annotated is not None:
+            return annotated
+        first_variant = obj.variants.first()
+        return first_variant.price if first_variant else 0
+
+    
+    like_count = serializers.IntegerField(source="like_count_annotated", read_only=True, default=0)
+    comment_count = serializers.IntegerField(source="comment_count_annotated", read_only=True, default=0)
+    
+    # We will use an Exists subquery for is_liked and is_saved
+    is_liked = serializers.BooleanField(source="is_liked_annotated", read_only=True, default=False)
+    is_saved = serializers.BooleanField(source="is_saved_annotated", read_only=True, default=False)
+
+    class Meta:
+        model = Product
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "brand",
+            "is_featured",
+            "category_name",
+            "price",
+            "default_variant_id",
+            "media",
+            "like_count",
+            "comment_count",
+            "is_liked",
+            "is_saved",
         )
 
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     media = ProductMediaSerializer(many=True, read_only=True)
+    price = serializers.SerializerMethodField()
+    default_variant_id = serializers.SerializerMethodField()
+    
+    def get_default_variant_id(self, obj):
+        return getattr(obj, 'default_variant_id_annotated', None)
+
+    
+    def get_price(self, obj):
+        annotated = getattr(obj, "min_price", None)
+        if annotated is not None:
+            return annotated
+        first_variant = obj.variants.first()
+        return first_variant.price if first_variant else 0
+
     variants = ProductVariantSerializer(many=True, read_only=True)
 
     like_count = serializers.SerializerMethodField()

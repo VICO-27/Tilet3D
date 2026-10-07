@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+from apps.products.models import ProductMedia
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
@@ -26,6 +28,7 @@ class CartView(RetrieveAPIView):
         cart, _ = (
             Cart.objects.prefetch_related(
                 "items__variant__product",
+                Prefetch("items__variant__product__media", queryset=ProductMedia.objects.filter(is_primary=True), to_attr="primary_media")
             ).get_or_create(
                 user=self.request.user
             )

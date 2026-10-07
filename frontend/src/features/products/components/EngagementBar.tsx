@@ -24,7 +24,7 @@ const EngagementBar: React.FC<EngagementBarProps> = ({ product, onOpenComment })
 
   const liked = hasLiked(product.id);
   const saved = isSaved(product.id);
-  const variantId = product.variants[0]?.id;
+  const variantId = product.default_variant_id || product.variants?.[0]?.id || product.id;
   const addedToCart = variantId ? isAdded(variantId) : false;
 
   const handleAction = (fn: () => void) => {

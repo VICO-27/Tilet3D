@@ -23,7 +23,9 @@ export interface Product {
   id: string;
   name: string;
   media: ProductMedia[];
-  variants: ProductVariant[];
+  variants?: ProductVariant[];
+  price?: string | number;
+  default_variant_id?: string;
   like_count: number;
   comment_count: number;
   is_liked: boolean;
@@ -47,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   useEngagementStore();
   const { addToCart, isAdded } = useCartStore();
 
-  const variantId = product.variants?.[0]?.id || product.id;
+  const variantId = product.default_variant_id || product.variants?.[0]?.id || product.id;
   const alreadyAdded = variantId ? isAdded(variantId) : false;
 
   const isWide = index % 5 === 0;
@@ -146,7 +148,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
               {product.name}
             </h3>
             <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
-              {product.variants?.[0]?.price ? `${product.variants[0].price} ETB` : t("products.bespoke", "Bespoke Order")}
+              {(product.price || product.variants?.[0]?.price) ? `${product.price || product.variants?.[0]?.price} ETB` : t("products.bespoke", "Bespoke Order")}
             </p>
           </div>
 

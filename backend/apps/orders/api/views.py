@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -76,6 +77,7 @@ class OrderListAPIView(generics.ListAPIView):
         return (
             Order.objects
             .filter(user=self.request.user)
+            .annotate(items_count=Count("items"))
             .order_by("-created_at")
         )
 

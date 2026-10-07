@@ -34,6 +34,8 @@ class OrderListSerializer(serializers.ModelSerializer):
         ]
 
     def get_item_count(self, obj):
+        if hasattr(obj, 'items_count'):
+            return obj.items_count
         return obj.items.count()
 
 

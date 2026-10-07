@@ -168,10 +168,9 @@ const HeroSection = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/avatar")}
-              className="group flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center gap-1.5 sm:gap-3 rounded-full bg-black px-3 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-neutral-800 shadow-lg hover:shadow-black/20"
+              className="group flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/70 backdrop-blur-xl border border-white/50 px-4 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-bold tracking-wide text-zinc-900 transition-all duration-300 hover:bg-white hover:border-white shadow-sm hover:shadow-md"
             >
               {t("hero.createAvatar", "Create your avatar")}
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.03 }}

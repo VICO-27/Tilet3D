@@ -162,13 +162,13 @@ const HeroSection = () => {
           {/* Call to Actions */}
           <motion.div 
             variants={prefersReducedMotion ? undefined : fadeUpVariants as any}
-            className="mt-8 flex flex-row items-center gap-3 sm:gap-4 w-full max-w-[400px] sm:max-w-none"
+            className="mt-6 sm:mt-8 flex flex-row items-center gap-2 sm:gap-4 w-[85%] sm:w-full max-w-[320px] sm:max-w-none"
           >
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/avatar")}
-              className="group flex-1 sm:flex-none inline-flex items-center justify-center gap-2 sm:gap-3 rounded-full bg-black px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-neutral-900 shadow-lg hover:shadow-neutral-900/20"
+              className="group flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center gap-1.5 sm:gap-3 rounded-full bg-black px-3 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-neutral-900 shadow-lg hover:shadow-neutral-900/20"
             >
               {t("hero.createAvatar", "Create your avatar")}
               <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -177,7 +177,7 @@ const HeroSection = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/products")}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-full border border-plum-200 bg-white/60 px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-sm font-semibold text-plum-600 transition-colors duration-300 hover:border-plum-300 hover:bg-plum-50 hover:shadow-sm"
+              className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full border border-plum-200 bg-white/60 px-3 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-semibold text-plum-600 transition-colors duration-300 hover:border-plum-300 hover:bg-plum-50 hover:shadow-sm"
             >
               {t("hero.shopNow", "Shop Now")}
             </motion.button>

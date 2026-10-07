@@ -27,7 +27,6 @@ const Navbar = () => {
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const LINKS = [
-    { to: "/", label: t("nav.home", "Home") },
     { to: "/products", label: t("nav.collection", "Collection") },
     { to: "/avatar", label: t("nav.fittingRoom", "Fitting Room") },
     { to: "/ai-concierge", label: "Chat" },

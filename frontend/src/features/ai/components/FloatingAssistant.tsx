@@ -173,27 +173,6 @@ export const FloatingAssistant: React.FC = () => {
       {isOpen && (
         <>
           {/* ═══════════════════════════════════════════════════════════════════
-              MINIMISE PILL — top-right, below the 48px Navbar
-          ═══════════════════════════════════════════════════════════════════ */}
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.button
-                key="minimise-btn"
-                initial={{ opacity: 0, y: -8, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.92 }}
-                transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                onClick={handleMinimise}
-                aria-label="Minimise assistant"
-                className="fixed top-[56px] right-3 z-[70] flex items-center gap-1.5 px-4 py-2 bg-neutral-950/95 backdrop-blur-xl border border-white/10 rounded-full text-white/80 text-[13px] font-medium shadow-lg select-none"
-              >
-                <ChevronDown size={13} className="opacity-60" />
-                Minimise
-              </motion.button>
-            )}
-          </AnimatePresence>
-
-          {/* ═══════════════════════════════════════════════════════════════════
               BACKDROP — soft dim, tapping it collapses the card
           ═══════════════════════════════════════════════════════════════════ */}
           <AnimatePresence>
@@ -242,8 +221,18 @@ export const FloatingAssistant: React.FC = () => {
               >
                 {/* Header / Drag handle */}
                 <div className="shrink-0 pt-3 pb-1.5 px-5 flex items-center justify-between">
-                  <div className="w-16" /> {/* Spacer to keep handle centered */}
+                  <button 
+                    type="button"
+                    onClick={handleMinimise}
+                    className="w-16 flex items-center justify-start gap-1 text-white/40 hover:text-white/80 transition-colors text-[11px] font-semibold tracking-wide uppercase"
+                    aria-label="Minimise assistant"
+                  >
+                    <ChevronDown size={14} />
+                    <span>Minimise</span>
+                  </button>
+
                   <div className="w-8 h-[3px] bg-white/15 rounded-full" />
+                  
                   <button 
                     type="button"
                     onClick={() => {

@@ -1,7 +1,12 @@
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from apps.products.cache_utils import get_catalog_version
 from django.db.models import Min
 from django.db.models import Count, Exists, OuterRef, Subquery
 # backend/apps/products/api/views.py
 from rest_framework import generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -58,6 +63,22 @@ class ProductSearchPagination(PageNumberPagination):
     max_page_size = 50
 
 class ProductListAPIView(generics.ListAPIView):
+    @method_decorator(cache_control(public=True, max_age=300)) # 5 min client cache
+    def list(self, request, *args, **kwargs):
+        user_id = request.user.id if request.user.is_authenticated else "anon"
+        version = get_catalog_version()
+        query_string = request.META.get('QUERY_STRING', '')
+        
+        cache_key = f"catalog_{version}_{self.__class__.__name__}_{user_id}_{query_string}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
+
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, 60 * 15)  # 15 min server cache
+        return response
+
     serializer_class = ProductListSerializer
     pagination_class = ProductSearchPagination
     permission_classes = [AllowAny]
@@ -119,6 +140,22 @@ from apps.products.services.search import search_products
 
 
 class ProductSearchAPIView(generics.ListAPIView):
+    @method_decorator(cache_control(public=True, max_age=300)) # 5 min client cache
+    def list(self, request, *args, **kwargs):
+        user_id = request.user.id if request.user.is_authenticated else "anon"
+        version = get_catalog_version()
+        query_string = request.META.get('QUERY_STRING', '')
+        
+        cache_key = f"catalog_{version}_{self.__class__.__name__}_{user_id}_{query_string}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
+
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, 60 * 15)  # 15 min server cache
+        return response
+
     """
     Unified search endpoint that supports query strings for filtering,
     sorting, and returns paginated results.

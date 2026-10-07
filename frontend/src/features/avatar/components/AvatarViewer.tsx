@@ -72,7 +72,8 @@ import {
   Preload,
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { CheckCircle2, AlertCircle, Ruler, Activity } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Ruler, Activity, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 
 import { AvatarModel } from './AvatarModel';
@@ -123,25 +124,25 @@ function LeftHUD() {
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[90px] md:w-56">
-        <div className="hidden md:flex items-center gap-2 mb-6">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[84px] md:w-44">
+        <div className="hidden md:flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
         </div>
-        <div className="space-y-2 md:space-y-4">
+        <div className="space-y-2 md:space-y-3">
           <div>
             <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Height</p>
-            <p className="text-sm md:text-xl font-light text-[#161616]">{height} <span className="text-[9px] md:text-sm">cm</span></p>
+            <p className="text-sm md:text-lg font-light text-[#161616]">{height} <span className="text-[9px] md:text-xs">cm</span></p>
           </div>
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
             <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Weight</p>
-            <p className="text-sm md:text-xl font-light text-[#161616]">{weight} <span className="text-[9px] md:text-sm">kg</span></p>
+            <p className="text-sm md:text-lg font-light text-[#161616]">{weight} <span className="text-[9px] md:text-xs">kg</span></p>
           </div>
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
             <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Structure</p>
-            <p className="text-sm md:text-lg font-light text-[#161616] capitalize truncate">{body_type.replace('_', ' ')}</p>
+            <p className="text-sm md:text-base font-light text-[#161616] capitalize truncate">{body_type.replace('_', ' ')}</p>
           </div>
         </div>
       </div>
@@ -164,8 +165,8 @@ function RightHUD() {
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[90px] md:w-56">
-        <div className="hidden md:flex items-center gap-2 mb-6">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[84px] md:w-44">
+        <div className="hidden md:flex items-center gap-2 mb-4">
           <Ruler className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>
         </div>
@@ -263,6 +264,31 @@ function StudioScene() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Top controls (Collections)
+// ─────────────────────────────────────────────────────────────────────────────
+function TopHUD() {
+  const navigate = useNavigate();
+  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
+
+  return (
+    <div
+      className={`absolute top-20 md:top-24 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-500 z-10 ${
+        isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'
+      }`}
+    >
+      <button
+        onClick={() => navigate('/products')}
+        className="group flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-[#161616]/80 hover:bg-[#161616] backdrop-blur-xl border border-white/20 text-white rounded-full text-xs font-semibold tracking-wide shadow-2xl transition-all duration-300 hover:scale-105"
+      >
+        <ShoppingBag size={14} className="text-plum-400 group-hover:text-plum-300 transition-colors" />
+        <span className="uppercase tracking-widest text-[10px] md:text-xs">Shop Collection</span>
+        <ArrowRight size={14} className="ml-1 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // AvatarViewer — the full-screen 3D studio
 // ─────────────────────────────────────────────────────────────────────────────
 export function AvatarViewer() {
@@ -324,6 +350,7 @@ export function AvatarViewer() {
         <Preload all />
       </Canvas>
 
+      <TopHUD />
       <LeftHUD />
       <RightHUD />
       <BottomControls />

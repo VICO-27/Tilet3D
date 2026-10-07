@@ -75,19 +75,6 @@ export function AvatarControls() {
         <span className="whitespace-nowrap">360° Spin</span>
       </button>
 
-      <div className="w-px h-6 bg-stone-200 mx-0.5 md:mx-1 shrink-0" />
-
-      {/* View Collections */}
-      <button
-        id="avatar-collections-btn"
-        type="button"
-        onClick={() => navigate('/products')}
-        className="flex shrink-0 items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-[#161616] text-white rounded-full text-xs md:text-sm font-semibold hover:bg-plum-600 transition-colors duration-200 shadow-md"
-      >
-        <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
-        <span className="whitespace-nowrap">Collections</span>
-      </button>
-
     </div>
   );
 }

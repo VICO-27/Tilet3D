@@ -38,20 +38,26 @@ function ResponsiveCamera() {
   }, [isConfirmed, size]);
 
   useFrame((_, dt) => {
-    // Current offset is stored in camera.view if it exists
     const currentX = camera.view?.offsetX || 0;
     const currentY = camera.view?.offsetY || 0;
     
-    // Lerp towards target
-    const newX = THREE.MathUtils.lerp(currentX, targetOffset.current.x, dt * 4);
-    const newY = THREE.MathUtils.lerp(currentY, targetOffset.current.y, dt * 4);
+    // Safety clamp dt to avoid unstable extrapolation if tab was backgrounded
+    const t = Math.min(dt * 4, 1);
+    const newX = THREE.MathUtils.lerp(currentX, targetOffset.current.x, t);
+    const newY = THREE.MathUtils.lerp(currentY, targetOffset.current.y, t);
 
-    // Only update if there is a meaningful difference
-    if (Math.abs(newX - targetOffset.current.x) > 0.5 || Math.abs(newY - targetOffset.current.y) > 0.5 || camera.view?.offsetX !== undefined) {
-      if (Math.abs(newX) < 1 && Math.abs(newY) < 1 && isConfirmed) {
+    const diffX = Math.abs(newX - targetOffset.current.x);
+    const diffY = Math.abs(newY - targetOffset.current.y);
+
+    if (diffX > 0.5 || diffY > 0.5) {
+      camera.setViewOffset(size.width, size.height, newX, newY, size.width, size.height);
+      camera.updateProjectionMatrix();
+    } else if (camera.view?.offsetX !== targetOffset.current.x || camera.view?.offsetY !== targetOffset.current.y) {
+      // Snap to exact target when close
+      if (targetOffset.current.x === 0 && targetOffset.current.y === 0 && isConfirmed) {
         camera.clearViewOffset();
       } else {
-        camera.setViewOffset(size.width, size.height, newX, newY, size.width, size.height);
+        camera.setViewOffset(size.width, size.height, targetOffset.current.x, targetOffset.current.y, size.width, size.height);
       }
       camera.updateProjectionMatrix();
     }

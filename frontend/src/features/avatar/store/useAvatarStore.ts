@@ -416,16 +416,13 @@ export const useAvatarStore =
       //   2. Collapse the form.
       //   3. Notification auto-hides.
       //   4. Edit Body reopens the form.
-      // ─────────────────────────────────────────────────────────────────────
-
       if (!hasAuthToken()) {
-
         set({
           isConfirmed: true,
           isLoading: false,
           notification:
-            'Please sign in first to save and interact with your avatar.',
-          notificationType: 'error',
+            'Previewing your avatar! Sign in to save these measurements permanently.',
+          notificationType: 'info',
         });
 
         scheduleNotifClear(set);

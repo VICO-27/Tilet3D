@@ -80,7 +80,7 @@ const ProductsPage: React.FC = () => {
   const { groupedProducts, categories, isLoading, error, hasNextPage, isFetchingNext, loadMore } = useProducts();
   
   // Search and filter view
-  const { data: searchData, isLoading: isSearchLoading, hasFilters } = useProductSearch(searchParams);
+  const { data: searchData, isLoading: isSearchLoading, hasFilters, isFetchingNext: isSearchFetchingNext, hasNextPage: searchHasNextPage, loadMore: searchLoadMore } = useProductSearch(searchParams);
 
   // Auto-open filter drawer if requested
   useEffect(() => {
@@ -319,40 +319,18 @@ const ProductsPage: React.FC = () => {
                   ))}
                 </div>
                 
-                {/* Pagination Controls */}
-                <div className="flex justify-center items-center gap-6 mt-16">
-                   {searchData.previous && (
-                      <button 
-                         onClick={() => {
-                           const newParams = new URLSearchParams(searchParams);
-                           const pageMatch = searchData.previous?.match(/page=(\d+)/);
-                           if (pageMatch) newParams.set('page', pageMatch[1]);
-                           else newParams.delete('page');
-                           setSearchParams(newParams);
-                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                         }}
-                         className="px-6 py-2 border border-zinc-200 rounded-full text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50"
-                      >
-                         Previous
-                      </button>
-                   )}
-                   <span className="text-xs text-zinc-400 font-medium">Page {searchParams.get('page') || 1}</span>
-                   {searchData.next && (
-                      <button 
-                         onClick={() => {
-                           const newParams = new URLSearchParams(searchParams);
-                           const pageMatch = searchData.next?.match(/page=(\d+)/);
-                           if (pageMatch) newParams.set('page', pageMatch[1]);
-                           else newParams.set('page', '2'); // if next exists but no page param, it's page 2
-                           setSearchParams(newParams);
-                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                         }}
-                         className="px-6 py-2 border border-zinc-200 rounded-full text-xs font-bold uppercase tracking-widest text-zinc-600 hover:bg-zinc-50"
-                      >
-                         Next
-                      </button>
-                   )}
-                </div>
+                {/* Infinite Scroll / Load More */}
+                {searchHasNextPage && (
+                  <div className="w-full flex justify-center mt-16 mb-8 relative z-10 px-6">
+                    <button
+                      onClick={searchLoadMore}
+                      disabled={isSearchFetchingNext}
+                      className="px-10 py-4 bg-black text-white text-[12px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                    >
+                      {isSearchFetchingNext ? "Loading..." : "Load More"}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

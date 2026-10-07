@@ -80,7 +80,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
     <>
       <div
         className={`relative h-[550px] overflow-hidden group transition-all duration-700 cursor-pointer ${isWide ? 'col-span-2' : 'col-span-1'}`}
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          import('../pages/ProductDetailPage');
+          import('../api/productApi').then(m => m.productApi.getProductById(product.id).catch(()=>{}));
+        }}
         onMouseLeave={() => {
           setIsHovered(false);
           setShowCommentInput(false);
@@ -221,4 +225,4 @@ const CommentInputTray: React.FC<{
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import apiClient from '@/shared/api/apiClient';
 
 export interface CartProductInfo {
@@ -38,7 +39,9 @@ interface CartState {
   cartTotal: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   cartItems: [],
   loading: false,
   addedVariantIds: [],
@@ -118,4 +121,10 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   cartTotal: () =>
     get().cartItems.reduce((acc, item) => acc + Number(item.variant?.price || 0) * item.quantity, 0),
-}));
+    }),
+    {
+      name: 'tilet3d-cart-storage',
+      partialize: (state) => ({ cartItems: state.cartItems }),
+    }
+  )
+);

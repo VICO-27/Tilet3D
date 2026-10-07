@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.conf import settings
 
 from common.models import BaseModel
@@ -106,6 +108,15 @@ class Product(BaseModel):
         ordering = ["display_order", "-created_at"]
         verbose_name = "Product"
         verbose_name_plural = "Products"
+        indexes = [
+            models.Index(fields=['is_active']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['display_order']),
+            GinIndex(
+                SearchVector('name', 'description', 'brand', config='english'),
+                name='product_search_gin',
+            )
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -175,6 +186,11 @@ class ProductVariant(BaseModel):
         ordering = ["price"]
         verbose_name = "Product Variant"
         verbose_name_plural = "Product Variants"
+        indexes = [
+            models.Index(fields=['price']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['color']),
+        ]
 
     # ==========================================================
     # AVAILABLE STOCK

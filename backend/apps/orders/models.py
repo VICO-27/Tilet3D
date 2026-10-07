@@ -90,6 +90,10 @@ class Order(BaseModel):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['status']),
+        ]
 
     def __str__(self):
         return self.order_number

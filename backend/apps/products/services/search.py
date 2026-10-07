@@ -1,4 +1,5 @@
 from django.db.models import Q, F
+from django.contrib.postgres.search import SearchVector, SearchQuery
 from apps.products.models import Product
 
 def search_products(
@@ -20,11 +21,10 @@ def search_products(
     )
 
     if query:
-        qs = qs.filter(
-            Q(name__icontains=query) |
-            Q(description__icontains=query) |
-            Q(brand__icontains=query)
-        )
+        # Utilize Postgres Full Text Search (GIN index configured in models.py)
+        vector = SearchVector('name', 'description', 'brand', config='english')
+        search_query = SearchQuery(query, config='english')
+        qs = qs.annotate(search=vector).filter(search=search_query)
 
     if category:
         categories = [c.strip() for c in category.split(',')]

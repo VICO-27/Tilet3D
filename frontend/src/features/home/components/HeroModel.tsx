@@ -82,8 +82,9 @@ function AvatarModel({ gender, active }: { gender: Gender; active: boolean }) {
     const targetScale = active ? transform.scale : 0.001;
     const targetY = active ? transform.position[1] : transform.position[1] - 0.1;
 
-    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 7);
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, delta * 7);
+    const t = Math.min(delta * 7, 1);
+    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), t);
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, t);
   });
 
   return (

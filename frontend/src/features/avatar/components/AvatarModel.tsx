@@ -114,7 +114,9 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
     const targetSxz = active ? clamp(0.85 + w / 120, 0.5, 2.0) : 0.001;
 
     // Same butter-smooth lerp dissolve HeroModel uses when swapping genders.
-    group.current.scale.lerp(new THREE.Vector3(targetSxz, targetSy, targetSxz), delta * 7);
+    // Clamp the interpolation factor to 1 to prevent exploding scale on large delta (e.g. after Suspense resolves)
+    const t = Math.min(delta * 7, 1);
+    group.current.scale.lerp(new THREE.Vector3(targetSxz, targetSy, targetSxz), t);
 
     if (active) {
       if (currentAnimation === 'spin') {

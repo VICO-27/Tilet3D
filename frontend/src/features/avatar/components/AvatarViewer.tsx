@@ -289,7 +289,9 @@ export function AvatarViewer() {
         onPointerUp={() => setIsInteracting(false)}
         onPointerLeave={() => setIsInteracting(false)}
       >
-        <Environment preset="city" />
+        <Suspense fallback={null}>
+          <Environment preset="city" />
+        </Suspense>
         <ambientLight intensity={0.6} color="#ffffff" />
         <spotLight
           position={[3, 7, 4]}

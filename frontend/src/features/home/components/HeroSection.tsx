@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useProgress } from "@react-three/drei";
+
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronLeft, ChevronRight, Star, Sparkles, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Gender } from "../../avatar/types/avatar.types";
-import HeroModel from "./HeroModel";
+
 
 const LOGO = "TILET3D";
 const APPLE_FONT =
@@ -87,19 +87,12 @@ const HeroSection = () => {
 
   const [heroGender, setHeroGender] = useState<Gender>("female");
   const interactingRef = useRef(false);
-  const [is3DReady, setIs3DReady] = useState(false);
+  
 
   // Defer mounting WebGL canvas by two frames to prevent main thread blocking during entrance
-  const [mount3D, setMount3D] = useState(false);
-  useEffect(() => {
-    const raf1 = requestAnimationFrame(() => {
-      const raf2 = requestAnimationFrame(() => setMount3D(true));
-      return () => cancelAnimationFrame(raf2);
-    });
-    return () => cancelAnimationFrame(raf1);
-  }, []);
+  
 
-  const { progress } = useProgress();
+  
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -188,73 +181,34 @@ const HeroSection = () => {
           </motion.div>
         </motion.div>
 
-        {/* ─── Right Column: Interactive 3D Stage ─── */}
+        {/* ─── Right Column: Interactive Static Image Stage ─── */}
         <motion.div
           variants={prefersReducedMotion ? undefined : visualVariants as any}
           initial="hidden"
           animate="visible"
-          className="relative h-full w-full lg:translate-x-6"
-          onPointerDown={markInteracting}
-          onPointerUp={endInteracting}
+          className="relative h-[50vh] lg:h-full w-full lg:translate-x-6 flex items-center justify-center"
         >
           {/* Living Aura Background */}
-          {!prefersReducedMotion && <TiletAura />}
+          <TiletAura />
 
-          {/* Idle floating motion for the 3D visual */}
-          <motion.div
-            animate={prefersReducedMotion ? {} : { y: [0, -10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="h-full w-full relative"
-          >
-            {mount3D && <HeroModel gender={heroGender} onReady={() => setIs3DReady(true)} />}
-            
-            {/* Playful Floating Badges */}
-            {!prefersReducedMotion && is3DReady && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
-                  animate={{ opacity: 1, scale: 1, rotate: [-2, 2, -2], y: [0, -6, 0] }}
-                  transition={{ 
-                    opacity: { duration: 0.5, delay: 1.2 },
-                    scale: { type: "spring", stiffness: 200, delay: 1.2 },
-                    rotate: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-                    y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="absolute top-1/4 right-8 md:right-16 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white shadow-sm flex items-center gap-1.5 z-20"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-plum-500" />
-                  <span className="text-[10px] font-bold tracking-wider text-zinc-700 uppercase">AI Fitted</span>
-                </motion.div>
+          {/* Static Hero Fallback instead of heavy WebGL/ThreeJS */}
+          <div className="relative w-full h-[80%] max-h-[600px] flex items-center justify-center pointer-events-none z-10">
+            <img 
+              src={`/models/${heroGender}Avatar_fallback.webp`} 
+              alt={`${heroGender} avatar wearing traditional Ethiopian clothing`}
+              fetchPriority="high"
+              className="object-contain h-full w-full drop-shadow-2xl transition-opacity duration-500"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center -z-10">
+               <div className="w-32 h-64 sm:w-48 sm:h-96 bg-gradient-to-t from-plum-200 to-plum-400 opacity-60 rounded-[100px] blur-sm animate-pulse" />
+            </div>
+          </div>
 
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5, rotate: 10 }}
-                  animate={{ opacity: 1, scale: 1, rotate: [2, -2, 2], y: [0, 8, 0] }}
-                  transition={{ 
-                    opacity: { duration: 0.5, delay: 1.4 },
-                    scale: { type: "spring", stiffness: 200, delay: 1.4 },
-                    rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-                    y: { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="absolute bottom-1/3 left-4 md:left-12 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white shadow-sm flex items-center gap-1.5 z-20"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                  <span className="text-[10px] font-bold tracking-wider text-zinc-700 uppercase">True Size</span>
-                </motion.div>
-              </>
-            )}
-          </motion.div>
-
-          {/* Cinematic Loader Overlay */}
-          <AnimatePresence>
-            {!is3DReady && <LoaderOverlay progress={progress} />}
-          </AnimatePresence>
-
-          {/* Navigation Switches */}
           <HeroSwitch side="left" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
           <HeroSwitch side="right" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
 
-          {/* Gender Segment Control */}
-          <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl">
+          <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
                 key={g}
@@ -266,7 +220,7 @@ const HeroSection = () => {
                 {heroGender === g && (
                   <motion.div
                     layoutId="genderCapsule"
-                    className="absolute inset-0 rounded-full bg-plum-600 shadow-sm"
+                    className="absolute inset-0 rounded-full bg-plum-600 shadow-sm -z-10"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -280,75 +234,7 @@ const HeroSection = () => {
   );
 };
 
-const LoaderOverlay = ({ progress = 0 }: { progress?: number }) => {
-  const letters = LOGO.split("");
-  return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(6px)" }}
-      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#fafafa]"
-    >
-      <style>{`
-        .hero-loader-shimmer {
-          background: linear-gradient(100deg, #09090b 42%, #a21caf 50%, #09090b 58%);
-          background-size: 250% 100%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: heroShimmerSweep 2.6s ease-in-out infinite;
-        }
-        @keyframes heroShimmerSweep {
-          0% { background-position: 200% 0; }
-          100% { background-position: -60% 0; }
-        }
-      `}</style>
 
-      <div className="relative flex flex-col items-center justify-center">
-        <div className="absolute h-[260px] w-[260px] sm:h-[340px] sm:w-[340px] rounded-full bg-plum-200/25 blur-[90px]" />
-        
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-          className="absolute h-[200px] w-[200px] sm:h-[280px] sm:w-[280px] rounded-full border border-plum-200/50"
-        >
-          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-plum-500 shadow-[0_0_14px_4px_rgba(162,28,175,0.35)]" />
-        </motion.div>
-
-        <div className="flex" style={{ fontFamily: APPLE_FONT }}>
-          {letters.map((char, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.2 + i * 0.055, ease: [0.16, 1, 0.3, 1] }}
-              className="hero-loader-shimmer text-[clamp(2.5rem,7vw,5rem)] font-semibold tracking-tight"
-            >
-              {char}
-            </motion.span>
-          ))}
-        </div>
-
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 + letters.length * 0.055 + 0.25 }}
-          className="mt-5 text-[10px] sm:text-xs font-medium tracking-[0.5em] uppercase text-zinc-400"
-        >
-          {"Preparing your fitting room"}
-        </motion.span>
-
-        <div className="mt-8 w-44 sm:w-52 h-[2px] bg-zinc-200 rounded-full overflow-hidden relative">
-          <motion.div
-            animate={{ width: `${Math.max(progress, 4)}%` }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-plum-400 to-plum-600"
-          />
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 const Testimonials = () => {
   const { t } = useTranslation();

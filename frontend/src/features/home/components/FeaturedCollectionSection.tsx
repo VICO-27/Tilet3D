@@ -170,36 +170,36 @@ const FeaturedCollectionSection = () => {
 
     const interleaved: DisplayItem[] = [];
     let wantVideo = true;
-    let lastCategory: string | null = null;
 
-    // We loop to pull ONE product from varying categories until all products are exhausted.
+    // To ensure fair round-robin, we will just loop through the categories in order
+    // until all products are exhausted.
+    let catNames = Object.keys(productsByCategory);
+
     while (true) {
-      // Find all categories that still have products
-      const availableCats = Object.keys(productsByCategory).filter(c => productsByCategory[c].length > 0);
-      
-      if (availableCats.length === 0) break; // done
+      catNames = catNames.filter(c => productsByCategory[c].length > 0);
+      if (catNames.length === 0) break;
 
-      // Pick a category that isn't the last one we used, if possible
-      const catName = availableCats.find(c => c !== lastCategory) ?? availableCats[0];
-      
-      const product = productsByCategory[catName].shift();
-      if (!product) continue;
+      for (const catName of catNames) {
+        if (productsByCategory[catName].length === 0) continue;
 
-      // Extract one media. Try to match wantVideo
-      let media = product.media.find(m => m.media_type === (wantVideo ? 'video' : 'image'));
-      if (!media) media = product.media[0]; // fallback to whatever it has
+        const product = productsByCategory[catName].shift();
+        if (!product) continue;
 
-      if (media) {
-        interleaved.push({
-          product,
-          mediaUrl: media.file,
-          mediaType: media.media_type,
-          uniqueKey: product.id,
-        });
+        // Extract one media. Try to match wantVideo
+        let media = product.media.find(m => m.media_type === (wantVideo ? 'video' : 'image'));
+        if (!media) media = product.media[0]; // fallback
+
+        if (media) {
+          interleaved.push({
+            product,
+            mediaUrl: media.file,
+            mediaType: media.media_type,
+            uniqueKey: product.id,
+          });
+        }
+
+        wantVideo = !wantVideo; // alternate video/image
       }
-
-      lastCategory = catName;
-      wantVideo = !wantVideo; // alternate
     }
 
     // Triplicate for seamless infinite scroll

@@ -174,8 +174,15 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       </div>
 
       {isLoading ? (
-        <div className="w-full h-[460px] flex items-center justify-center text-gray-400 font-light bg-gray-50/50 rounded-3xl mx-8 md:mx-16 max-w-[calc(100%-4rem)] md:max-w-[calc(100%-8rem)]">
-          Preparing catalog...
+        <div className="w-full overflow-hidden pb-4">
+          <div className="flex gap-8 px-8 md:px-16 w-max">
+            {[...Array(6)].map((_, i) => (
+              <div 
+                key={i} 
+                className="w-[280px] md:w-[320px] h-[400px] md:h-[460px] rounded-3xl bg-gray-200 animate-pulse shrink-0" 
+              />
+            ))}
+          </div>
         </div>
       ) : displayItems.length === 0 ? (
         <div className="w-full h-[100px] flex items-center justify-center text-gray-400">

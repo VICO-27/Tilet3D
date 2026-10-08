@@ -11,7 +11,12 @@ from apps.products.models import (
 )
 
 
+import cloudinary
+import cloudinary.utils
+
 class ProductMediaSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductMedia
         fields = (
@@ -21,6 +26,18 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             "is_primary",
             "display_order",
         )
+
+    def get_file(self, obj):
+        if not obj.file:
+            return None
+        # Safely generate the Cloudinary delivery URL using the explicit media_type
+        # This bypasses the faulty 'auto' injection and 'media/' prefixing from django-cloudinary-storage
+        url, _options = cloudinary.utils.cloudinary_url(
+            str(obj.file.name),
+            resource_type=obj.media_type,
+            secure=True
+        )
+        return url
 
 
 class ProductVariantSerializer(serializers.ModelSerializer):

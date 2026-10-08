@@ -67,15 +67,16 @@ class CartItemSerializer(serializers.ModelSerializer):
         except AttributeError:
             return None
 
-        if not media:
+        if not media or not media.file:
             return None
 
-        request = self.context.get("request")
-
-        if request:
-            return request.build_absolute_uri(media.file.url)
-
-        return media.file.url
+        import cloudinary.utils
+        url, _ = cloudinary.utils.cloudinary_url(
+            str(media.file.name),
+            resource_type=media.media_type,
+            secure=True
+        )
+        return url
 
     def get_subtotal(self, obj):
         return obj.quantity * obj.variant.price

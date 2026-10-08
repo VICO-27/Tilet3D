@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play } from 'lucide-react';
 import { ProductMedia } from '../types';
+import { optimizeCloudinaryUrl } from '../../../shared/utils/cloudinary';
 
 interface Props {
   media: ProductMedia[];
@@ -33,7 +34,7 @@ const ProductGallery: React.FC<Props> = ({ media, productName }) => {
         ) : (
           <img
             key={active.id}
-            src={active.file}
+            src={optimizeCloudinaryUrl(active.file, 'c_limit,w_1200,q_auto,f_auto')}
             alt={productName}
             className="w-full h-full object-cover"
           />
@@ -59,7 +60,7 @@ const ProductGallery: React.FC<Props> = ({ media, productName }) => {
                   </div>
                 </>
               ) : (
-                <img src={m.file} alt="" className="w-full h-full object-cover" />
+                <img src={optimizeCloudinaryUrl(m.file, 'c_fill,w_200,q_auto,f_auto')} alt="" className="w-full h-full object-cover" />
               )}
             </button>
           ))}

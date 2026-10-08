@@ -5,7 +5,10 @@ from django.conf import settings
 
 from common.models import BaseModel
 from common.utils import generate_unique_slug
+from cloudinary_storage.storage import MediaCloudinaryStorage
 
+# Shared storage instance for all product and category media
+cloudinary_auto_storage = MediaCloudinaryStorage(resource_type='auto')
 
 class Category(BaseModel):
     """
@@ -32,14 +35,16 @@ class Category(BaseModel):
     )
 
     image = models.ImageField(
-        upload_to="categories/images/",
+        upload_to="tilet3d/categories/images/",
+        storage=cloudinary_auto_storage,
         blank=True,
         null=True,
         help_text="Category thumbnail."
     )
 
     banner = models.ImageField(
-        upload_to="categories/banners/",
+        upload_to="tilet3d/categories/banners/",
+        storage=cloudinary_auto_storage,
         blank=True,
         null=True,
         help_text="Category banner."
@@ -234,7 +239,8 @@ class ProductMedia(BaseModel):
     )
 
     file = models.FileField(
-        upload_to="products/media/",
+        upload_to="tilet3d/products/media/",
+        storage=cloudinary_auto_storage,
     )
 
     alt_text = models.CharField(

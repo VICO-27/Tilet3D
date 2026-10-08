@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "cloudinary",
+    "cloudinary_storage",
 
 
     # Local apps
@@ -393,4 +395,12 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.orders.tasks.task_expire_orders',
         'schedule': crontab(minute='*/30'), # Runs every 30 minutes
     },
+}
+# ==========================================================
+# CLOUDINARY CONFIGURATION
+# ==========================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': env("CLOUDINARY_CLOUD_NAME", default=""),
+    'API_KEY': env("CLOUDINARY_API_KEY", default=""),
+    'API_SECRET': env("CLOUDINARY_API_SECRET", default=""),
 }

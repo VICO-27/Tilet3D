@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
+import { optimizeCloudinaryUrl } from "../../../shared/utils/cloudinary";
 
 // ==========================================
 // 1. INDIVIDUAL LAZY-LOADED ROW COMPONENT
@@ -210,7 +211,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
                     {isVideo ? (
                       <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
-                      <img src={item.mediaUrl} alt={item.product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <img src={optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_400,q_auto,f_auto')} alt={item.product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     )}
                   </div>
                   <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />

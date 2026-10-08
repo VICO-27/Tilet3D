@@ -7,6 +7,8 @@ import { useCartStore } from '@/app/store/useCartStore';
 import { ShoppingBag, Check } from 'lucide-react';
 import PremiumPlanModal from './PremiumPlanModal';
 
+import { optimizeCloudinaryUrl } from '../../../shared/utils/cloudinary';
+
 interface ProductMedia {
   id: string;
   file: string;
@@ -96,7 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             <video src={activeMedia.file} autoPlay muted loop className="w-full h-full object-cover" />
           ) : (
             <img
-              src={activeMedia?.file}
+              src={optimizeCloudinaryUrl(activeMedia?.file, 'c_fill,w_600,q_auto,f_auto')}
               alt={product.name}
               loading={index < 5 ? 'eager' : 'lazy'}
               fetchPriority={index < 5 ? 'high' : 'auto'}

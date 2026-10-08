@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
+import { optimizeCloudinaryUrl } from "../../../shared/utils/cloudinary";
 
 // ==========================================
 // TYPES & INTERFACES
@@ -99,7 +100,7 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
           />
         ) : (
           <img
-            src={inView ? item.mediaUrl : undefined}
+            src={inView ? optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_800,q_auto,f_auto') : undefined}
             alt={item.product.name}
             loading="lazy"
             onLoad={() => setMediaLoaded(true)}

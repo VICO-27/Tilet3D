@@ -35,7 +35,6 @@ class ProductVariantSerializer(serializers.ModelSerializer):
             "color",
             "size",
             "price",
-            "default_variant_id",
             "available_stock",
             "measurements",
         )
@@ -118,6 +117,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "description",
+            "price",
+            "default_variant_id",
             "brand",
             "is_featured",
             "category_name",

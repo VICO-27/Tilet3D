@@ -17,6 +17,7 @@ export const productApi = {
     const params = new URLSearchParams();
     if (categories) {
       params.append('categories', categories);
+      params.append('page_size', '50');
     }
     params.append('page', page.toString());
     

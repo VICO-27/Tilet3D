@@ -1,7 +1,7 @@
-// frontend/src/features/products/pages/CategoryDetailPage.tsx
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProducts } from '../hooks/useProducts';
+import { productApi } from '../api/productApi';
+import { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import { ArrowLeft } from 'lucide-react';
 import BrandLoader from '@/shared/components/BrandLoader';
@@ -9,21 +9,33 @@ import BrandLoader from '@/shared/components/BrandLoader';
 function CategoryDetailPage() {
   const { categoryName } = useParams<{ categoryName: string }>();
   const navigate = useNavigate();
-  const { groupedProducts, isLoading } = useProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll to top instantly on page mount for that smooth, seamless load transition
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [categoryName]);
 
-  const filteredProducts = useMemo(() => {
-    const key = Object.keys(groupedProducts).find(
-      (k) => k.toLowerCase() === categoryName?.toLowerCase()
-    );
-    return key ? groupedProducts[key] : [];
-  }, [groupedProducts, categoryName]);
+  useEffect(() => {
+    const fetchCategoryProducts = async () => {
+      if (!categoryName) return;
+      setIsLoading(true);
+      try {
+        const response = await productApi.getProducts(categoryName, 1);
+        setProducts(response.results);
+      } catch (error) {
+        console.error("Failed to load category products", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCategoryProducts();
+  }, [categoryName]);
 
   if (isLoading) return <BrandLoader />;
+
+  const filteredProducts = products;
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white antialiased">

@@ -103,8 +103,12 @@ class ProductListAPIView(generics.ListAPIView):
 
         categories_param = self.request.query_params.get("categories", None)
         if categories_param:
+            from django.db.models import Q
             category_list = [cat.strip() for cat in categories_param.split(",")]
-            queryset = queryset.filter(category__name__in=category_list)
+            q_objects = Q()
+            for cat in category_list:
+                q_objects |= Q(category__name__iexact=cat)
+            queryset = queryset.filter(q_objects)
 
         is_featured_param = self.request.query_params.get("is_featured", None)
         if is_featured_param and is_featured_param.lower() in ['true', '1']:

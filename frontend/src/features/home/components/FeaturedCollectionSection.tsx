@@ -114,14 +114,11 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
       </div>
 
       {/* Text info */}
-      <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 z-20">
-        <span className="text-[8px] md:text-[9px] font-mono tracking-widest text-plum-400 uppercase block mb-1">
+      <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 z-20 flex flex-col justify-end">
+        <span className="text-[8px] md:text-[9px] font-mono tracking-widest text-plum-400 uppercase block">
           {categoryLabel}
         </span>
-        <h3 className="text-lg md:text-xl text-neutral-100 font-light drop-shadow-md">
-          {item.product.name}
-        </h3>
-        <div className="mt-2 md:mt-4 flex items-center gap-2 text-[10px] text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="mt-2 flex items-center gap-2 text-[10px] text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity">
           <span>View Details</span>
           <span className="text-plum-400">→</span>
         </div>
@@ -163,59 +160,46 @@ const FeaturedCollectionSection = () => {
   const displayItems = useMemo(() => {
     if (products.length === 0) return [];
 
-    const videosByCategory: Record<string, DisplayItem[]> = {};
-    const imagesByCategory: Record<string, DisplayItem[]> = {};
+    const productsByCategory: Record<string, Product[]> = {};
 
     products.forEach(p => {
       const catName = getCategoryName(p);
-      p.media.forEach((m, idx) => {
-        const item: DisplayItem = {
-          product: p,
-          mediaUrl: m.file,
-          mediaType: m.media_type,
-          uniqueKey: `${p.id}-${idx}`,
-        };
-        if (m.media_type === 'video') {
-          if (!videosByCategory[catName]) videosByCategory[catName] = [];
-          videosByCategory[catName].push(item);
-        } else {
-          if (!imagesByCategory[catName]) imagesByCategory[catName] = [];
-          imagesByCategory[catName].push(item);
-        }
-      });
+      if (!productsByCategory[catName]) productsByCategory[catName] = [];
+      productsByCategory[catName].push(p);
     });
 
-    // Pull the next item from a bucket, never from `bannedCategory`
-    const pull = (source: Record<string, DisplayItem[]>, banned: string | null): DisplayItem | null => {
-      const cats = Object.keys(source).filter(c => source[c].length > 0);
-      if (cats.length === 0) return null;
-      // Prefer a different category; only reuse banned if no alternative
-      const cat = cats.find(c => c !== banned) ?? cats[0];
-      return source[cat].shift() ?? null;
-    };
-
     const interleaved: DisplayItem[] = [];
-    let lastCategory: string | null = null;
-    // position 0 = odd (1-indexed) → video; position 1 = even → image
     let wantVideo = true;
+    let lastCategory: string | null = null;
 
+    // We loop to pull ONE product from varying categories until all products are exhausted.
     while (true) {
-      let item: DisplayItem | null = null;
+      // Find all categories that still have products
+      const availableCats = Object.keys(productsByCategory).filter(c => productsByCategory[c].length > 0);
+      
+      if (availableCats.length === 0) break; // done
 
-      if (wantVideo) {
-        item = pull(videosByCategory, lastCategory);
-        if (!item) item = pull(imagesByCategory, lastCategory); // fallback
-      } else {
-        item = pull(imagesByCategory, lastCategory);
-        if (!item) item = pull(videosByCategory, lastCategory); // fallback
+      // Pick a category that isn't the last one we used, if possible
+      const catName = availableCats.find(c => c !== lastCategory) ?? availableCats[0];
+      
+      const product = productsByCategory[catName].shift();
+      if (!product) continue;
+
+      // Extract one media. Try to match wantVideo
+      let media = product.media.find(m => m.media_type === (wantVideo ? 'video' : 'image'));
+      if (!media) media = product.media[0]; // fallback to whatever it has
+
+      if (media) {
+        interleaved.push({
+          product,
+          mediaUrl: media.file,
+          mediaType: media.media_type,
+          uniqueKey: product.id,
+        });
       }
 
-      if (!item) break;
-
-      interleaved.push(item);
-      lastCategory = getCategoryName(item.product);
-      // Always flip — so the pattern stays strict regardless of fallback
-      wantVideo = !wantVideo;
+      lastCategory = catName;
+      wantVideo = !wantVideo; // alternate
     }
 
     // Triplicate for seamless infinite scroll
@@ -224,7 +208,7 @@ const FeaturedCollectionSection = () => {
 
   // ==========================================
   // AUTO-SCROLL ENGINE
-  // Speed: 1.2px/frame (~72px/s at 60fps) — slow, cinematic
+  // Speed: 2.0px/frame (faster) — cinematic
   // Hover: slows to 0.3x but never stops
   // ==========================================
   useEffect(() => {
@@ -235,7 +219,7 @@ const FeaturedCollectionSection = () => {
     let isDragging = false;
     let startX = 0;
     let scrollLeftStart = 0;
-    const BASE_SPEED = 1.2;
+    const BASE_SPEED = 2.0;
 
     const tick = () => {
       if (!isDragging) {

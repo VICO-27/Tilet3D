@@ -45,15 +45,17 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
   // Duplicate the array to create identical halves for seamless infinite scrolling
   const displayItems = useMemo(() => {
     if (products.length === 0) return [];
-    const allMedia = products.flatMap(p => 
-      p.media.map((m, idx) => ({
+    const allMedia = products.map(p => {
+      const m = p.media.find(m => m.media_type === 'image') || p.media[0];
+      return {
         product: p,
-        mediaUrl: m.file,
-        mediaType: m.media_type,
-        uniqueKey: `${p.id}-${idx}`
-      }))
-    );
-    return [...allMedia, ...allMedia]; 
+        mediaUrl: m?.file,
+        mediaType: m?.media_type,
+        uniqueKey: p.id
+      };
+    }).filter(i => i.mediaUrl);
+    // Duplicate the array multiple times to ensure enough length for infinite scroll
+    return [...allMedia, ...allMedia, ...allMedia]; 
   }, [products]);
 
   // NATIVE SCROLL + DRAG + AUTO-SCROLL LOGIC
@@ -66,8 +68,8 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     let startX: number;
     let scrollLeft: number;
     
-    // Auto-scroll speed (-1 for right, 1 for left)
-    const speed = direction === "left" ? 1 : -1;
+    // Auto-scroll speed
+    const speed = direction === "left" ? 1.5 : -1.5;
 
     // If moving right, we start the scrollbar in the middle so it has room to scroll backwards
     if (speed < 0) {
@@ -199,10 +201,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
                     )}
                   </div>
                   <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-                  <div className="absolute inset-x-0 bottom-0 p-6 z-20 text-left">
-                    <h4 className="text-xl text-white font-medium drop-shadow-md">
-                      {item.product.name}
-                    </h4>
+                  <div className="absolute inset-x-0 bottom-0 p-6 z-20 text-left flex flex-col justify-end">
                     <span className="text-sm font-light text-white/80 block mt-1">
                       ETB {item.product.price || item.product.variants?.[0]?.price}
                     </span>

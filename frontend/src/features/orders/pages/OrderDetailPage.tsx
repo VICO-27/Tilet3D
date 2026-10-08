@@ -54,9 +54,6 @@ const OrderDetailPage = () => {
     <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-20 pt-16">
       <Navbar />
       <main className="mx-auto max-w-5xl px-6 py-10 md:px-8">
-        <button onClick={() => navigate("/orders")} className="mb-8 flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Back to Orders
-        </button>
 
         <div className="mb-10 flex flex-col gap-4 border-b border-slate-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -142,6 +139,12 @@ const OrderDetailPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-12">
+          <button onClick={() => navigate("/orders")} className="flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-900">
+            <ArrowLeft className="h-4 w-4" /> Back to Orders
+          </button>
         </div>
       </main>
     </div>

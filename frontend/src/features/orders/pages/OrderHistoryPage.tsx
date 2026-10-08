@@ -45,15 +45,7 @@ function UnauthenticatedOrdersView() {
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="mx-auto max-w-xl px-6 py-16 text-center"
     >
-      <button
-        onClick={() => navigate(-1)}
-        className="group mb-12 mx-auto flex items-center justify-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 transition-colors duration-300"
-      >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white group-hover:border-slate-400 transition-colors duration-300">
-          <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
-        </div>
-        Back
-      </button>
+
 
       {/* Brand mark */}
       <motion.div
@@ -154,6 +146,16 @@ function UnauthenticatedOrdersView() {
           Create a free account
         </button>
       </motion.p>
+      
+      <button
+        onClick={() => navigate(-1)}
+        className="group mt-16 mx-auto flex items-center justify-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 transition-colors duration-300"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white group-hover:border-slate-400 transition-colors duration-300">
+          <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
+        </div>
+        Back
+      </button>
     </motion.div>
   );
 }
@@ -187,15 +189,6 @@ const OrderHistoryPage = () => {
       {error !== "session_expired" && (
         <main className="mx-auto max-w-4xl px-6 py-12 md:px-8">
           <header className="mb-10">
-            <button
-              onClick={() => navigate(-1)}
-              className="group mb-8 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 transition-colors duration-300"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white group-hover:border-slate-400 transition-colors duration-300">
-                <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
-              </div>
-              Back
-            </button>
             <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-600 mb-3">Your Atelier</p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Order History</h1>
@@ -294,6 +287,18 @@ const OrderHistoryPage = () => {
               })}
             </div>
           )}
+
+          <div className="mt-12 flex justify-start">
+            <button
+              onClick={() => navigate(-1)}
+              className="group flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 hover:text-slate-900 transition-colors duration-300"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white group-hover:border-slate-400 transition-colors duration-300">
+                <ArrowLeft size={14} className="transform group-hover:-translate-x-0.5 transition-transform" />
+              </div>
+              Back
+            </button>
+          </div>
         </main>
       )}
     </div>

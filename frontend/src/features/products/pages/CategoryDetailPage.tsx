@@ -11,10 +11,12 @@ function CategoryDetailPage() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // Scroll to top instantly on page mount for that smooth, seamless load transition
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+    setVisibleCount(12);
   }, [categoryName]);
 
   useEffect(() => {
@@ -110,27 +112,40 @@ function CategoryDetailPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
-            {filteredProducts.map((product, index) => {
-              // Asymmetric staggered offset pattern to mimic premium layout books (Apple Look)
-              const isStaggered = index % 4 === 1 || index % 4 === 3;
-              
-              return (
-                <div
-                  key={product.id}
-                  className={`animate-apple-fadeup opacity-0 [animation-fill-mode:forwards] transition-all duration-700
-                    ${isStaggered ? 'md:translate-y-12' : ''}`}
-                  style={{
-                    animationDelay: `${(index % 4) * 150}ms`
-                  }}
-                >
-                  <div className="bg-zinc-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1">
-                    <ProductCard product={product} index={index} />
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
+              {filteredProducts.slice(0, visibleCount).map((product, index) => {
+                // Asymmetric staggered offset pattern to mimic premium layout books (Apple Look)
+                const isStaggered = index % 4 === 1 || index % 4 === 3;
+                
+                return (
+                  <div
+                    key={product.id}
+                    className={`animate-apple-fadeup opacity-0 [animation-fill-mode:forwards] transition-all duration-700
+                      ${isStaggered ? 'md:translate-y-12' : ''}`}
+                    style={{
+                      animationDelay: `${(index % 4) * 150}ms`
+                    }}
+                  >
+                    <div className="bg-zinc-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1">
+                      <ProductCard product={product} index={index} />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {visibleCount < filteredProducts.length && (
+              <div className="mt-32 w-full flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(v => v + 12)}
+                  className="px-10 py-5 bg-black text-white rounded-full uppercase tracking-widest font-black text-xs hover:bg-zinc-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
 

@@ -19,8 +19,7 @@ const AvatarPage = () => {
 
   useEffect(() => {
     if (hasAttemptedFetch && !isLoading) {
-      const t = setTimeout(() => setIsInitializing(false), 100);
-      return () => clearTimeout(t);
+      setIsInitializing(false);
     }
   }, [hasAttemptedFetch, isLoading]);
 

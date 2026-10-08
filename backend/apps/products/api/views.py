@@ -116,12 +116,20 @@ class ProductListAPIView(generics.ListAPIView):
 
         user_id = self.request.user.id if self.request.user.is_authenticated else None
         
+        from django.db.models import Subquery, OuterRef, IntegerField, DecimalField
+        from django.db.models.functions import Coalesce
+        from apps.products.models import ProductLike, ProductComment, ProductVariant, ProductBookmark
+
+        like_sq = ProductLike.objects.filter(product=OuterRef('pk')).values('product').annotate(c=Count('pk')).values('c')
+        comment_sq = ProductComment.objects.filter(product=OuterRef('pk')).values('product').annotate(c=Count('pk')).values('c')
+        min_price_sq = ProductVariant.objects.filter(product=OuterRef('pk')).values('product').annotate(m=Min('price')).values('m')
+
         queryset = queryset.annotate(
-            like_count_annotated=Count('likes', distinct=True),
-            min_price=Min('variants__price'),
-            comment_count_annotated=Count('comments', distinct=True),
+            like_count_annotated=Coalesce(Subquery(like_sq, output_field=IntegerField()), 0),
+            comment_count_annotated=Coalesce(Subquery(comment_sq, output_field=IntegerField()), 0),
+            min_price=Subquery(min_price_sq, output_field=DecimalField(max_digits=10, decimal_places=2)),
         )
-        from apps.products.models import ProductVariant
+
         default_var = ProductVariant.objects.filter(product=OuterRef('pk')).order_by('id').values('id')[:1]
         queryset = queryset.annotate(
             default_variant_id_annotated=Subquery(default_var)
@@ -129,7 +137,6 @@ class ProductListAPIView(generics.ListAPIView):
 
         
         if user_id:
-            from apps.products.models import ProductLike, ProductBookmark
             queryset = queryset.annotate(
                 is_liked_annotated=Exists(ProductLike.objects.filter(product=OuterRef('pk'), user_id=user_id)),
                 is_saved_annotated=Exists(ProductBookmark.objects.filter(product=OuterRef('pk'), user_id=user_id)),
@@ -193,14 +200,26 @@ class ProductSearchAPIView(generics.ListAPIView):
         
         user_id = self.request.user.id if self.request.user.is_authenticated else None
         
+        from django.db.models import Subquery, OuterRef, IntegerField, DecimalField
+        from django.db.models.functions import Coalesce
+        from apps.products.models import ProductLike, ProductComment, ProductVariant, ProductBookmark
+
+        like_sq = ProductLike.objects.filter(product=OuterRef('pk')).values('product').annotate(c=Count('pk')).values('c')
+        comment_sq = ProductComment.objects.filter(product=OuterRef('pk')).values('product').annotate(c=Count('pk')).values('c')
+        min_price_sq = ProductVariant.objects.filter(product=OuterRef('pk')).values('product').annotate(m=Min('price')).values('m')
+
         qs = qs.annotate(
-            like_count_annotated=Count('likes', distinct=True),
-            min_price=Min('variants__price'),
-            comment_count_annotated=Count('comments', distinct=True),
+            like_count_annotated=Coalesce(Subquery(like_sq, output_field=IntegerField()), 0),
+            comment_count_annotated=Coalesce(Subquery(comment_sq, output_field=IntegerField()), 0),
+            min_price=Subquery(min_price_sq, output_field=DecimalField(max_digits=10, decimal_places=2)),
+        )
+        
+        default_var = ProductVariant.objects.filter(product=OuterRef('pk')).order_by('id').values('id')[:1]
+        qs = qs.annotate(
+            default_variant_id_annotated=Subquery(default_var)
         )
         
         if user_id:
-            from apps.products.models import ProductLike, ProductBookmark
             qs = qs.annotate(
                 is_liked_annotated=Exists(ProductLike.objects.filter(product=OuterRef('pk'), user_id=user_id)),
                 is_saved_annotated=Exists(ProductBookmark.objects.filter(product=OuterRef('pk'), user_id=user_id)),

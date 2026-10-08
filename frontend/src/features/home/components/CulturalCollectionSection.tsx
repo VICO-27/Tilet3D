@@ -180,7 +180,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
             {[...Array(6)].map((_, i) => (
               <div 
                 key={i} 
-                className="w-[280px] md:w-[320px] h-[400px] md:h-[460px] rounded-3xl bg-gray-200 animate-pulse shrink-0" 
+                className="w-[240px] md:w-[280px] h-[340px] md:h-[400px] rounded-3xl bg-gray-200 animate-pulse shrink-0" 
               />
             ))}
           </div>
@@ -204,7 +204,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
                 <div
                   key={`${item.uniqueKey}-${idx}`}
                   onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
-                  className="group relative w-[280px] md:w-[320px] h-[400px] md:h-[460px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0 cursor-pointer"
+                  className="group relative w-[240px] md:w-[280px] h-[340px] md:h-[400px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0 cursor-pointer"
                 >
                   <div className="absolute inset-0 z-0 bg-gray-200">
                     {isVideo ? (

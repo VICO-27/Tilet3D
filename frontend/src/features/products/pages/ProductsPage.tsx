@@ -97,11 +97,11 @@ const ProductsPage: React.FC = () => {
   const [showBrandLoader, setShowBrandLoader] = useState(true);
   const [activeScrollCategory, setActiveScrollCategory] = useState<string>("All");
 
-  // 1. Brand Loader takes over for the first 800ms to build suspense
+  // 1. Brand Loader takes over for the first 50ms to build suspense
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowBrandLoader(false);
-    }, 800);
+    }, 50);
     return () => clearTimeout(timer);
   }, []);
 

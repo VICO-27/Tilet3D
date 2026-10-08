@@ -60,7 +60,7 @@ class ProductCommentsListView(generics.ListAPIView):
 class ProductSearchPagination(PageNumberPagination):
     page_size = 12
     page_size_query_param = 'page_size'
-    max_page_size = 50
+    max_page_size = 500
 
 class ProductListAPIView(generics.ListAPIView):
     @method_decorator(cache_control(public=True, max_age=300)) # 5 min client cache

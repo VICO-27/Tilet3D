@@ -19,7 +19,7 @@ export const productApi = {
       params.append('categories', categories);
     }
     params.append('page', page.toString());
-    params.append('page_size', '40');
+    params.append('page_size', '500');
     
     const response = await apiClient.get<any>(`/products/?${params.toString()}`);
     // Support both paginated and unpaginated for safety

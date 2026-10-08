@@ -41,6 +41,9 @@ export const CATEGORY_ORDER = [
   "Gabi",
   "Children",
   "Accessories",
+  "Oromo",
+  "Tigray",
+  "Amhara",
   "All",
 ];
 

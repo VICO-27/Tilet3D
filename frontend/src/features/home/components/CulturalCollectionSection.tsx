@@ -72,22 +72,22 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     // Auto-scroll speed
     const speed = direction === "left" ? 1.0 : -1.0;
 
-    // If moving right, we start the scrollbar in the middle so it has room to scroll backwards
-    if (speed < 0) {
-      track.scrollLeft = track.scrollWidth / 2;
+    // If moving right (negative speed), start the scrollbar in the middle so it doesn't get stuck at 0 immediately
+    if (speed < 0 && track.scrollLeft === 0) {
+      track.scrollLeft = track.scrollWidth / 3;
     }
 
     // 1. Auto Scrolling Engine
     const autoScroll = () => {
       if (!isDown) {
         track.scrollLeft += speed;
-        const halfWidth = track.scrollWidth / 2;
+        const third = track.scrollWidth / 3;
 
         // Seamless wrap around
-        if (speed > 0 && track.scrollLeft >= halfWidth) {
-          track.scrollLeft -= halfWidth;
+        if (speed > 0 && track.scrollLeft >= third * 2) {
+          track.scrollLeft -= third;
         } else if (speed < 0 && track.scrollLeft <= 0) {
-          track.scrollLeft += halfWidth;
+          track.scrollLeft += third;
         }
       }
       animationFrameId = requestAnimationFrame(autoScroll);
@@ -120,11 +120,11 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     // 3. Trackpad/Wheel Seamless Wrap Engine
     const onScroll = () => {
-      const halfWidth = track.scrollWidth / 2;
-      if (track.scrollLeft >= halfWidth) {
-        track.scrollLeft -= halfWidth;
+      const third = track.scrollWidth / 3;
+      if (track.scrollLeft >= third * 2) {
+        track.scrollLeft -= third;
       } else if (track.scrollLeft <= 0) {
-        track.scrollLeft += halfWidth;
+        track.scrollLeft += third;
       }
     };
 

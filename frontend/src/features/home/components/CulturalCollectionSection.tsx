@@ -65,11 +65,12 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     let animationFrameId: number;
     let isDown = false;
+    let isHovering = false;
     let startX: number;
     let scrollLeft: number;
     
     // Auto-scroll speed
-    const speed = direction === "left" ? 2.5 : -2.5;
+    const speed = direction === "left" ? 0.4 : -0.4;
 
     // If moving right, we start the scrollbar in the middle so it has room to scroll backwards
     if (speed < 0) {
@@ -78,7 +79,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     // 1. Auto Scrolling Engine
     const autoScroll = () => {
-      if (!isDown) {
+      if (!isDown && !isHovering) {
         track.scrollLeft += speed;
         const halfWidth = track.scrollWidth / 2;
 
@@ -99,8 +100,10 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       startX = e.pageX - track.offsetLeft;
       scrollLeft = track.scrollLeft;
     };
+    const onMouseEnter = () => { isHovering = true; };
     const onMouseLeave = () => { 
       isDown = false; 
+      isHovering = false;
       track.style.cursor = 'grab';
     };
     const onMouseUp = () => { 
@@ -128,6 +131,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     // Attach listeners
     track.addEventListener('mousedown', onMouseDown);
     track.addEventListener('mouseleave', onMouseLeave);
+    track.addEventListener('mouseenter', onMouseEnter);
     track.addEventListener('mouseup', onMouseUp);
     track.addEventListener('mousemove', onMouseMove);
     track.addEventListener('scroll', onScroll, { passive: true });
@@ -139,6 +143,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       cancelAnimationFrame(animationFrameId);
       track.removeEventListener('mousedown', onMouseDown);
       track.removeEventListener('mouseleave', onMouseLeave);
+      track.removeEventListener('mouseenter', onMouseEnter);
       track.removeEventListener('mouseup', onMouseUp);
       track.removeEventListener('mousemove', onMouseMove);
       track.removeEventListener('scroll', onScroll);
@@ -190,8 +195,8 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
               return (
                 <div
                   key={`${item.uniqueKey}-${idx}`}
-                  onClick={() => navigate(`/products/${item.product.id}`)}
-                  className="group relative w-[280px] md:w-[320px] h-[400px] md:h-[460px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0"
+                  onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
+                  className="group relative w-[280px] md:w-[320px] h-[400px] md:h-[460px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0 cursor-pointer"
                 >
                   <div className="absolute inset-0 z-0 bg-gray-200">
                     {isVideo ? (

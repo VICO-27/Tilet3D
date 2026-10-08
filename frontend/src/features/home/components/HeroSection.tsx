@@ -19,65 +19,70 @@ const containerVariants: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.1, // Wait for aura to start
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
     },
   },
 };
 
 const tumbleVariants: Variants = {
-  hidden: { opacity: 0, y: 40, rotate: -4, scale: 0.94 },
+  hidden: { opacity: 0, y: 30, scale: 0.98 },
   visible: { 
     opacity: 1, 
     y: 0, 
-    rotate: 0, 
     scale: 1,
-    transition: { type: "spring", stiffness: 220, damping: 20, mass: 0.8 }
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } // ultra smooth ease-out (Apple-like)
   }
 };
 
 const fadeUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
-    opacity: 1, y: 0, scale: 1,
-    transition: { type: "spring", stiffness: 200, damping: 20 }
+    opacity: 1, y: 0,
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
   }
 };
 
 const visualVariants: Variants = {
-  hidden: { opacity: 0, y: 40, scale: 0.9, rotate: 2 },
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
   visible: {
-    opacity: 1, y: 0, scale: 1, rotate: 0,
-    transition: { type: "spring", stiffness: 180, damping: 22, delay: 0.65 }
+    opacity: 1, y: 0, scale: 1,
+    transition: { duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
   }
 };
 
 // ─── Living Aura ─────────────────────────────────────────────────────────────
 const TiletAura = () => (
   <motion.div 
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 1.2, ease: "easeOut" }}
-    className="absolute left-1/2 top-1/2 -z-10 h-full w-full -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-80 mix-blend-multiply dark:mix-blend-screen"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 1.5, ease: "easeOut" }}
+    className="absolute left-1/2 top-1/2 -z-10 h-full w-full -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-60 mix-blend-multiply dark:mix-blend-screen"
+    style={{ willChange: "opacity" }}
   >
-    {/* Layer 1: Large atmospheric glow */}
-    <motion.div
-      animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.50, 0.35] }}
-      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute left-1/2 top-1/2 h-[75%] w-[75%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-200/50 blur-[100px]"
-    />
-    {/* Layer 2: Brighter core */}
-    <motion.div
-      animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.4, 0.65, 0.4], x: ["-50%", "-48%", "-52%", "-50%"], y: ["-50%", "-52%", "-48%", "-50%"] }}
-      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute left-1/2 top-1/2 h-[45%] w-[45%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-plum-300/60 blur-[80px]"
-    />
-    {/* Layer 3: Secondary offset glow */}
-    <motion.div
-      animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2], x: ["-30%", "-20%", "-30%"] }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute left-[40%] top-[60%] h-[55%] w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-100/40 blur-[90px]"
-    />
+    {/* Use CSS-based infinite pulsing instead of heavy framer-motion recalculations for blurred layers */}
+    <style>{`
+      @keyframes smoothPulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.35; }
+        50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.5; }
+      }
+      .aura-layer-1 {
+        animation: smoothPulse 8s ease-in-out infinite;
+        will-change: transform, opacity;
+      }
+      @keyframes smoothPulse2 {
+        0%, 100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.4; }
+        50% { transform: translate(-50%, -50%) scale(1.02); opacity: 0.6; }
+      }
+      .aura-layer-2 {
+        animation: smoothPulse2 6s ease-in-out infinite;
+        will-change: transform, opacity;
+      }
+    `}</style>
+    
+    <div className="aura-layer-1 absolute left-1/2 top-1/2 h-[75%] w-[75%] rounded-full bg-purple-200/50 blur-[80px]" />
+    <div className="aura-layer-2 absolute left-1/2 top-1/2 h-[45%] w-[45%] rounded-full bg-plum-300/60 blur-[60px]" />
+    <div className="absolute left-[40%] top-[60%] h-[55%] w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-100/40 blur-[70px] opacity-30" />
   </motion.div>
 );
 

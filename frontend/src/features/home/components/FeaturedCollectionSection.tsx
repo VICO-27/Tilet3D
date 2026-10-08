@@ -219,7 +219,7 @@ const FeaturedCollectionSection = () => {
     let isDragging = false;
     let startX = 0;
     let scrollLeftStart = 0;
-    const BASE_SPEED = 2.0;
+    const BASE_SPEED = 3.0;
 
     const tick = () => {
       if (!isDragging) {

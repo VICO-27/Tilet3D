@@ -69,7 +69,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     let scrollLeft: number;
     
     // Auto-scroll speed
-    const speed = direction === "left" ? 1.5 : -1.5;
+    const speed = direction === "left" ? 2.5 : -2.5;
 
     // If moving right, we start the scrollbar in the middle so it has room to scroll backwards
     if (speed < 0) {

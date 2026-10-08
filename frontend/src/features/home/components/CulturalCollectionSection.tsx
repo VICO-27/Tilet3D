@@ -65,12 +65,12 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     let animationFrameId: number;
     let isDown = false;
-    let isHovering = false;
+    
     let startX: number;
     let scrollLeft: number;
     
     // Auto-scroll speed
-    const speed = direction === "left" ? 0.4 : -0.4;
+    const speed = direction === "left" ? 1.0 : -1.0;
 
     // If moving right, we start the scrollbar in the middle so it has room to scroll backwards
     if (speed < 0) {
@@ -79,7 +79,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     // 1. Auto Scrolling Engine
     const autoScroll = () => {
-      if (!isDown && !isHovering) {
+      if (!isDown) {
         track.scrollLeft += speed;
         const halfWidth = track.scrollWidth / 2;
 
@@ -100,10 +100,10 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       startX = e.pageX - track.offsetLeft;
       scrollLeft = track.scrollLeft;
     };
-    const onMouseEnter = () => { isHovering = true; };
+    
     const onMouseLeave = () => { 
       isDown = false; 
-      isHovering = false;
+      
       track.style.cursor = 'grab';
     };
     const onMouseUp = () => { 
@@ -131,7 +131,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     // Attach listeners
     track.addEventListener('mousedown', onMouseDown);
     track.addEventListener('mouseleave', onMouseLeave);
-    track.addEventListener('mouseenter', onMouseEnter);
+    
     track.addEventListener('mouseup', onMouseUp);
     track.addEventListener('mousemove', onMouseMove);
     track.addEventListener('scroll', onScroll, { passive: true });
@@ -143,7 +143,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       cancelAnimationFrame(animationFrameId);
       track.removeEventListener('mousedown', onMouseDown);
       track.removeEventListener('mouseleave', onMouseLeave);
-      track.removeEventListener('mouseenter', onMouseEnter);
+      
       track.removeEventListener('mouseup', onMouseUp);
       track.removeEventListener('mousemove', onMouseMove);
       track.removeEventListener('scroll', onScroll);

@@ -124,7 +124,7 @@ function LeftHUD() {
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[84px] md:w-44">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-2 md:p-4 rounded-xl md:rounded-3xl shadow-lg md:shadow-xl w-[70px] md:w-44">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
@@ -165,7 +165,7 @@ function RightHUD() {
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-lg md:shadow-xl w-[84px] md:w-44">
+      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-2 md:p-4 rounded-xl md:rounded-3xl shadow-lg md:shadow-xl w-[70px] md:w-44">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Ruler className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>

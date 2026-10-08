@@ -93,7 +93,7 @@ const ProductsPage: React.FC = () => {
   }, [searchParams, setSearchParams]);
 
   const [viewContext, setViewContext] = useState<string>('normal');
-  const [loadDeferredBatch, setLoadDeferredBatch] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(3);
   const [showBrandLoader, setShowBrandLoader] = useState(true);
   const [activeScrollCategory, setActiveScrollCategory] = useState<string>("All");
 
@@ -148,21 +148,9 @@ const ProductsPage: React.FC = () => {
     return categories.filter((cat) => groupedProducts[cat]?.length > 0);
   }, [categories, groupedProducts]);
 
-  const { initialBatch, deferredBatch } = useMemo(() => {
-    const cutoffIndex = activeCategories.findIndex(
-      (cat) => cat.toLowerCase() === CUTOFF_CATEGORY
-    );
-    const splitPoint = cutoffIndex !== -1 ? cutoffIndex + 1 : 4;
-
-    return {
-      initialBatch: activeCategories.slice(0, splitPoint),
-      deferredBatch: activeCategories.slice(splitPoint)
-    };
-  }, [activeCategories]);
-
   const activeRenderList = useMemo(() => {
     if (viewContext === 'normal') {
-      return loadDeferredBatch ? [...initialBatch, ...deferredBatch] : initialBatch;
+      return activeCategories.slice(0, visibleCount);
     }
 
     const chosenIndex = activeCategories.findIndex(
@@ -173,8 +161,8 @@ const ProductsPage: React.FC = () => {
       return activeCategories.slice(chosenIndex);
     }
 
-    return initialBatch;
-  }, [viewContext, loadDeferredBatch, activeCategories, initialBatch, deferredBatch]);
+    return activeCategories.slice(0, 3);
+  }, [viewContext, visibleCount, activeCategories]);
 
   // ==========================================
   // ROW DATA MANIPULATION LOGIC
@@ -236,7 +224,7 @@ const ProductsPage: React.FC = () => {
       return;
     }
 
-    const isInitiallyAvailable = initialBatch.some(i => i.toLowerCase() === normalizedCat);
+    const isInitiallyAvailable = activeRenderList.some(i => i.toLowerCase() === normalizedCat);
 
     if (isInitiallyAvailable) {
       setViewContext('normal');
@@ -368,31 +356,23 @@ const ProductsPage: React.FC = () => {
               );
             })}
 
-            {viewContext === 'normal' && !loadDeferredBatch && (
+            {viewContext === 'normal' && visibleCount < activeCategories.length && (
               <div className="w-full flex flex-col items-center justify-center mt-20 px-6">
                 <div className="w-full max-w-5xl h-[1px] bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-16" />
 
-                <p className="text-[11px] tracking-[0.35em] uppercase font-black text-zinc-400 mb-8 animate-pulse">
-                  Explore More Collections
-                </p>
-
-                <div className="h-[58px] inline-flex items-center gap-3 bg-zinc-50 border border-zinc-200/80 p-2 rounded-full shadow-md hover:shadow-xl transition-all duration-500 hover:scale-[1.01]">
-                  {deferredBatch.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => handleCategoryNavigation(cat)}
-                      className="h-full px-7 text-[12px] font-bold tracking-widest text-zinc-600 hover:text-black rounded-full hover:bg-white hover:shadow-sm transition-all duration-300 uppercase"
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                  <div className="h-4 w-[1px] bg-zinc-300 mx-1" />
+                <div className="flex flex-col items-center gap-4">
                   <button
-                    onClick={() => setLoadDeferredBatch(true)}
-                    className="h-full px-6 text-[12px] font-black tracking-widest text-white bg-black rounded-full hover:bg-zinc-800 transition-all duration-200 uppercase"
+                    onClick={() => setVisibleCount(prev => prev + 2)}
+                    className="inline-flex items-center gap-4 px-10 py-5 bg-black text-white rounded-full shadow-xl hover:bg-zinc-800 transition-all duration-300 hover:-translate-y-1 group"
                   >
-                    View All
+                    <span className="text-sm font-black tracking-widest uppercase">Next Clothes</span>
+                    <div className="bg-white/20 p-2 rounded-full">
+                      <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </button>
+                  <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-zinc-500">
+                    Next: {activeCategories.slice(visibleCount, visibleCount + 2).join(" & ")}
+                  </p>
                 </div>
               </div>
             )}

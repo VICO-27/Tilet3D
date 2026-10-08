@@ -278,9 +278,9 @@ function TopHUD() {
     >
       <button
         onClick={() => navigate('/products')}
-        className="group flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-[#161616]/80 hover:bg-[#161616] backdrop-blur-xl border border-white/20 text-white rounded-full text-xs font-semibold tracking-wide shadow-2xl transition-all duration-300 hover:scale-105"
+        className="group flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-plum-600 hover:bg-plum-700 backdrop-blur-xl text-white rounded-full text-xs font-semibold tracking-wide shadow-lg shadow-plum-600/30 transition-all duration-300 hover:scale-105"
       >
-        <ShoppingBag size={14} className="text-plum-400 group-hover:text-plum-300 transition-colors" />
+        <ShoppingBag size={14} className="text-white/80 group-hover:text-white transition-colors" />
         <span className="uppercase tracking-widest text-[10px] md:text-xs">Shop Collection</span>
         <ArrowRight size={14} className="ml-1 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
       </button>

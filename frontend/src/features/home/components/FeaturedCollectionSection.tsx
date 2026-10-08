@@ -23,6 +23,7 @@ interface FeaturedCardProps {
 const getCategoryName = (product: Product): string => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = product as any;
+  if (p.category_name) return p.category_name;
   if (p.category?.name) return p.category.name;
   if (typeof p.category === 'string') return p.category;
   const name = product.name.toLowerCase();
@@ -141,9 +142,8 @@ const FeaturedCollectionSection = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const data = await productApi.getProducts();
-        const featured = data.results.filter((p: Product) => p.is_featured);
-        setProducts(featured);
+        const data = await productApi.getFeaturedProducts();
+        setProducts(data.results);
       } catch (error) {
         console.error("Failed to fetch featured products", error);
       } finally {

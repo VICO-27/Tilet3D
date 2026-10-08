@@ -28,6 +28,14 @@ export const productApi = {
     return { results: response.data.results, next: response.data.next };
   },
 
+  getFeaturedProducts: async (): Promise<{ results: Product[] }> => {
+    const response = await apiClient.get<any>(`/products/?is_featured=true`);
+    if (Array.isArray(response.data)) {
+        return { results: response.data };
+    }
+    return { results: response.data.results };
+  },
+
   // GET /api/products/:id/ - for the detail page
   getProductById: async (id: string): Promise<Product> => {
     const response = await apiClient.get<Product>(`/products/${id}/`);

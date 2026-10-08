@@ -83,6 +83,13 @@ class ProductListAPIView(generics.ListAPIView):
     pagination_class = ProductSearchPagination
     permission_classes = [AllowAny]
 
+    @property
+    def paginator(self):
+        is_featured = self.request.query_params.get("is_featured", None)
+        if is_featured and is_featured.lower() in ['true', '1']:
+            return None
+        return super().paginator
+
     def get_queryset(self):
         queryset = Product.objects.filter(
             is_active=True
@@ -98,6 +105,10 @@ class ProductListAPIView(generics.ListAPIView):
         if categories_param:
             category_list = [cat.strip() for cat in categories_param.split(",")]
             queryset = queryset.filter(category__name__in=category_list)
+
+        is_featured_param = self.request.query_params.get("is_featured", None)
+        if is_featured_param and is_featured_param.lower() in ['true', '1']:
+            queryset = queryset.filter(is_featured=True)
 
         user_id = self.request.user.id if self.request.user.is_authenticated else None
         

@@ -167,9 +167,10 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
         </h3>
         <button 
           onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest hidden md:block"
+          className="text-xs md:text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest whitespace-nowrap ml-4"
         >
-          Explore All →
+          <span className="hidden md:inline">Explore All →</span>
+          <span className="md:hidden">Explore →</span>
         </button>
       </div>
 

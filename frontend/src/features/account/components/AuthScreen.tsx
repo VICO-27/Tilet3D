@@ -1,376 +1,141 @@
-// features/account/components/AuthScreen.tsx
-// cspell:words Tilet Tilet3D
-import React, { useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Ruler, Package, Heart, ArrowRight } from "lucide-react";
+import { Ruler, Package, Heart, Mail, ArrowRight, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../../app/store/useAuthStore";
-import { OtpInput } from "./OtpInput";
-import { BackButton } from "./BackButton";
 import { GoogleSignInButton } from "./GoogleSignInButton";
-
-type Step = "in" | "up" | "forgot-email" | "forgot-otp" | "forgot-password";
 
 interface LocationState {
   from?: string;
 }
 
 export const AuthScreen: React.FC = () => {
-  const [step, setStep] = useState<Step>("in");
-  const [form, setForm] = useState({ email: "", password: "", password2: "" });
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [localMsg, setLocalMsg] = useState<string | null>(null);
-
-  const { signIn, signUp, requestOtp, resetPassword, error, loading, clearError } = useAuthStore();
-
   const location = useLocation();
   const navigate = useNavigate();
 
-  const goto = (s: Step) => {
-    clearError();
-    setLocalMsg(null);
-    setStep(s);
-  };
-
-  const submitAuth = async () => {
-    if (!form.email.trim()) return;
-
-    if (step === "up") {
-      if (form.password !== form.password2) {
-        setLocalMsg("Passwords do not match.");
-        return;
-      }
-      const err = await signUp(form.email, form.password, form.password2);
-      if (!err) redirectIfVerified();
-      return;
-    }
-
-    const err = await signIn(form.email, form.password);
-    if (!err) redirectIfVerified();
-  };
-
   const redirectIfVerified = () => {
-    const user = useAuthStore.getState().user;
-    if (user?.is_verified) {
-      redirectHome();
-    }
-    // Note: If unverified, stay mounted. AccountPage detects !user.is_verified 
-    // and swaps the view directly to VerifyEmailScreen.
-  };
-
-  const redirectHome = () => {
     const state = location.state as LocationState;
-    navigate(state?.from || "/", { replace: true });
+    navigate(state?.from || "/");
   };
 
-  const submitForgotEmail = async () => {
-    if (!form.email.trim()) return;
-    const err = await requestOtp(form.email, "password_reset");
-    if (!err) goto("forgot-otp");
+  const handleGuest = () => {
+    redirectIfVerified();
   };
-
-  const submitForgotOtp = () => {
-    if (otp.length !== 6) {
-      setLocalMsg("Enter the 6-digit code.");
-      return;
-    }
-    setLocalMsg(null);
-    goto("forgot-password");
-  };
-
-  const submitNewPassword = async () => {
-    if (newPassword.length < 8) {
-      setLocalMsg("Password must be at least 8 characters.");
-      return;
-    }
-    const err = await resetPassword(form.email, otp, newPassword);
-    if (!err) {
-      setLocalMsg("Password updated — sign in below.");
-      setOtp("");
-      setNewPassword("");
-      goto("in");
-    }
-  };
-
-  const displayError = error || localMsg;
 
   return (
-    <div className="mx-auto grid min-h-screen max-w-[1400px] grid-cols-1 items-center gap-12 px-6 pt-[68px] md:px-10 lg:grid-cols-2">
-      {/* Editorial side */}
-      <div className="hidden lg:block">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.35em] text-plum-600">
-          Your Atelier Account
-        </span>
-        <h1 className="display mt-5 text-5xl font-semibold leading-[1.02] text-ink">
-          Your measurements,
-          <br />
-          <span className="italic text-plum-600">remembered.</span>
-        </h1>
-        <p className="mt-6 max-w-md text-lg leading-relaxed text-ink/55">
-          Save your 3D avatar, track bespoke orders, and keep the pieces you love
-          — all in one place.
-        </p>
-        <div className="mt-10 flex gap-8">
-          <Perk icon={<Ruler className="h-5 w-5" />} label="Saved avatar" />
-          <Perk icon={<Package className="h-5 w-5" />} label="Order tracking" />
-          <Perk icon={<Heart className="h-5 w-5" />} label="Saved pieces" />
+    <div className="flex min-h-screen bg-stone-50">
+      {/* LEFT: Branding / Features (Hidden on mobile) */}
+      <div className="hidden w-[40%] flex-col justify-between bg-ink p-12 text-white lg:flex">
+        <div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-plum-600 text-sm font-black shadow-lg">
+            ጥ
+          </div>
+          <h1 className="display mt-10 text-4xl leading-tight">
+            Step into the future of<br />Habesha couture.
+          </h1>
+        </div>
+
+        <div className="space-y-6">
+          <Feature icon={<Ruler />} title="Save your 3D avatar" text="Get pixel-perfect sizing on every order." />
+          <Feature icon={<Package />} title="Track atelier progress" text="Real-time updates from sketch to delivery." />
+          <Feature icon={<Heart />} title="Curate your collection" text="Save and share your favorite styles." />
         </div>
       </div>
 
-      {/* Form card */}
-      <div className="mx-auto w-full max-w-md">
-        <div className="rounded-[26px] border border-ink/[0.07] bg-white p-8 shadow-2xl shadow-ink/5">
-          {(step === "in" || step === "up") && (
-            <>
-              <BackButton onClick={() => navigate("/")} label="Back to shop" />
-              <div className="mb-6 flex rounded-full bg-ink/[0.04] p-1">
-                {(["in", "up"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => {
-                      setForm({ email: "", password: "", password2: "" });
-                      goto(m);
-                    }}
-                    className={`flex-1 rounded-full py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                      step === m ? "bg-ink text-white" : "text-ink/50"
-                    }`}
-                  >
-                    {m === "in" ? "Sign In" : "Sign Up"}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+      {/* RIGHT: Auth Box */}
+      <div className="flex flex-1 items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-[380px]">
+          {/* Mobile Logo */}
+          <div className="mb-10 flex h-10 w-10 items-center justify-center rounded-lg bg-plum-600 text-sm font-black text-white shadow-lg lg:hidden">
+            ጥ
+          </div>
 
-          <AnimatePresence mode="wait">
-            {/* ---------------- SIGN IN / SIGN UP ---------------- */}
-            {(step === "in" || step === "up") && (
-              <motion.div
-                key={step}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5"
-              >
-                <h2 className="display text-2xl font-semibold text-ink">
-                  {step === "in" ? "Welcome back" : "Create your account"}
-                </h2>
+          <h2 className="display mb-2 text-2xl font-semibold text-ink">Welcome to Tilet3D</h2>
+          <p className="mb-8 text-sm text-ink/60">Log in or create an account to continue.</p>
 
-                <InputRow
-                  icon={<Mail className="h-4 w-4" />}
-                  placeholder="Email"
-                  type="email"
-                  value={form.email}
-                  onChange={(v) => setForm({ ...form, email: v })}
-                />
-                <InputRow
-                  icon={<Lock className="h-4 w-4" />}
-                  placeholder="Password"
-                  type="password"
-                  value={form.password}
-                  onChange={(v) => setForm({ ...form, password: v })}
-                  onEnter={submitAuth}
-                />
-                {step === "up" && (
-                  <InputRow
-                    icon={<Lock className="h-4 w-4" />}
-                    placeholder="Confirm password"
-                    type="password"
-                    value={form.password2}
-                    onChange={(v) => setForm({ ...form, password2: v })}
-                    onEnter={submitAuth}
-                  />
-                )}
+          <div className="space-y-3">
+            {/* 1. Google (Active) */}
+            <GoogleSignInButton
+              onSuccess={redirectIfVerified}
+              label="Continue with Google"
+            />
 
-                {step === "in" && (
-                  <button
-                    type="button"
-                    onClick={() => goto("forgot-email")}
-                    className="block text-right text-xs font-medium text-ink/45 transition-colors hover:text-plum-600"
-                  >
-                    Forgot password?
-                  </button>
-                )}
+            {/* 2. Apple (Coming Soon) */}
+            <AuthButton
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16.365 21.43c-1.39.954-2.822.997-4.113.064-1.282-.934-2.618-1.02-4.047-.07-2.612 1.705-5.362-2.128-6.326-4.71-1.34-3.61-.836-8.232 2.7-10.22 1.455-.815 3.018-.742 4.167.062 1.15.79 1.787.87 2.898.136 1.43-.923 3.036-.723 4.298.3 2.115 1.748 1.41 4.542.84 5.385-1.558.74-2.164 2.924-.707 4.385 1.05 1.056 2.502 1.258 2.502 1.258-.088.36-1.127 2.47-2.212 3.41zM14.996 5.86c-1.352 1.572-3.415 1.583-3.69.015-.054-.316.035-.744.257-1.144.59-1.042 1.734-1.74 2.802-1.79.055.334-.022.784-.253 1.2-.284.5-.783 1.186-1.116 1.719z" />
+                </svg>
+              }
+              label="Continue with Apple"
+              disabled
+            />
 
-                {displayError && <ErrorMsg text={displayError} />}
+            {/* 3. Facebook (Coming Soon) */}
+            <AuthButton
+              icon={
+                <svg className="h-5 w-5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              }
+              label="Continue with Facebook"
+              disabled
+            />
 
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={submitAuth}
-                  disabled={loading}
-                  className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-plum-600 disabled:opacity-50"
-                >
-                  {loading ? "Please wait..." : step === "in" ? "Sign In" : "Create Account"}
-                  {!loading && <ArrowRight className="h-4 w-4" />}
-                </motion.button>
+            {/* 4. Email / OTP (Coming Soon) */}
+            <AuthButton
+              icon={<Mail className="h-5 w-5 text-ink/70" />}
+              label="Continue with Email / OTP"
+              disabled
+            />
 
-                {/* ── Google divider + button ── */}
-                <div className="flex items-center gap-3 py-1">
-                  <div className="flex-1 h-px bg-ink/[0.07]" />
-                  <span className="text-[11px] font-medium text-ink/35 uppercase tracking-wider">or</span>
-                  <div className="flex-1 h-px bg-ink/[0.07]" />
-                </div>
+            <div className="my-6 flex items-center gap-3">
+              <div className="h-px flex-1 bg-ink/10" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-ink/40">or</span>
+              <div className="h-px flex-1 bg-ink/10" />
+            </div>
 
-                <GoogleSignInButton
-                  onSuccess={redirectIfVerified}
-                  label={step === "in" ? "Continue with Google" : "Sign up with Google"}
-                />
-              </motion.div>
-            )}
-
-            {/* ---------------- FORGOT: EMAIL ---------------- */}
-            {step === "forgot-email" && (
-              <motion.div
-                key="forgot-email"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5"
-              >
-                <BackButton onClick={() => goto("in")} />
-                <h2 className="display text-2xl font-semibold text-ink">Reset your password</h2>
-                <p className="text-sm text-ink/50">We'll send a 6-digit code to your email.</p>
-
-                <InputRow
-                  icon={<Mail className="h-4 w-4" />}
-                  placeholder="Email"
-                  type="email"
-                  value={form.email}
-                  onChange={(v) => setForm({ ...form, email: v })}
-                  onEnter={submitForgotEmail}
-                />
-
-                {displayError && <ErrorMsg text={displayError} />}
-
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={submitForgotEmail}
-                  disabled={loading}
-                  className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-plum-600 disabled:opacity-50"
-                >
-                  {loading ? "Sending..." : "Send Code"}
-                </motion.button>
-              </motion.div>
-            )}
-
-            {/* ---------------- FORGOT: OTP ---------------- */}
-            {step === "forgot-otp" && (
-              <motion.div
-                key="forgot-otp"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                <BackButton onClick={() => goto("forgot-email")} />
-                <h2 className="display text-2xl font-semibold text-ink">Enter the code</h2>
-                <p className="text-sm text-ink/50">Sent to {form.email}</p>
-
-                <OtpInput value={otp} onChange={setOtp} />
-
-                {displayError && <ErrorMsg text={displayError} />}
-
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={submitForgotOtp}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-plum-600"
-                >
-                  Continue
-                </motion.button>
-
-                <button
-                  type="button"
-                  onClick={submitForgotEmail}
-                  disabled={loading}
-                  className="w-full text-center text-xs font-medium text-ink/45 transition-colors hover:text-plum-600"
-                >
-                  Resend code
-                </button>
-              </motion.div>
-            )}
-
-            {/* ---------------- FORGOT: NEW PASSWORD ---------------- */}
-            {step === "forgot-password" && (
-              <motion.div
-                key="forgot-password"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5"
-              >
-                <BackButton onClick={() => goto("forgot-otp")} />
-                <h2 className="display text-2xl font-semibold text-ink">Set a new password</h2>
-
-                <InputRow
-                  icon={<Lock className="h-4 w-4" />}
-                  placeholder="New password"
-                  type="password"
-                  value={newPassword}
-                  onChange={setNewPassword}
-                  onEnter={submitNewPassword}
-                />
-
-                {displayError && <ErrorMsg text={displayError} />}
-
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={submitNewPassword}
-                  disabled={loading}
-                  className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-plum-600 disabled:opacity-50"
-                >
-                  {loading ? "Saving..." : "Update Password"}
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* 5. As Guest (Active) */}
+            <button
+              onClick={handleGuest}
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-ink/20 bg-white py-3.5 px-4 text-sm font-semibold text-ink transition-all hover:bg-stone-50 hover:border-ink/30 active:scale-[0.98]"
+            >
+              <User className="h-5 w-5 text-ink/60" />
+              Continue as Guest
+            </button>
+          </div>
         </div>
-        <p className="mt-4 text-center text-xs text-ink/40">
-          Secure authentication powered by Django &amp; JWT.
-        </p>
       </div>
     </div>
   );
 };
 
-/* ────────────────────────────── Sub Components ──────────────────────────── */
-
-const InputRow: React.FC<{
-  icon: React.ReactNode;
-  placeholder: string;
-  value: string;
-  type?: string;
-  onChange: (v: string) => void;
-  onEnter?: () => void;
-}> = ({ icon, placeholder, value, type = "text", onChange, onEnter }) => (
-  <div className="relative">
-    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35">
+const AuthButton = ({ icon, label, disabled }: { icon: React.ReactNode; label: string; disabled?: boolean }) => (
+  <button
+    disabled={disabled}
+    className={`group relative flex w-full items-center justify-center gap-3 rounded-full border border-ink/20 bg-white py-3.5 px-4 text-sm font-semibold text-ink transition-all ${
+      disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-stone-50 hover:border-ink/30 active:scale-[0.98]"
+    }`}
+  >
+    <div className="absolute left-4 flex h-5 w-5 items-center justify-center">
       {icon}
-    </span>
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
-      className="w-full rounded-xl border border-ink/10 bg-neutral-50 py-3 pl-10 pr-4 text-sm text-ink placeholder-ink/35 transition-colors focus:border-plum-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-plum-100"
-    />
-  </div>
+    </div>
+    {label}
+    {disabled && (
+      <span className="absolute right-4 rounded-md bg-stone-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
+        Coming Soon
+      </span>
+    )}
+  </button>
 );
 
-const Perk: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
-  <div className="flex flex-col items-center gap-2 text-center">
-    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-plum-50 text-plum-600">
+const Feature = ({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) => (
+  <div className="flex gap-4">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10">
       {icon}
-    </span>
-    <span className="text-xs font-medium text-ink/55">{label}</span>
+    </div>
+    <div>
+      <h3 className="font-semibold">{title}</h3>
+      <p className="mt-1 text-sm text-white/60">{text}</p>
+    </div>
   </div>
-);
-
-const ErrorMsg: React.FC<{ text: string }> = ({ text }) => (
-  <p className="rounded-xl bg-rose-50 py-2 text-center text-xs font-medium text-rose-600">{text}</p>
 );

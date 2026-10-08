@@ -61,12 +61,12 @@ const Navbar = () => {
     // Aggressively prefetch lazy-loaded route chunks to ensure absolutely zero delay on click
     const prefetchRoutes = () => {
       setTimeout(() => {
-        import('../../features/products/pages/ProductsPage');
-        import('../../features/avatar/pages/AvatarPage');
-        import('../../features/orders/pages/OrderHistoryPage');
-        import('../../features/account/pages/AccountPage');
+        import('../../../features/products/pages/ProductsPage');
+        import('../../../features/avatar/pages/AvatarPage');
+        import('../../../features/orders/pages/OrderHistoryPage');
+        import('../../../features/account/pages/AccountPage');
         // Pre-fetch product API data proactively to make that instantaneous as well
-        import('../../features/products/hooks/useProducts').then(m => m.prefetchProducts?.());
+        import('../../../features/products/hooks/useProducts').then(m => m.prefetchProducts?.());
       }, 1500); // Wait slightly to not block initial render
     };
     prefetchRoutes();

@@ -104,15 +104,16 @@ DATABASES = {
 # THIRD PARTY KEYS
 # ==========================================================
 
-GOOGLE_CLIENT_ID = env(
-    "GOOGLE_CLIENT_ID",
-    default=""
-)
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
 
-GOOGLE_CLIENT_SECRET = env(
-    "GOOGLE_CLIENT_SECRET",
-    default=""
-)
+APPLE_CLIENT_ID = env("APPLE_CLIENT_ID", default="")
+APPLE_TEAM_ID = env("APPLE_TEAM_ID", default="")
+APPLE_KEY_ID = env("APPLE_KEY_ID", default="")
+APPLE_PRIVATE_KEY = env("APPLE_PRIVATE_KEY", default="")
+
+FACEBOOK_APP_ID = env("FACEBOOK_APP_ID", default="")
+FACEBOOK_APP_SECRET = env("FACEBOOK_APP_SECRET", default="")
 
 GEMINI_API_KEY = env(
     "GEMINI_API_KEY",

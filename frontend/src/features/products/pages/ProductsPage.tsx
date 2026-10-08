@@ -219,7 +219,7 @@ const ProductsPage: React.FC = () => {
 
     if (normalizedCat === 'all') {
       setViewContext('normal');
-      setLoadDeferredBatch(false);
+      setVisibleCount(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }

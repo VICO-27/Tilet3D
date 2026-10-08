@@ -17,9 +17,9 @@ export const productApi = {
     const params = new URLSearchParams();
     if (categories) {
       params.append('categories', categories);
-      params.append('page_size', '50');
     }
     params.append('page', page.toString());
+    params.append('page_size', '40');
     
     const response = await apiClient.get<any>(`/products/?${params.toString()}`);
     // Support both paginated and unpaginated for safety

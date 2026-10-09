@@ -106,7 +106,7 @@ const Navbar = () => {
         <div className="mx-auto flex h-[48px] max-w-[1400px] items-center justify-between px-6 md:px-10">
           
           <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-[11px] font-black text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-plum-600 text-[11px] font-black text-white">
               ጥ
             </span>
             <span className="display text-base font-semibold tracking-tight text-ink">

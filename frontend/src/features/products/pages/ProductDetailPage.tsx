@@ -14,6 +14,7 @@ import RelatedProducts from '../components/RelatedProducts';
 import { AiRecommendations } from '../../ai/components/AiRecommendations'; // <-- Imported AI Recommendations component
 import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
+import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,7 +75,7 @@ const ProductDetailPage: React.FC = () => {
   if (loading) {
     return (
       <PageLayout>
-        <BrandLoader />
+        <ProductDetailSkeleton />
       </PageLayout>
     );
   }

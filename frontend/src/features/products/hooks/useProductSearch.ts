@@ -9,6 +9,9 @@ interface SearchResult {
   results: Product[];
 }
 
+// Memory cache to make filtering feel instantaneous when returning to a previous filter state
+const searchCache = new Map<string, SearchResult>();
+
 export const useProductSearch = (searchParams: URLSearchParams) => {
   const [data, setData] = useState<SearchResult | null>(null);
   const [results, setResults] = useState<Product[]>([]);
@@ -32,6 +35,17 @@ export const useProductSearch = (searchParams: URLSearchParams) => {
       return;
     }
 
+    // FAST PATH: If we have this exact filter combination cached, use it instantly!
+    if (searchCache.has(searchParamsString)) {
+      const cached = searchCache.get(searchParamsString)!;
+      setData(cached);
+      setResults(cached.results);
+      const nextMatch = cached.next?.match(/page=(\d+)/);
+      setNextPage(nextMatch ? parseInt(nextMatch[1], 10) : (cached.next ? 2 : null));
+      setIsLoading(false);
+      return;
+    }
+
     const abortController = new AbortController();
 
     const fetchSearch = async () => {
@@ -43,7 +57,9 @@ export const useProductSearch = (searchParams: URLSearchParams) => {
         const response = await apiClient.get<SearchResult>(`/products/search/?${params.toString()}`, {
           signal: abortController.signal
         });
+        
         if (mountedRef.current) {
+            searchCache.set(searchParamsString, response.data); // Save to cache
             setData(response.data);
             setResults(response.data.results);
             const nextMatch = response.data.next?.match(/page=(\d+)/);
@@ -52,7 +68,6 @@ export const useProductSearch = (searchParams: URLSearchParams) => {
         }
       } catch (err: any) {
         if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-           // Request was aborted, ignore
            return;
         }
         console.error('Search failed:', err);
@@ -62,12 +77,10 @@ export const useProductSearch = (searchParams: URLSearchParams) => {
       }
     };
 
-    const debounceId = setTimeout(() => {
-      fetchSearch();
-    }, 150);
+    // Removed artificial 150ms debounce delay to make the filter trigger immediately
+    fetchSearch();
 
     return () => {
-        clearTimeout(debounceId);
         abortController.abort();
         mountedRef.current = false;
     };

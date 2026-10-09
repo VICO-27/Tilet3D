@@ -5,6 +5,8 @@ import { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import { ArrowLeft } from 'lucide-react';
 import BrandLoader from '@/shared/components/BrandLoader';
+import { CategoryGridSkeleton } from '../components/ProductsSkeleton';
+import { useScrollDirection } from '@/shared/hooks/useScrollDirection';
 
 function CategoryDetailPage() {
   const { categoryName } = useParams<{ categoryName: string }>();
@@ -12,6 +14,7 @@ function CategoryDetailPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
+  const { navbarHidden } = useScrollDirection();
 
   // Scroll to top instantly on page mount for that smooth, seamless load transition
   useEffect(() => {
@@ -35,7 +38,7 @@ function CategoryDetailPage() {
     fetchCategoryProducts();
   }, [categoryName]);
 
-  if (isLoading) return <BrandLoader />;
+
 
   const filteredProducts = products;
 
@@ -59,7 +62,7 @@ function CategoryDetailPage() {
       `}</style>
 
       {/* MINIMAL NAV UTILITY STRIP */}
-      <nav className="fixed inset-x-0 top-0 z-50 bg-white/70 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
+      <nav className={`fixed inset-x-0 top-0 z-50 bg-white/70 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex items-center justify-between transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${navbarHidden ? '-translate-y-full' : 'translate-y-0'}`}>
         <button
           onClick={() => navigate(-1)}
           className="group flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 hover:text-black transition-colors duration-300"
@@ -101,7 +104,11 @@ function CategoryDetailPage() {
 
       {/* LUXURY GRID SPACE */}
       <main className="max-w-[1800px] mx-auto px-6 py-16 md:py-24">
-        {filteredProducts.length === 0 ? (
+        {isLoading ? (
+          <div className="mt-8">
+            <CategoryGridSkeleton />
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-32 text-center space-y-4 animate-apple-fadeup">
             <p className="font-serif text-2xl italic text-zinc-400">The atelier is currently preparing this catalog.</p>
             <button 

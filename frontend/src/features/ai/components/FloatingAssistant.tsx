@@ -100,6 +100,34 @@ export const FloatingAssistant: React.FC = () => {
     "Welcome to Tilet3D AI — your personal styling concierge."
   );
 
+  // Auto-focus on typing
+  useEffect(() => {
+    if (!isOpen || isMinimized) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if modifier keys are pressed (e.g. Ctrl+C)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      
+      // Ignore if already focused on an input/textarea
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === "INPUT" || activeTag === "TEXTAREA") return;
+      
+      // Focus if printable char or backspace
+      if (e.key.length === 1 || e.key === "Backspace") {
+        if (document.activeElement !== inputRef.current) {
+          inputRef.current?.focus();
+          if (e.key.length === 1) {
+            setInput(prev => prev + e.key);
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isOpen, isMinimized]);
+
   const hasConversation = messages.length > 1;
   const aiState: "idle" | "thinking" | "responding" = isGenerating
     ? "thinking"
@@ -128,6 +156,19 @@ export const FloatingAssistant: React.FC = () => {
   const handleClose = () => {
     closeAssistant();
     setIsExpanded(false);
+  };
+
+  const clickTimeoutRef = useRef<number | null>(null);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.detail === 1) {
+      clickTimeoutRef.current = window.setTimeout(() => {
+        handleMinimise();
+      }, 250); // wait for potential double click
+    } else if (e.detail === 2) {
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
+      handleClose();
+    }
   };
 
   const handleMinimise = () => {
@@ -183,8 +224,9 @@ export const FloatingAssistant: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                onClick={handleMinimise}
+                onClick={handleBackdropClick}
                 className="fixed inset-0 z-[55] bg-black/25 backdrop-blur-[1.5px]"
+                style={{ cursor: 'pointer' }}
                 aria-hidden="true"
               />
             )}

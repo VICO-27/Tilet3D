@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Ruler, Package, Heart, Mail, ArrowRight, User } from "lucide-react";
+import { Ruler, Package, Heart, Mail, ArrowLeft, ArrowRight, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
@@ -42,7 +42,15 @@ export const AuthScreen: React.FC = () => {
       </div>
 
       {/* RIGHT: Auth Box */}
-      <div className="flex flex-1 items-center justify-center p-6 sm:p-12">
+      <div className="relative flex flex-1 items-center justify-center p-6 sm:p-12">
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate("/")} 
+        className="absolute top-6 left-6 flex items-center gap-2 text-sm font-medium text-ink/60 hover:text-ink transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
         <div className="w-full max-w-[380px]">
           {/* Mobile Logo */}
           <div className="mb-10 flex h-10 w-10 items-center justify-center rounded-lg bg-plum-600 text-sm font-black text-white shadow-lg lg:hidden">
@@ -112,17 +120,17 @@ export const AuthScreen: React.FC = () => {
 const AuthButton = ({ icon, label, disabled }: { icon: React.ReactNode; label: string; disabled?: boolean }) => (
   <button
     disabled={disabled}
-    className={`group relative flex w-full items-center justify-center gap-3 rounded-full border border-ink/20 bg-white py-3.5 px-4 text-sm font-semibold text-ink transition-all ${
+    className={`group flex w-full items-center justify-center gap-2 sm:gap-3 rounded-full border border-ink/20 bg-white py-3 px-3 sm:px-4 text-sm font-semibold text-ink transition-all ${
       disabled ? "opacity-60 cursor-not-allowed" : "hover:bg-stone-50 hover:border-ink/30 active:scale-[0.98]"
     }`}
   >
-    <div className="absolute left-4 flex h-5 w-5 items-center justify-center">
+    <div className="flex h-5 w-5 shrink-0 items-center justify-center">
       {icon}
     </div>
-    {label}
+    <span className="truncate">{label}</span>
     {disabled && (
-      <span className="absolute right-4 rounded-md bg-stone-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
-        Coming Soon
+      <span className="shrink-0 rounded-md bg-stone-100 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-stone-500">
+        Soon
       </span>
     )}
   </button>

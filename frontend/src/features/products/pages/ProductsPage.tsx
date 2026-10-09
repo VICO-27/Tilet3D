@@ -8,6 +8,7 @@ import BlockDivider from '../components/BlockDivider';
 import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
 import ProductCard, { Product } from '../components/ProductCard';
+import ProductsSkeleton from '../components/ProductsSkeleton';
 import { Search, X, ArrowRight, SlidersHorizontal } from 'lucide-react';
 import { FilterDrawer } from '../components/FilterDrawer';
 
@@ -21,50 +22,6 @@ const STORY_VARIATIONS = [
 
 const CUTOFF_CATEGORY = "netela";
 
-// ==========================================
-// LUXURY SKELETON LOADER COMPONENT
-// ==========================================
-const ProductsSkeleton = () => (
-  <div className="w-full flex flex-col gap-24 py-12 overflow-hidden">
-    <style>{`
-      @keyframes shimmerSweep {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-      }
-      .shimmer-sweep {
-        animation: shimmerSweep 2s infinite linear;
-      }
-    `}</style>
-
-    {[1, 2].map((row) => (
-      <div key={row} className="w-full">
-        <div className="px-6 md:px-10 mb-8 flex justify-between items-end">
-          <div className="w-48 md:w-64 h-10 bg-stone-100 rounded-lg overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent shimmer-sweep" />
-          </div>
-        </div>
-
-        <div className="flex gap-6 px-6 md:px-10 overflow-hidden w-max">
-          {[1, 2, 3, 4, 5].map((card) => (
-            <div key={card} className="min-w-[300px] md:min-w-[400px] shrink-0">
-              <div className="w-full aspect-[3/4] bg-stone-100 rounded-2xl relative overflow-hidden mb-5">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent shimmer-sweep" />
-              </div>
-              <div className="space-y-3">
-                <div className="w-3/4 h-5 bg-stone-100 rounded-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent shimmer-sweep" />
-                </div>
-                <div className="w-1/3 h-4 bg-stone-100 rounded-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent shimmer-sweep" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
 // ==========================================
 // MAIN PAGE COMPONENT
@@ -95,16 +52,22 @@ const ProductsPage: React.FC = () => {
   const [viewContext, setViewContext] = useState<string>('normal');
   const [visibleCount, setVisibleCount] = useState(3);
   const [showBrandLoader, setShowBrandLoader] = useState(true);
+
+  // Keep BrandLoader visible until the products have fully loaded in the background!
+  useEffect(() => {
+    if (!isLoading) {
+      // The moment the products are fetched and ready, we drop the BrandLoader
+      // Added a slight 400ms delay so the beautiful brand animation isn't abruptly cut off if network is instantly fast
+      const timer = setTimeout(() => {
+        setShowBrandLoader(false);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
   const [activeScrollCategory, setActiveScrollCategory] = useState<string>("All");
 
-  // 1. Brand Loader takes over for the first 50ms to build suspense
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowBrandLoader(false);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
-
+  
   useEffect(() => {
     const handleScroll = () => {
       if (viewContext !== 'normal' || searchQuery) return;
@@ -243,12 +206,79 @@ const ProductsPage: React.FC = () => {
     }
   };
 
+
+
+
+  // ==========================================
+  // OVERSCROLL "PULL TO LOAD" INFINITE SCROLL
+  // ==========================================
+  useEffect(() => {
+    if (viewContext !== 'normal' || searchQuery) return;
+
+    let accumulatedOverscroll = 0;
+    let lastTouchY = 0;
+
+    const triggerNext = () => {
+      if (visibleCount >= activeCategories.length) {
+        setVisibleCount(3);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setVisibleCount(prev => prev + 2);
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 150;
+      if (isAtBottom && e.deltaY > 0) {
+        accumulatedOverscroll += e.deltaY;
+        if (accumulatedOverscroll > 250) { // roughly two strong scrolls
+          triggerNext();
+          accumulatedOverscroll = 0;
+        }
+      } else if (e.deltaY < 0) {
+        accumulatedOverscroll = 0;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      lastTouchY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const currentY = e.touches[0].clientY;
+      const deltaY = lastTouchY - currentY; // positive means scrolling down (swiping up)
+      lastTouchY = currentY;
+
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 150;
+      if (isAtBottom && deltaY > 0) {
+        accumulatedOverscroll += deltaY;
+        if (accumulatedOverscroll > 150) { // mobile swipe threshold
+          triggerNext();
+          accumulatedOverscroll = 0;
+        }
+      } else if (deltaY < 0) {
+        accumulatedOverscroll = 0;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [viewContext, searchQuery, visibleCount, activeCategories.length]);
+
   // Render BrandLoader first
   if (showBrandLoader) {
     return <BrandLoader />;
   }
 
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+
 
   return (
     <PageLayout>
@@ -295,9 +325,18 @@ const ProductsPage: React.FC = () => {
             {isSearchLoading ? (
                <ProductsSkeleton />
             ) : !searchData || searchData.results.length === 0 ? (
-              <div className="py-24 text-center space-y-3">
-                <p className="font-serif text-2xl text-stone-900">No matching pieces found</p>
-                <p className="text-xs text-stone-400">Try searching for another name like "Kemis", "Netela", or adjusting your filters.</p>
+              <div className="py-24 text-center space-y-8 animate-fade-in">
+                <div className="space-y-3">
+                  <p className="font-serif text-2xl text-stone-900">We couldn't find an exact match</p>
+                  <p className="text-xs text-stone-400">But we think you'll love these pieces from our collection.</p>
+                </div>
+                
+                {/* Fallback to showing normal products instead of a dead end! */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12 text-left">
+                  {allProducts.slice(0, 6).map((product, index) => (
+                    <ProductCard key={`fallback-${product.id}-${index}`} product={product} index={index} />
+                  ))}
+                </div>
               </div>
             ) : (
               <>
@@ -356,13 +395,21 @@ const ProductsPage: React.FC = () => {
               );
             })}
 
-            {viewContext === 'normal' && visibleCount < activeCategories.length && (
+            {viewContext === 'normal' && (
               <div className="w-full flex flex-col items-center justify-center mt-20 px-6">
                 <div className="w-full max-w-5xl h-[1px] bg-gradient-to-r from-transparent via-zinc-200 to-transparent mb-16" />
 
                 <div className="flex flex-col items-center gap-4">
                   <button
-                    onClick={() => setVisibleCount(prev => prev + 2)}
+                    onClick={() => {
+                      if (visibleCount >= activeCategories.length) {
+                        // Loop back to the start
+                        setVisibleCount(3);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                        setVisibleCount(prev => prev + 2);
+                      }
+                    }}
                     className="inline-flex items-center gap-4 px-10 py-5 bg-black text-white rounded-full shadow-xl hover:bg-zinc-800 transition-all duration-300 hover:-translate-y-1 group"
                   >
                     <span className="text-sm font-black tracking-widest uppercase">Next Clothes</span>
@@ -371,7 +418,9 @@ const ProductsPage: React.FC = () => {
                     </div>
                   </button>
                   <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-zinc-500">
-                    Next: {activeCategories.slice(visibleCount, visibleCount + 2).join(" & ")}
+                    Next: {(visibleCount >= activeCategories.length 
+                      ? activeCategories.slice(0, 2) 
+                      : activeCategories.slice(visibleCount, visibleCount + 2)).join(" & ")}
                   </p>
                 </div>
               </div>

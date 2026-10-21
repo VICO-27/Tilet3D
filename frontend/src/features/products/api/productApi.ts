@@ -13,13 +13,13 @@ export const productApi = {
   
 
   // GET /api/products/
-  getProducts: async (categories?: string, page: number = 1): Promise<{ results: Product[], next: string | null }> => {
+  getProducts: async (categories?: string, page: number = 1, pageSize?: number): Promise<{ results: Product[], next: string | null }> => {
     const params = new URLSearchParams();
     if (categories) {
       params.append('categories', categories);
     }
     params.append('page', page.toString());
-    params.append('page_size', '500');
+    params.append('page_size', pageSize ? pageSize.toString() : '500');
     
     const response = await apiClient.get<any>(`/products/?${params.toString()}`);
     // Support both paginated and unpaginated for safety
@@ -65,5 +65,23 @@ export const productApi = {
   shareProduct: async (payload: ShareProductPayload) => {
     const response = await apiClient.post('/products/share/', payload);
     return response.data;
+  },
+
+  // GET /api/products/liked/
+  getLikedProducts: async (): Promise<Product[]> => {
+    const response = await apiClient.get<any>('/products/liked/');
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data.results || [];
+  },
+
+  // GET /api/products/saved/
+  getSavedProducts: async (): Promise<Product[]> => {
+    const response = await apiClient.get<any>('/products/saved/');
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data.results || [];
   }
 };

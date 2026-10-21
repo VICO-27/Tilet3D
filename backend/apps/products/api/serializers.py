@@ -32,10 +32,15 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             return None
         # Safely generate the Cloudinary delivery URL using the explicit media_type
         # This bypasses the faulty 'auto' injection and 'media/' prefixing from django-cloudinary-storage
+        options = {
+            "resource_type": obj.media_type,
+            "secure": True,
+        }
+        if obj.media_type == "video":
+            options["video_codec"] = "h264"
         url, _options = cloudinary.utils.cloudinary_url(
             str(obj.file.name),
-            resource_type=obj.media_type,
-            secure=True
+            **options
         )
         return url
 
@@ -76,12 +81,46 @@ class ProductListSerializer(serializers.ModelSerializer):
         return first_variant.price if first_variant else 0
 
     
-    like_count = serializers.IntegerField(source="like_count_annotated", read_only=True, default=0)
-    comment_count = serializers.IntegerField(source="comment_count_annotated", read_only=True, default=0)
-    
-    # We will use an Exists subquery for is_liked and is_saved
-    is_liked = serializers.BooleanField(source="is_liked_annotated", read_only=True, default=False)
-    is_saved = serializers.BooleanField(source="is_saved_annotated", read_only=True, default=False)
+    like_count = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
+
+    def get_like_count(self, obj):
+        annotated = getattr(obj, "like_count_annotated", None)
+        if annotated is not None:
+            return annotated
+        return len(obj.likes.all()) if hasattr(obj, 'likes') else 0
+
+    def get_comment_count(self, obj):
+        annotated = getattr(obj, "comment_count_annotated", None)
+        if annotated is not None:
+            return annotated
+        return len(obj.comments.all()) if hasattr(obj, 'comments') else 0
+
+    def get_is_liked(self, obj):
+        annotated = getattr(obj, "is_liked_annotated", None)
+        if annotated is not None:
+            return annotated
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if hasattr(obj, 'likes'):
+            return any(like.user_id == request.user.id for like in obj.likes.all())
+        from apps.products.models import ProductLike
+        return ProductLike.objects.filter(product=obj, user=request.user).exists()
+
+    def get_is_saved(self, obj):
+        annotated = getattr(obj, "is_saved_annotated", None)
+        if annotated is not None:
+            return annotated
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        if hasattr(obj, 'bookmarks'):
+            return any(bookmark.user_id == request.user.id for bookmark in obj.bookmarks.all())
+        from apps.products.models import ProductBookmark
+        return ProductBookmark.objects.filter(product=obj, user=request.user).exists()
 
     class Meta:
         model = Product
@@ -92,6 +131,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "description",
             "brand",
             "is_featured",
+            "display_order",
             "category_name",
             "price",
             "default_variant_id",
@@ -101,6 +141,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_liked",
             "is_saved",
         )
+
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -138,6 +179,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "default_variant_id",
             "brand",
             "is_featured",
+            "display_order",
             "category_name",
             "media",
             "variants",

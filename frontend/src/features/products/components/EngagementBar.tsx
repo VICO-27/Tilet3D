@@ -34,7 +34,7 @@ const EngagementBar: React.FC<EngagementBarProps> = ({ product, onOpenComment })
     fn();
   };
 
-  const onAddToCart = () => {
+  const onAddToCart = async () => {
     if (!variantId) {
       showToast("This item isn't available right now", "error");
       return;
@@ -43,8 +43,14 @@ const EngagementBar: React.FC<EngagementBarProps> = ({ product, onOpenComment })
       showToast("Already in your cart");
       return;
     }
-    addToCart(variantId);
-    showToast("Added to cart");
+    if (!localStorage.getItem("tilet3d_access_token")) {
+      showToast("Please sign in to add to your bag", "error");
+      return;
+    }
+    const success = await addToCart(variantId);
+    if (success) {
+      showToast("Added to cart");
+    }
   };
 
   const onShare = () => {

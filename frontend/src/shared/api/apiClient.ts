@@ -1,4 +1,5 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
+import type { TokenRefreshResponse } from "@/features/account/types/auth";
 
 const ACCESS_TOKEN_KEY = "tilet3d_access_token";
 const REFRESH_TOKEN_KEY = "tilet3d_refresh_token";
@@ -33,6 +34,10 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Shared in-flight promise to avoid concurrent refresh token rotation race conditions
+let refreshPromise: Promise<string> | null = null;
+
+
 // ==========================================================
 // Refresh Token & Global Error Handler
 // ==========================================================
@@ -48,16 +53,32 @@ apiClient.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          // Attempt to fetch a new access token
-          const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-          const refreshResponse = await axios.post(`${baseURL}/auth/token/refresh/`, {
-            refresh: refreshToken,
-          });
+          if (!refreshPromise) {
+            refreshPromise = (async () => {
+              const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+              const refreshResponse = await axios.post<TokenRefreshResponse>(
+                `${baseURL}/auth/token/refresh/`,
+                { refresh: refreshToken }
+              );
 
-          const newAccessToken = refreshResponse.data.access;
+              const newAccessToken = refreshResponse.data.access;
+              const newRefreshToken = refreshResponse.data.refresh;
 
-          // Save new access token
-          localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+              // Save new access token
+              localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+
+              // Save rotated refresh token when returned by backend
+              if (newRefreshToken) {
+                localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+              }
+
+              return newAccessToken;
+            })().finally(() => {
+              refreshPromise = null;
+            });
+          }
+
+          const newAccessToken = await refreshPromise;
 
           // Update header for original request and retry it
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -67,6 +88,7 @@ apiClient.interceptors.response.use(
           localStorage.removeItem(ACCESS_TOKEN_KEY);
           localStorage.removeItem(REFRESH_TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
+          localStorage.removeItem("tilet3d-cart-storage");
           return Promise.reject(refreshError);
         }
       } else {
@@ -74,11 +96,13 @@ apiClient.interceptors.response.use(
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        localStorage.removeItem("tilet3d-cart-storage");
       }
     }
 
     return Promise.reject(error);
   }
 );
+
 
 export default apiClient;

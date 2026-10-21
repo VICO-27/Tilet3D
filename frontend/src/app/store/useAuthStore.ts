@@ -2,6 +2,8 @@ import { create } from "zustand";
 
 import authService from "../../features/account/services/authService";
 import type { AuthUser, OTPPurpose } from "../../features/account/types/auth";
+import { useCartStore } from "./useCartStore";
+import { useEngagementStore } from "./useEngagementStore";
 
 interface AuthState {
   user: AuthUser | null;
@@ -69,6 +71,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     if (!authService.hasToken()) {
       set({ user: null });
+      useCartStore.getState().clearCart();
+      useEngagementStore.getState().clearEngagements();
       return;
     }
 
@@ -80,8 +84,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user = { ...current, ...profile } as AuthUser;
       authService.storeUser(user);
       set({ user });
+      useCartStore.getState().fetchCart();
+      useEngagementStore.getState().fetchEngagements();
     } catch {
       await authService.logout();
+      useCartStore.getState().clearCart();
+      useEngagementStore.getState().clearEngagements();
       set({ user: null });
     } finally {
       set({ loading: false });
@@ -95,6 +103,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user = await authService.register({ email, password, password2 });
       authService.storeUser(user);
       set({ user });
+      useCartStore.getState().fetchCart();
+      useEngagementStore.getState().fetchEngagements();
       return null;
     } catch (err) {
       const message = extractMessage(err, "Registration failed.");
@@ -112,6 +122,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user = await authService.login({ email, password });
       authService.storeUser(user);
       set({ user });
+      useCartStore.getState().fetchCart();
+      useEngagementStore.getState().fetchEngagements();
       return null;
     } catch (err) {
       const message = extractMessage(err, "Invalid email or password.");
@@ -128,6 +140,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const user = await authService.googleLogin(idToken);
       authService.storeUser(user);
       set({ user });
+      useCartStore.getState().fetchCart();
+      useEngagementStore.getState().fetchEngagements();
       return null;
     } catch (err) {
       const message = extractMessage(err, "Google sign-in failed. Please try again.");
@@ -148,6 +162,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.removeItem("tilet3d_access_token");
       localStorage.removeItem("tilet3d_refresh_token");
       localStorage.removeItem("tilet3d_user");
+      localStorage.removeItem("tilet3d-cart-storage");
+      useCartStore.getState().clearCart();
+      useEngagementStore.getState().clearEngagements();
       set({ user: null, error: null });
     }
   },

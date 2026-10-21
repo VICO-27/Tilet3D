@@ -3,10 +3,95 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
-import { optimizeCloudinaryUrl } from "../../../shared/utils/cloudinary";
+import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from "../../../shared/utils/cloudinary";
 
 // ==========================================
-// 1. INDIVIDUAL LAZY-LOADED ROW COMPONENT
+// 1. INDIVIDUAL ITEM CARD (Viewport-Aware Media)
+// ==========================================
+interface DisplayItem {
+  product: Product;
+  mediaUrl: string;
+  mediaType: string;
+  uniqueKey: string;
+}
+
+const CulturalItemCard = ({
+  item,
+  idx,
+  dbCategory,
+  onClick,
+}: {
+  item: DisplayItem;
+  idx: number;
+  dbCategory: string;
+  onClick: () => void;
+}) => {
+  const isVideo = item.mediaType === 'video';
+  const cardRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          if (isVideo) {
+            videoRef.current?.play().catch(() => {});
+          }
+        } else {
+          if (isVideo) {
+            videoRef.current?.pause();
+          }
+        }
+      },
+      { rootMargin: '300px', threshold: 0 }
+    );
+
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [isVideo]);
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={onClick}
+      className="group relative w-[240px] md:w-[280px] h-[340px] md:h-[400px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0 cursor-pointer"
+    >
+      <div className="absolute inset-0 z-0 bg-gray-200">
+        {isVideo ? (
+          <video
+            ref={videoRef}
+            src={inView ? optimizeCloudinaryVideoUrl(item.mediaUrl) : undefined}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="none"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <img
+            src={inView ? optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_400,q_auto,f_auto') : undefined}
+            alt={item.product.name}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        )}
+      </div>
+      <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+      <div className="absolute inset-x-0 bottom-0 p-6 z-20 text-left flex flex-col justify-end">
+        <span className="text-sm font-light text-white/80 block mt-1">
+          ETB {item.product.price || item.product.variants?.[0]?.price}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 2. INDIVIDUAL LAZY-LOADED ROW COMPONENT
 // ==========================================
 interface CulturalRowProps {
   dbCategory: string;
@@ -19,14 +104,17 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
   const navigate = useNavigate();
   const trackRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
+  const wasDraggedRef = useRef(false);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [hasFetched, setHasFetched] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRowVisible, setIsRowVisible] = useState(false);
 
-  // LAZY FETCHING: Only fetch this specific category when scrolling near it
+  // LAZY FETCHING: Only fetch this specific category when scrolling near it, and pause auto-scroll when offscreen
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
+      setIsRowVisible(entry.isIntersecting);
       if (entry.isIntersecting && !hasFetched) {
         setHasFetched(true);
         productApi.getProducts(dbCategory).then(data => {
@@ -59,16 +147,16 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     return [...allMedia, ...allMedia, ...allMedia]; 
   }, [products]);
 
-  // NATIVE SCROLL + DRAG + AUTO-SCROLL LOGIC
+  // NATIVE SCROLL + MOUSE DRAG + AUTO-SCROLL LOGIC
   useEffect(() => {
     const track = trackRef.current;
-    if (!track || displayItems.length === 0) return;
+    if (!track || displayItems.length === 0 || !isRowVisible) return;
 
     let animationFrameId: number;
     let isDown = false;
-    
     let startX: number;
-    let scrollLeft: number;
+    let scrollLeftStart: number;
+    let hasDragged = false;
     
     // Auto-scroll speed
     const speed = direction === "left" ? 1.0 : -1.0;
@@ -78,7 +166,18 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       track.scrollLeft = track.scrollWidth / 3;
     }
 
-    // 1. Auto Scrolling Engine
+    const wrapTrack = () => {
+      const third = track.scrollWidth / 3;
+      if (track.scrollLeft >= third * 2) {
+        track.scrollLeft -= third;
+        scrollLeftStart -= third;
+      } else if (track.scrollLeft <= 0) {
+        track.scrollLeft += third;
+        scrollLeftStart += third;
+      }
+    };
+
+    // 1. Auto Scrolling Engine — only runs while the row is in viewport
     const autoScroll = () => {
       if (!isDown) {
         track.scrollLeft += speed;
@@ -94,29 +193,49 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       animationFrameId = requestAnimationFrame(autoScroll);
     };
 
+    animationFrameId = requestAnimationFrame(autoScroll);
+
     // 2. Mouse Drag Engine
-    const onMouseDown = (e: MouseEvent) => {
-      isDown = true;
-      track.style.cursor = 'grabbing';
-      startX = e.pageX - track.offsetLeft;
-      scrollLeft = track.scrollLeft;
-    };
-    
-    const onMouseLeave = () => { 
-      isDown = false; 
-      
-      track.style.cursor = 'grab';
-    };
-    const onMouseUp = () => { 
-      isDown = false; 
-      track.style.cursor = 'grab';
-    };
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - track.offsetLeft;
-      const walk = (x - startX) * 1.5; // Drag speed multiplier
-      track.scrollLeft = scrollLeft - walk;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) {
+        hasDragged = true;
+        wasDraggedRef.current = true;
+      }
+      track.scrollLeft = scrollLeftStart - dx * 1.2;
+      wrapTrack();
+    };
+
+    const onMouseUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      track.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      if (hasDragged) {
+        setTimeout(() => {
+          wasDraggedRef.current = false;
+        }, 120);
+      } else {
+        wasDraggedRef.current = false;
+      }
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest('button, input, textarea')) return;
+
+      isDown = true;
+      hasDragged = false;
+      wasDraggedRef.current = false;
+      track.style.cursor = 'grabbing';
+      startX = e.clientX;
+      scrollLeftStart = track.scrollLeft;
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
     };
 
     // 3. Trackpad/Wheel Seamless Wrap Engine
@@ -131,10 +250,6 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     // Attach listeners
     track.addEventListener('mousedown', onMouseDown);
-    track.addEventListener('mouseleave', onMouseLeave);
-    
-    track.addEventListener('mouseup', onMouseUp);
-    track.addEventListener('mousemove', onMouseMove);
     track.addEventListener('scroll', onScroll, { passive: true });
 
     // Start auto-scroll
@@ -143,11 +258,9 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     return () => {
       cancelAnimationFrame(animationFrameId);
       track.removeEventListener('mousedown', onMouseDown);
-      track.removeEventListener('mouseleave', onMouseLeave);
-      
-      track.removeEventListener('mouseup', onMouseUp);
-      track.removeEventListener('mousemove', onMouseMove);
       track.removeEventListener('scroll', onScroll);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
     };
   }, [displayItems, direction]);
 
@@ -194,35 +307,25 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
         /* FIXED STRUCTURE: overflow-x-auto is on the bounded w-full wrapper! */
         <div 
           ref={trackRef} 
-          className="w-full overflow-x-auto smooth-scroll-container cursor-grab pb-4"
+          onClickCapture={(e) => {
+            if (wasDraggedRef.current) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+          className="w-full overflow-x-auto smooth-scroll-container cursor-grab active:cursor-grabbing pb-4 select-none"
         >
           {/* Inner track expands to fit content using w-max */}
           <div className="flex gap-8 px-8 md:px-16 w-max">
-            {displayItems.map((item, idx) => {
-              const isVideo = item.mediaType === 'video';
-
-              return (
-                <div
-                  key={`${item.uniqueKey}-${idx}`}
-                  onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
-                  className="group relative w-[240px] md:w-[280px] h-[340px] md:h-[400px] rounded-3xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-2xl transition-shadow duration-500 will-change-transform shrink-0 cursor-pointer"
-                >
-                  <div className="absolute inset-0 z-0 bg-gray-200">
-                    {isVideo ? (
-                      <video src={item.mediaUrl} autoPlay loop muted playsInline className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    ) : (
-                      <img src={optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_400,q_auto,f_auto')} alt={item.product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    )}
-                  </div>
-                  <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-                  <div className="absolute inset-x-0 bottom-0 p-6 z-20 text-left flex flex-col justify-end">
-                    <span className="text-sm font-light text-white/80 block mt-1">
-                      ETB {item.product.price || item.product.variants?.[0]?.price}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {displayItems.map((item, idx) => (
+              <CulturalItemCard
+                key={`${item.uniqueKey}-${idx}`}
+                item={item}
+                idx={idx}
+                dbCategory={dbCategory}
+                onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -249,6 +352,13 @@ const CulturalCollectionSection = () => {
           scroll-behavior: auto;
           scrollbar-width: none;
           overscroll-behavior-x: contain; /* Stops Chrome swipe back */
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .smooth-scroll-container img,
+        .smooth-scroll-container video {
+          -webkit-user-drag: none;
+          user-drag: none;
         }
         .smooth-scroll-container::-webkit-scrollbar {
           display: none;

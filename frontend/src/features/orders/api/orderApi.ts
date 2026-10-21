@@ -25,6 +25,16 @@ export interface OrderItemType {
   subtotal: string | number;
 }
 
+export interface PaymentInfoType {
+  id: string;
+  provider: string;
+  amount: string | number;
+  currency: string;
+  status: string;
+  transaction_id?: string;
+  created_at: string;
+}
+
 export interface OrderDetailType {
   id: string;
   order_number: string;
@@ -45,7 +55,16 @@ export interface OrderDetailType {
   postal_code: string;
   note: string;
   items: OrderItemType[];
+  payment?: PaymentInfoType | null;
   created_at: string;
+}
+
+export interface VerifyPaymentResponseType {
+  success: boolean;
+  status: string;
+  is_paid: boolean;
+  payment: PaymentInfoType;
+  order: OrderDetailType;
 }
 
 export const orderApi = {
@@ -58,6 +77,12 @@ export const orderApi = {
   // GET /api/orders/:id/
   getOrderById: async (id: string): Promise<OrderDetailType> => {
     const response = await apiClient.get<OrderDetailType>(`/orders/${id}/`);
+    return response.data;
+  },
+
+  // POST /api/payments/verify/
+  verifyPayment: async (orderId: string): Promise<VerifyPaymentResponseType> => {
+    const response = await apiClient.post<VerifyPaymentResponseType>('/payments/verify/', { order_id: orderId });
     return response.data;
   }
 };

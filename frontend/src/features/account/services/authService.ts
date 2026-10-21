@@ -160,6 +160,7 @@ class AuthService {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("tilet3d-cart-storage");
   }
 
   // ==========================================================

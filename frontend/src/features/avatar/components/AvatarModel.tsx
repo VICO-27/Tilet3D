@@ -1,5 +1,5 @@
 // frontend/src/features/avatar/components/AvatarModel.tsx
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { SkeletonUtils } from 'three-stdlib';
@@ -8,9 +8,16 @@ import { useAvatarStore } from '../store/useAvatarStore';
 import { prepareAvatar, applySkinTone, debugAvatarMeshes } from '../utils/avatarRig';
 import type { Gender } from '../types/avatar.types';
 
-export const DRACO_URL = 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/gltf/';
+export const DRACO_URL = '/draco/';
 const MALE_GLB = '/models/maleAvatar.glb';
 const FEMALE_GLB = '/models/femaleAvatar.glb';
+
+// Preload avatar 3D models and Draco decoder immediately on script evaluation
+if (typeof window !== 'undefined') {
+  useGLTF.preload(FEMALE_GLB, DRACO_URL);
+  useGLTF.preload(MALE_GLB, DRACO_URL);
+}
+
 
 import type { SkinTone } from '../types/avatar.types';
 
@@ -106,17 +113,26 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
     }
   }, [currentAnimation, actions, names, active, clonedScene]);
 
+  // Reusable vector reference to avoid per-frame GC allocation in 60fps loop
+  const targetScaleRef = useRef(new THREE.Vector3());
+
   useFrame((_, delta) => {
     if (!group.current) return;
+
+    // When inactive and already fully shrunk down to near zero, avoid redundant per-frame calculations
+    if (!active && group.current.scale.y <= 0.002) {
+      return;
+    }
+
     const h = isFinite(height) && height > 0 ? height : 170;
     const w = isFinite(weight) && weight > 0 ? weight : 70;
     const targetSy = active ? clamp(h / 170, 0.5, 2.0) : 0.001;
     const targetSxz = active ? clamp(0.85 + w / 120, 0.5, 2.0) : 0.001;
 
-    // Same butter-smooth lerp dissolve HeroModel uses when swapping genders.
-    // Clamp the interpolation factor to 1 to prevent exploding scale on large delta (e.g. after Suspense resolves)
+    // Smooth lerp dissolve when swapping genders
     const t = Math.min(delta * 7, 1);
-    group.current.scale.lerp(new THREE.Vector3(targetSxz, targetSy, targetSxz), t);
+    targetScaleRef.current.set(targetSxz, targetSy, targetSxz);
+    group.current.scale.lerp(targetScaleRef.current, t);
 
     if (active) {
       if (currentAnimation === 'spin') {
@@ -145,13 +161,27 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
 export function AvatarModel() {
   const gender = useAvatarStore((s) => s.gender);
 
+  // On-demand gender mounting: only load the selected model initially.
+  // Once a gender is activated, keep it mounted to allow butter-smooth scale transitions
+  // without re-suspending or flashing blank mid-session.
+  const [mountedGenders, setMountedGenders] = useState<Record<Gender, boolean>>({
+    male: gender === 'male',
+    female: gender === 'female',
+  });
+
+  useEffect(() => {
+    setMountedGenders((prev) => {
+      if (!prev[gender]) {
+        return { ...prev, [gender]: true };
+      }
+      return prev;
+    });
+  }, [gender]);
+
   return (
     <>
-      <SingleGenderAvatar gender="male" active={gender === 'male'} />
-      <SingleGenderAvatar gender="female" active={gender === 'female'} />
+      {mountedGenders.male && <SingleGenderAvatar gender="male" active={gender === 'male'} />}
+      {mountedGenders.female && <SingleGenderAvatar gender="female" active={gender === 'female'} />}
     </>
   );
 }
-
-useGLTF.preload(MALE_GLB, DRACO_URL);
-useGLTF.preload(FEMALE_GLB, DRACO_URL);

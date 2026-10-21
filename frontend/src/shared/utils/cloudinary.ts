@@ -18,3 +18,20 @@ export function optimizeCloudinaryUrl(url: string | undefined | null, transform:
   }
   return url;
 }
+
+/**
+ * Ensures video URLs on Cloudinary use universally-supported H.264 (avc1) codec,
+ * preventing blank/white video rendering caused by raw HEVC (hvc1) files in web browsers.
+ */
+export function optimizeCloudinaryVideoUrl(url: string | undefined | null): string {
+  if (!url || typeof url !== 'string' || !url.includes('res.cloudinary.com')) return url || '';
+  if (url.includes('/vc_h264/') || url.includes('/vc_auto/')) return url;
+  
+  const uploadIndex = url.indexOf('/video/upload/');
+  if (uploadIndex !== -1) {
+    const beforeUpload = url.substring(0, uploadIndex + 14); // includes '/video/upload/'
+    const afterUpload = url.substring(uploadIndex + 14);
+    return `${beforeUpload}vc_h264/${afterUpload}`;
+  }
+  return url;
+}

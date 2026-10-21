@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 
@@ -10,9 +10,68 @@ interface Props {
 
 const RelatedProducts: React.FC<Props> = ({ products, currentProductId, categoryName }) => {
   const navigate = useNavigate();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const wasDraggedRef = useRef(false);
+
   const related = products
     .filter((p) => p.id !== currentProductId && p.category_name === categoryName)
     .slice(0, 12);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeftStart = 0;
+    let hasDragged = false;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) {
+        hasDragged = true;
+        wasDraggedRef.current = true;
+      }
+      track.scrollLeft = scrollLeftStart - dx * 1.2;
+    };
+
+    const onMouseUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      track.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      if (hasDragged) {
+        setTimeout(() => {
+          wasDraggedRef.current = false;
+        }, 120);
+      } else {
+        wasDraggedRef.current = false;
+      }
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      hasDragged = false;
+      wasDraggedRef.current = false;
+      track.style.cursor = 'grabbing';
+      startX = e.clientX;
+      scrollLeftStart = track.scrollLeft;
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    track.addEventListener('mousedown', onMouseDown);
+    return () => {
+      track.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [related.length]);
 
   if (!related.length) return null;
 
@@ -25,7 +84,16 @@ const RelatedProducts: React.FC<Props> = ({ products, currentProductId, category
         You may also like
       </h2>
 
-      <div className="flex gap-5 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory">
+      <div 
+        ref={trackRef}
+        onClickCapture={(e) => {
+          if (wasDraggedRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+        className="flex gap-5 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+      >
         {related.map((p) => {
           const primary = p.media.find((m) => m.is_primary) || p.media[0];
           return (

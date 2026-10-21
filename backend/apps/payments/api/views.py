@@ -156,3 +156,87 @@ class PaymentWebhookView(APIView):
             {"message": "Webhook processed successfully"},
             status=status.HTTP_200_OK,
         )
+
+
+# ==========================================================
+# VERIFY PAYMENT (Client Return & Verification)
+# ==========================================================
+
+class VerifyPaymentView(APIView):
+    """
+    Called by the frontend checkout success page to verify the payment 
+    status directly with Chapa (especially useful when local webhooks cannot 
+    be delivered, or to provide instant customer feedback).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        order_id = request.data.get("order_id")
+        tx_ref = request.data.get("tx_ref")
+
+        if not order_id and not tx_ref:
+            return Response(
+                {"error": "Missing order_id or tx_ref parameter."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            if order_id:
+                payment = (
+                    Payment.objects
+                    .select_related("order")
+                    .get(order_id=order_id, user=request.user)
+                )
+            else:
+                payment = (
+                    Payment.objects
+                    .select_related("order")
+                    .get(id=tx_ref, user=request.user)
+                )
+        except Payment.DoesNotExist:
+            return Response(
+                {"error": "Payment record not found for this order."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # If payment is not yet marked SUCCESS, verify directly with gateway
+        if payment.status != PaymentStatus.SUCCESS:
+            provider = getattr(payment, "provider", "chapa")
+            gateway = GatewayFactory.get_gateway(provider)
+            try:
+                is_verified = gateway.verify_payment(str(payment.id))
+                if is_verified:
+                    PaymentService.mark_success(payment)
+            except Exception as e:
+                logger.error(f"Error during payment verification for {payment.id}: {str(e)}")
+
+        payment.refresh_from_db()
+        order = payment.order
+        order.refresh_from_db()
+
+        from apps.orders.api.serializers import OrderDetailSerializer
+
+        return Response(
+            {
+                "success": True,
+                "status": payment.status,
+                "is_paid": payment.status == PaymentStatus.SUCCESS,
+                "payment": {
+                    "id": str(payment.id),
+                    "provider": payment.provider,
+                    "amount": str(payment.amount),
+                    "currency": payment.currency,
+                    "status": payment.status,
+                    "transaction_id": payment.transaction_id,
+                    "created_at": payment.created_at,
+                },
+                "order": OrderDetailSerializer(order).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def get(self, request):
+        order_id = request.query_params.get("order_id")
+        tx_ref = request.query_params.get("tx_ref")
+        request.data = {"order_id": order_id, "tx_ref": tx_ref}
+        return self.post(request)

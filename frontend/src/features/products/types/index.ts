@@ -26,6 +26,7 @@ export interface Product {
   description: string;
   brand: string;
   is_featured: boolean;
+  display_order?: number;
   category_name: string;
   media: ProductMedia[];
   variants: ProductVariant[];

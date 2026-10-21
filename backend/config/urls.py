@@ -7,20 +7,30 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenRefreshView
 
+def health_check(request):
+    return JsonResponse({"status": "ok", "app": "Tilet3D API"})
+
 urlpatterns = [
+    # Health checks for deployment / cloud load balancers (Render, AWS, etc.)
+    path("health/", health_check, name="health-check"),
+    path("api/health/", health_check, name="api-health-check"),
+
     path("admin/", admin.site.urls),
     
     # API App Endpoints
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/", include("apps.accounts.api.urls")),
+    path("api/accounts/", include("apps.accounts.api.urls")),
     path("api/products/", include("apps.products.api.urls")),
     path("api/cart/", include("apps.cart.api.urls")),
     path("api/orders/", include("apps.orders.api.urls")),
     path("api/payments/", include("apps.payments.api.urls")),
     path('api/avatars/', include('apps.avatars.api.urls')),
     path("api/ai/", include("apps.ai.api.urls")),
+    path("api/admin/", include("apps.accounts.api.admin_urls")),
 
     # API Documentation (Spectacular)
     path(

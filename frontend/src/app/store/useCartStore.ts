@@ -33,6 +33,7 @@ interface CartState {
   addedVariantIds: string[];
   isAdded: (variantId: string) => boolean;
   fetchCart: () => Promise<void>;
+  clearCart: () => void;
   addToCart: (variantId: string, quantity?: number) => Promise<boolean>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
@@ -42,89 +43,116 @@ interface CartState {
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-  cartItems: [],
-  loading: false,
-  addedVariantIds: [],
+      cartItems: [],
+      loading: false,
+      addedVariantIds: [],
 
-  isAdded: (variantId: string) => get().addedVariantIds.includes(variantId),
+      isAdded: (variantId: string) => get().addedVariantIds.includes(variantId),
 
-  fetchCart: async () => {
-    set({ loading: true });
-    try {
-      const response = await apiClient.get('/cart/');
-      const rawData = response.data;
-      const items = Array.isArray(rawData) 
-        ? rawData 
-        : (rawData.items || rawData.cart_items || []);
+      clearCart: () => {
+        set({ cartItems: [], addedVariantIds: [], loading: false });
+        try {
+          localStorage.removeItem('tilet3d-cart-storage');
+        } catch {
+          // ignore
+        }
+      },
 
-      set({ cartItems: items });
-    } catch (err) {
-      console.error('Failed to fetch cart from backend', err);
-    } finally {
-      set({ loading: false });
-    }
-  },
+      fetchCart: async () => {
+        const token = localStorage.getItem('tilet3d_access_token');
+        if (!token) {
+          // Unauthenticated users should never see stale items
+          get().clearCart();
+          return;
+        }
 
-  addToCart: async (variantId: string, quantity: number = 1) => {
-    if (!variantId) return false;
+        set({ loading: true });
+        try {
+          const response = await apiClient.get('/cart/');
+          const rawData = response.data;
+          const items = Array.isArray(rawData)
+            ? rawData
+            : (rawData.items || rawData.cart_items || []);
 
-    set((state) => ({
-      addedVariantIds: state.addedVariantIds.includes(variantId)
-        ? state.addedVariantIds
-        : [...state.addedVariantIds, variantId],
-    }));
+          set({ cartItems: items });
+        } catch (err) {
+          console.error('Failed to fetch cart from backend', err);
+        } finally {
+          set({ loading: false });
+        }
+      },
 
-    try {
-      await apiClient.post('/cart/add/', {
-        variant_id: variantId,
-        quantity,
-      });
-      await get().fetchCart();
-      return true;
-    } catch (err) {
-      set((state) => ({
-        addedVariantIds: state.addedVariantIds.filter((id) => id !== variantId),
-      }));
-      console.error('Could not add to cart', err);
-      return false;
-    }
-  },
+      addToCart: async (variantId: string, quantity: number = 1) => {
+        if (!variantId) return false;
 
-  updateQuantity: async (itemId: string, quantity: number) => {
-    set((state) => ({
-      cartItems: state.cartItems.map((item) =>
-        item.id === itemId ? { ...item, quantity } : item
-      ),
-    }));
-    try {
-      await apiClient.patch(`/cart/item/${itemId}/update/`, { quantity });
-      await get().fetchCart();
-    } catch (err) {
-      console.error('Update failed', err);
-      get().fetchCart();
-    }
-  },
+        const token = localStorage.getItem('tilet3d_access_token');
+        if (!token) {
+          return false;
+        }
 
-  removeItem: async (itemId: string) => {
-    const previous = get().cartItems;
-    set((state) => ({
-      cartItems: state.cartItems.filter((item) => item.id !== itemId),
-    }));
-    try {
-      await apiClient.delete(`/cart/item/${itemId}/`);
-      await get().fetchCart();
-    } catch (err) {
-      console.error('Remove failed', err);
-      set({ cartItems: previous });
-    }
-  },
+        set((state) => ({
+          addedVariantIds: state.addedVariantIds.includes(variantId)
+            ? state.addedVariantIds
+            : [...state.addedVariantIds, variantId],
+        }));
 
-  cartTotal: () =>
-    get().cartItems.reduce((acc, item) => acc + Number(item.variant?.price || 0) * item.quantity, 0),
+        try {
+          await apiClient.post('/cart/add/', {
+            variant_id: variantId,
+            quantity,
+          });
+          await get().fetchCart();
+          return true;
+        } catch (err) {
+          set((state) => ({
+            addedVariantIds: state.addedVariantIds.filter((id) => id !== variantId),
+          }));
+          console.error('Could not add to cart', err);
+          return false;
+        }
+      },
+
+      updateQuantity: async (itemId: string, quantity: number) => {
+        set((state) => ({
+          cartItems: state.cartItems.map((item) =>
+            item.id === itemId ? { ...item, quantity } : item
+          ),
+        }));
+        try {
+          await apiClient.patch(`/cart/item/${itemId}/update/`, { quantity });
+          await get().fetchCart();
+        } catch (err) {
+          console.error('Update failed', err);
+          get().fetchCart();
+        }
+      },
+
+      removeItem: async (itemId: string) => {
+        const previous = get().cartItems;
+        set((state) => ({
+          cartItems: state.cartItems.filter((item) => item.id !== itemId),
+        }));
+        try {
+          await apiClient.delete(`/cart/item/${itemId}/`);
+          await get().fetchCart();
+        } catch (err) {
+          console.error('Remove failed', err);
+          set({ cartItems: previous });
+        }
+      },
+
+      cartTotal: () =>
+        get().cartItems.reduce((acc, item) => acc + Number(item.variant?.price || 0) * item.quantity, 0),
     }),
     {
       name: 'tilet3d-cart-storage',
       partialize: (state) => ({ cartItems: state.cartItems }),
+      onRehydrateStorage: () => (state) => {
+        // Purge stored cart immediately if no active auth token exists
+        if (!localStorage.getItem('tilet3d_access_token')) {
+          state?.clearCart();
+        }
+      },
     }
   )
 );

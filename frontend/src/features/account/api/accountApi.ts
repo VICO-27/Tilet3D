@@ -29,13 +29,13 @@ interface BackendSession {
 export const securityApi = {
   // 1. Fetch Audit Logs
   getSecurityLogs: async (): Promise<SecurityLog[]> => {
-    const response = await apiClient.get("/accounts/security/logs/");
+    const response = await apiClient.get("/auth/security/logs/");
     return response.data;
   },
 
   // 2. Fetch Active Sessions
   getSessions: async (): Promise<Session[]> => {
-    const response = await apiClient.get<BackendSession[]>("/accounts/security/sessions/");
+    const response = await apiClient.get<BackendSession[]>("/auth/security/sessions/");
     return response.data.map((s) => ({
       id: String(s.id),
       device: s.device || "Web Browser",
@@ -48,7 +48,7 @@ export const securityApi = {
 
   // 3. Change Password
   changePassword: async (data: { currentPass: string; newPass: string }) => {
-    const response = await apiClient.post("/accounts/security/change-password/", {
+    const response = await apiClient.post("/auth/security/change-password/", {
       current_password: data.currentPass,
       new_password: data.newPass,
     });
@@ -57,13 +57,13 @@ export const securityApi = {
 
   // 4. Revoke Other Sessions
   revokeSessions: async () => {
-    const response = await apiClient.delete("/accounts/security/sessions/");
+    const response = await apiClient.delete("/auth/security/sessions/");
     return response.data;
   },
 
   // 5. Delete Account
   deleteAccount: async () => {
-    const response = await apiClient.delete("/accounts/security/delete-account/");
+    const response = await apiClient.delete("/auth/security/delete-account/");
     return response.data;
   },
 };

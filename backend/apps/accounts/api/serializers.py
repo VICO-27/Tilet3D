@@ -77,6 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 "id": str(instance.id),
                 "email": instance.email,
                 "is_verified": instance.is_verified,
+                "is_staff": instance.is_staff,
             },
             "tokens": {
                 "refresh": str(refresh),
@@ -120,6 +121,8 @@ class LoginSerializer(serializers.Serializer):
             "user": {
                 "id": str(user.id),
                 "email": user.email,
+                "is_verified": user.is_verified,
+                "is_staff": user.is_staff,
             },
             "tokens": {
                 "refresh": str(refresh),
@@ -129,15 +132,25 @@ class LoginSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    # Human-readable labels for the frontend UI dropdowns/displays
-    gender_display = serializers.CharField(source="get_gender_display", read_only=True)
-    body_type_display = serializers.CharField(source="get_body_type_display", read_only=True)
-    skin_tone_display = serializers.CharField(source="get_skin_tone_display", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
+    is_verified = serializers.BooleanField(source="user.is_verified", read_only=True)
+
+    # Attributes safely retrieved from user's AvatarProfile if present
+    gender = serializers.SerializerMethodField()
+    gender_display = serializers.SerializerMethodField()
+    body_type = serializers.SerializerMethodField()
+    body_type_display = serializers.SerializerMethodField()
+    skin_tone = serializers.SerializerMethodField()
+    skin_tone_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = [
             "id",
+            "email",
+            "is_staff",
+            "is_verified",
             "full_name",
             "nickname",
             "avatar_image",
@@ -150,10 +163,33 @@ class ProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at"]
+        read_only_fields = ["id", "email", "is_staff", "is_verified", "created_at", "updated_at"]
+
+    def get_gender(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.gender if avatar else None
+
+    def get_gender_display(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.get_gender_display() if avatar else None
+
+    def get_body_type(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.body_type if avatar else None
+
+    def get_body_type_display(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.get_body_type_display() if avatar else None
+
+    def get_skin_tone(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.skin_tone if avatar else None
+
+    def get_skin_tone_display(self, obj):
+        avatar = getattr(obj.user, "avatar_profile", None)
+        return avatar.get_skin_tone_display() if avatar else None
 
     def update(self, instance, validated_data):
-        # extra safety layer (prevents accidental overwrite bugs)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

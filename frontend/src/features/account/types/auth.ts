@@ -11,6 +11,7 @@ export interface User {
   id: string;
   email: string;
   is_verified: boolean;
+  is_staff?: boolean;
 }
 
 export interface Profile {
@@ -21,6 +22,7 @@ export interface Profile {
   gender: string | null;
   body_type: string | null;
   skin_tone: string | null;
+  is_staff?: boolean;
 
   created_at: string;
   updated_at: string;
@@ -43,6 +45,12 @@ export interface RegisterResponse {
     refresh: string;
   };
 }
+
+export interface TokenRefreshResponse {
+  access: string;
+  refresh?: string;
+}
+
 
 export interface RegisterPayload {
   email: string;

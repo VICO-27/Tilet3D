@@ -9,16 +9,20 @@ from .views import (
     ShareProductView,
     ProductCommentsListView,
     UserLikedProductsAPIView,
+    UserSavedProductsAPIView,
     ToggleBookmarkView,
 )
 
 urlpatterns = [
     # =========================
-    # PRODUCT LIST & LIKED
+    # PRODUCT LIST & ENGAGEMENTS
     # =========================
     path("", ProductListAPIView.as_view(), name="product-list"),
     path("search/", ProductSearchAPIView.as_view(), name="product-search"),
     path("liked/", UserLikedProductsAPIView.as_view(), name="user-liked-products"),
+    path("saved/", UserSavedProductsAPIView.as_view(), name="user-saved-products"),
+    path("bookmarked/", UserSavedProductsAPIView.as_view(), name="user-bookmarked-products"),
+
 
     # =========================
     # SOCIAL ACTIONS

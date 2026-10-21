@@ -43,6 +43,9 @@ def test_webhook_idempotency(mock_verify, api_client, create_payment):
     # Verify that we didn't ping Chapa again unnecessarily
     assert mock_verify.call_count == 1
 
+from django.db import connection
+
+@pytest.mark.skipif(connection.vendor == "sqlite", reason="SQLite does not support concurrent row-level locking")
 @pytest.mark.django_db(transaction=True)
 @patch('apps.payments.gateways.chapa.ChapaGateway.verify_payment')
 def test_webhook_concurrency(mock_verify, create_payment):
@@ -71,3 +74,23 @@ def test_webhook_concurrency(mock_verify, create_payment):
     # We just want to ensure that NO corrupt state happens.
     payment.refresh_from_db()
     assert payment.status == PaymentStatus.SUCCESS
+
+
+@pytest.mark.django_db(transaction=True)
+@patch('apps.payments.gateways.chapa.ChapaGateway.verify_payment')
+def test_verify_payment_view(mock_verify, api_client, create_payment):
+    mock_verify.return_value = True
+    payment = create_payment
+    api_client.force_authenticate(user=payment.user)
+
+    url = reverse("verify-payment")
+    response = api_client.post(url, {"order_id": str(payment.order.id)})
+
+    assert response.status_code == 200
+    assert response.data["status"] == "success"
+    assert response.data["is_paid"] is True
+    assert response.data["order"]["id"] == str(payment.order.id)
+
+    payment.refresh_from_db()
+    assert payment.status == PaymentStatus.SUCCESS
+

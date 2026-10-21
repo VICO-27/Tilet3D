@@ -69,12 +69,15 @@ const ProductsPage: React.FC = () => {
 
   
   useEffect(() => {
-    const handleScroll = () => {
-      if (viewContext !== 'normal' || searchQuery) return;
+    let ticking = false;
+
+    const updateActiveCategory = () => {
+      if (viewContext !== 'normal' || searchQuery) {
+        ticking = false;
+        return;
+      }
       
       let current = "All";
-      // We will look for elements with id category-{cat}
-      // and determine the one most visible at the top.
       const elements = document.querySelectorAll('[id^="category-"]');
       elements.forEach((el) => {
         const rect = el.getBoundingClientRect();
@@ -85,10 +88,18 @@ const ProductsPage: React.FC = () => {
       
       if (window.scrollY < 200) current = "All";
       setActiveScrollCategory(current);
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateActiveCategory);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
+    updateActiveCategory();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [viewContext, searchQuery]);
 
@@ -138,33 +149,17 @@ const ProductsPage: React.FC = () => {
     if (kemisKey && updatedGroups[kemisKey] && updatedGroups[kemisKey].length > 0) {
       const allKemis = [...updatedGroups[kemisKey]];
 
-      const newProducts = allKemis.slice(0, 8);
-      const oldProducts = allKemis.slice(8);
+      // Ensure good-looking couture collection products are positioned in Row 1 and Row 2 (Cards 1-5),
+      // followed by the new bespoke Kemis products starting from Row 2 Card 6 onwards.
+      allKemis.sort((a, b) => {
+        const aIsCouture = a.slug.includes('collection') || a.name.toLowerCase().includes('couture');
+        const bIsCouture = b.slug.includes('collection') || b.name.toLowerCase().includes('couture');
+        if (aIsCouture && !bIsCouture) return -1;
+        if (!aIsCouture && bIsCouture) return 1;
+        return (a.display_order ?? 0) - (b.display_order ?? 0);
+      });
 
-      const row1Base = oldProducts.slice(0, 6);
-      const row1Other = [...oldProducts].reverse().slice(0, 4);
-
-      let row1 = [...row1Base, ...row1Other];
-      while (row1.length > 0 && row1.length < 10) {
-        row1 = [...row1, ...oldProducts];
-      }
-      row1 = row1.slice(0, 10);
-
-      let row2 = [...newProducts];
-      while (row2.length > 0 && row2.length < 10) {
-        row2 = [...row2, ...newProducts];
-      }
-      row2 = row2.slice(0, 10);
-
-      let row3 = [...oldProducts].reverse().slice(4);
-      while (row3.length > 0 && row3.length < 10) {
-        row3 = [...row3, ...oldProducts.reverse()];
-      }
-      row3 = row3.slice(0, 10);
-
-      if (newProducts.length > 0 && oldProducts.length > 0) {
-        updatedGroups[kemisKey] = [...row1, ...row2, ...row3];
-      }
+      updatedGroups[kemisKey] = allKemis;
     }
 
     return updatedGroups;

@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, ArrowRight } from "lucide-react";
 import { Product } from "../../products/types";
-import { optimizeCloudinaryUrl } from "../../../shared/utils/cloudinary";
+import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from "../../../shared/utils/cloudinary";
 
 interface ProductPreviewCardProps {
   product: Product;
@@ -31,7 +31,7 @@ export const ProductPreviewCard: React.FC<ProductPreviewCardProps> = ({ product,
           isVideo ? (
             <>
               <video
-                src={primaryMedia.file}
+                src={optimizeCloudinaryVideoUrl(primaryMedia.file)}
                 className="w-full h-full object-cover"
                 muted
                 playsInline

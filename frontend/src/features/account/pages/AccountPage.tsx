@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   User,
@@ -31,9 +31,14 @@ type SettingsTab =
   | "security"
   | "preferences";
 
-const AccountPage = () => {
+interface AccountPageProps {
+  initialMode?: "login" | "register";
+}
+
+const AccountPage: React.FC<AccountPageProps> = ({ initialMode = "login" }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<SettingsTab>("dashboard");
   // Controls whether the email verification card is shown for unverified users.
   // Defaults to true when the user is signed in but unverified.
@@ -52,6 +57,14 @@ const AccountPage = () => {
     handleDeleteAccount,
   } = useSecurity();
 
+  // If already authenticated and accessing /login or /register, redirect to /account or return destination
+  useEffect(() => {
+    if (user && user.is_verified && (location.pathname === "/login" || location.pathname === "/register")) {
+      const state = location.state as { from?: string } | undefined;
+      navigate(state?.from || "/account", { replace: true });
+    }
+  }, [user, location, navigate]);
+
   const NAV_ITEMS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { key: "dashboard", label: t("account.tabs.overview", "Overview"), icon: <User className="h-4 w-4" /> },
     { key: "profile", label: t("account.tabs.personalDetails", "Personal Details"), icon: <SettingsIcon className="h-4 w-4" /> },
@@ -61,33 +74,18 @@ const AccountPage = () => {
   ];
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <AuthScreen />
-      </div>
-    );
+    return <AuthScreen initialMode={initialMode} />;
   }
 
   if (!user.is_verified) {
     if (!showVerify) {
-      // User dismissed the verify card — show the auth screen so they can
-      // sign out or navigate away without being locked in a verify loop.
-      return (
-        <div className="min-h-screen bg-white">
-          <Navbar />
-          <AuthScreen />
-        </div>
-      );
+      return <AuthScreen initialMode={initialMode} />;
     }
     return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <VerifyEmailScreen
-          onBack={() => setShowVerify(false)}
-          onDone={() => setShowVerify(true)}
-        />
-      </div>
+      <VerifyEmailScreen
+        onBack={() => setShowVerify(false)}
+        onDone={() => setShowVerify(true)}
+      />
     );
   }
 

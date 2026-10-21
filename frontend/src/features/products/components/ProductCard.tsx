@@ -7,7 +7,7 @@ import { useCartStore } from '@/app/store/useCartStore';
 import { ShoppingBag, Check } from 'lucide-react';
 import PremiumPlanModal from './PremiumPlanModal';
 
-import { optimizeCloudinaryUrl } from '../../../shared/utils/cloudinary';
+import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from '../../../shared/utils/cloudinary';
 
 interface ProductMedia {
   id: string;
@@ -24,6 +24,7 @@ interface ProductVariant {
 export interface Product {
   id: string;
   name: string;
+  display_order?: number;
   media: ProductMedia[];
   variants?: ProductVariant[];
   price?: string | number;
@@ -41,6 +42,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [showCommentInput, setShowCommentInput] = useState(false);
   
   const [showPremium, setShowPremium] = useState(false); 
@@ -48,29 +50,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const [localCommentCount, setLocalCommentCount] = useState(product.comment_count);
   const navigate = useNavigate();
 
-  useEngagementStore();
-  const { addToCart, isAdded } = useCartStore();
-
   const variantId = product.default_variant_id || product.variants?.[0]?.id || product.id;
-  const alreadyAdded = variantId ? isAdded(variantId) : false;
+  const addToCart = useCartStore((s) => s.addToCart);
+  const alreadyAdded = useCartStore((s) => variantId ? s.addedVariantIds.includes(variantId) : false);
 
   const isWide = index % 5 === 0;
+  const images = product.media.filter((m) => m.media_type === 'image');
   const primary = product.media.find((m) => m.is_primary) || product.media[0];
   const hoverMedia = product.media.length > 1 ? product.media.find((m) => !m.is_primary) : null;
-  const activeMedia = (isHovered && hoverMedia) ? hoverMedia : primary;
+  const displayedImage = (activeImageIndex !== null && images[activeImageIndex]) ? images[activeImageIndex] : null;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!variantId) {
       console.error("Product variants missing:", product);
-      alert(t("cart.variantError", "Unable to add item: Variant ID not found."));
       return;
     }
 
-    const success = await addToCart(variantId, 1);
-    if (!success) {
-      alert(t("cart.syncError", "Failed to sync with cart. Please ensure you are logged in."));
+    if (!localStorage.getItem("tilet3d_access_token")) {
+      navigate("/account");
+      return;
     }
+
+    await addToCart(variantId, 1);
   };
 
   const handleTryOnAvatar = (e: React.MouseEvent) => {
@@ -89,6 +91,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
         }}
         onMouseLeave={() => {
           setIsHovered(false);
+          setActiveImageIndex(null);
           setShowCommentInput(false);
         }}
         onClick={() => navigate(`/products/${product.id}`)}
@@ -97,7 +100,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           {/* Primary Media - Always visible (z-0) so it never flashes white if the hover media is slow! */}
           {primary?.media_type === 'video' ? (
             <video 
-              src={primary.file} 
+              src={optimizeCloudinaryVideoUrl(primary.file)} 
               autoPlay 
               muted 
               loop 
@@ -106,23 +109,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             />
           ) : (
             <img
-              src={optimizeCloudinaryUrl(primary?.file, 'c_fill,w_600,q_auto,f_auto')}
+              src={optimizeCloudinaryUrl(primary?.file, isWide ? 'c_fill,w_650,q_auto,f_auto' : 'c_fill,w_500,q_auto,f_auto')}
               alt={product.name}
-              loading={index < 5 ? 'eager' : 'lazy'}
-              fetchPriority={index < 5 ? 'high' : 'auto'}
+              loading={index < 4 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={index < 4 ? 'high' : 'auto'}
               className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out opacity-100 scale-100 group-hover:scale-105 z-0"
             />
           )}
 
-          {/* Hover Media (Preloaded and Ready) */}
-          {hoverMedia && (
+          {/* Explicit Selected Image (e.g. Front, Back, Top) or Default Hover Media */}
+          {displayedImage ? (
+            <img
+              src={optimizeCloudinaryUrl(displayedImage.file, isWide ? 'c_fill,w_650,q_auto,f_auto' : 'c_fill,w_500,q_auto,f_auto')}
+              alt={`${product.name} view`}
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out opacity-100 scale-105 z-10"
+            />
+          ) : hoverMedia ? (
             hoverMedia.media_type === 'video' ? (
               <video 
-                src={hoverMedia.file} 
+                src={isHovered ? optimizeCloudinaryVideoUrl(hoverMedia.file) : undefined} 
                 muted 
                 loop 
                 playsInline
-                preload="auto"
+                preload="none"
                 ref={(el) => {
                   if (el) {
                     if (isHovered) {
@@ -137,13 +148,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
               />
             ) : (
               <img
-                src={optimizeCloudinaryUrl(hoverMedia.file, 'c_fill,w_600,q_auto,f_auto')}
+                src={isHovered ? optimizeCloudinaryUrl(hoverMedia.file, isWide ? 'c_fill,w_650,q_auto,f_auto' : 'c_fill,w_500,q_auto,f_auto') : undefined}
                 alt={`${product.name} hover`}
                 loading="lazy"
+                decoding="async"
                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${isHovered ? 'opacity-100 scale-105 z-10' : 'opacity-0 scale-100 z-0'}`}
               />
             )
-          )}
+          ) : null}
         </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-10" />
@@ -159,6 +171,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
         </div>
 
         <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
+
+          {/* Multi-angle view selector pills (Front, Back, Top) */}
+          {images.length > 1 && (
+            <div 
+              className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {images.map((img, idx) => {
+                const label = idx === 0 ? "Front" : idx === 1 ? "Back" : idx === 2 ? "Top" : `View ${idx + 1}`;
+                const isCurrent = activeImageIndex === idx || (activeImageIndex === null && (idx === 1 ? isHovered : !isHovered));
+                return (
+                  <button
+                    key={img.id || idx}
+                    type="button"
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(idx);
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(idx);
+                    }}
+                    className={`px-2.5 py-0.5 text-[9px] uppercase tracking-widest font-mono rounded-full backdrop-blur-md transition-all duration-300 ${
+                      isCurrent 
+                        ? 'bg-white text-black font-bold shadow-md scale-105' 
+                        : 'bg-black/60 text-white/80 hover:bg-black/80 hover:text-white border border-white/20'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2 w-full">
             <button

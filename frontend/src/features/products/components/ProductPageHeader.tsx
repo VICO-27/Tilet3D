@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
 import { SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -13,10 +13,68 @@ interface Props {
 const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { navbarHidden, categoryHidden } = useScrollDirection();
+  const navScrollRef = useRef<HTMLDivElement>(null);
+  const wasDraggedRef = useRef(false);
 
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
   );
+
+  useEffect(() => {
+    const track = navScrollRef.current;
+    if (!track) return;
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeftStart = 0;
+    let hasDragged = false;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) {
+        hasDragged = true;
+        wasDraggedRef.current = true;
+      }
+      track.scrollLeft = scrollLeftStart - dx * 1.2;
+    };
+
+    const onMouseUp = () => {
+      if (!isDown) return;
+      isDown = false;
+      track.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      if (hasDragged) {
+        setTimeout(() => {
+          wasDraggedRef.current = false;
+        }, 120);
+      } else {
+        wasDraggedRef.current = false;
+      }
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      isDown = true;
+      hasDragged = false;
+      wasDraggedRef.current = false;
+      track.style.cursor = 'grabbing';
+      startX = e.clientX;
+      scrollLeftStart = track.scrollLeft;
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    track.addEventListener('mousedown', onMouseDown);
+    return () => {
+      track.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
 
   return (
     <>
@@ -42,6 +100,13 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
       >
         <div className="max-w-[1400px] mx-auto flex items-center justify-center px-4 md:px-8 h-11 w-full">
           <div
+            ref={navScrollRef}
+            onClickCapture={(e) => {
+              if (wasDraggedRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
             className="
               flex
               justify-start
@@ -53,6 +118,9 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
               no-scrollbar
               w-full
               md:w-auto
+              cursor-grab
+              active:cursor-grabbing
+              select-none
             "
           >
             {navbarCategories.map((category) => {

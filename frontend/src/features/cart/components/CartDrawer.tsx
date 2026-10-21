@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, ShoppingBag, ArrowRight, Plus, Minus, Package } from "lucide-react";
 import { useCartStore } from "../../../app/store/useCartStore";
+import { useAuthStore } from "../../../app/store/useAuthStore";
 import { CheckoutModal } from "./CheckoutModal";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,7 @@ interface CartDrawerProps {
 export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { cartItems, fetchCart, updateQuantity, removeItem, cartTotal, loading } = useCartStore();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -89,6 +91,23 @@ export const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                       >
                         {t("cart.exploreBtn", "Explore Collection")}
                       </button>
+
+                      {!user && (
+                        <div className="pt-2">
+                          <p className="text-xs text-stone-400">
+                            Already have an account?{" "}
+                            <button
+                              onClick={() => {
+                                onClose();
+                                navigate("/account");
+                              }}
+                              className="font-medium text-stone-900 underline underline-offset-4 hover:text-violet-600 transition-colors"
+                            >
+                              Sign in
+                            </button>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     cartItems.map((item) => {

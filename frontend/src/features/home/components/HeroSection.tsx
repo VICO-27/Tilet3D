@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight, Star, Sparkles, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Gender } from "../../avatar/types/avatar.types";
+import HeroModel, { preloadGender, type PointerTracker } from "./HeroModel";
+import HeroBrandAnimation from "./HeroBrandAnimation";
 
-
-const LOGO = "TILET3D";
-const APPLE_FONT =
-  "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif";
-
+// Preload hero 3D models immediately
+if (typeof window !== "undefined") {
+  preloadGender("female");
+  preloadGender("male");
+}
 import type { Variants } from "framer-motion";
 
 // ─── Motion Language: Tumble & Fun ───────────────────────────────────────────
@@ -40,14 +42,6 @@ const fadeUpVariants: Variants = {
   visible: {
     opacity: 1, y: 0,
     transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
-  }
-};
-
-const visualVariants: Variants = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
-  visible: {
-    opacity: 1, y: 0, scale: 1,
-    transition: { duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
   }
 };
 
@@ -91,45 +85,114 @@ const HeroSection = () => {
   const navigate = useNavigate();
 
   const [heroGender, setHeroGender] = useState<Gender>("female");
+  const [transitionDirection, setTransitionDirection] = useState<-1 | 1>(1);
   const interactingRef = useRef(false);
-  
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isInView, setIsInView] = useState(true);
+  const [is3DReady, setIs3DReady] = useState(false);
 
-  // Defer mounting WebGL canvas by two frames to prevent main thread blocking during entrance
-  
+  // Mutable ref for pointer tracking — prevents React re-renders on mousemove
+  const pointerRef = useRef<PointerTracker>({ x: 0, y: 0, active: false });
 
-  
+  const handlePointerMove = (e: React.PointerEvent) => {
+    // Touch interactions are handled via touch OrbitControls and scrolling; skip pointer-driven tracking
+    if (e.pointerType === "touch") return;
+    const section = sectionRef.current;
+    if (!section) return;
+    const rect = section.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
 
+    // Normalize coordinates relative to hero section interaction area into bounded [-1, 1] range
+    const rawX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const rawY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+
+    pointerRef.current.x = Math.max(-1, Math.min(1, rawX));
+    pointerRef.current.y = Math.max(-1, Math.min(1, rawY));
+    pointerRef.current.active = true;
+  };
+
+  const handlePointerLeave = () => {
+    pointerRef.current.x = 0;
+    pointerRef.current.y = 0;
+    pointerRef.current.active = false;
+  };
+
+  // Ensure avatar returns smoothly to neutral if window blurs or cursor exits the document
   useEffect(() => {
-    const id = setInterval(() => {
-      if (!interactingRef.current) {
-        setHeroGender((g) => (g === "female" ? "male" : "female"));
-      }
-    }, 10000);
-    return () => clearInterval(id);
+    const handleWindowBlur = () => {
+      pointerRef.current.x = 0;
+      pointerRef.current.y = 0;
+      pointerRef.current.active = false;
+    };
+    window.addEventListener("blur", handleWindowBlur);
+    document.addEventListener("mouseleave", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+      document.removeEventListener("mouseleave", handleWindowBlur);
+    };
   }, []);
 
+  // Monitor viewport visibility of HeroSection to throttle 3D frameloop when scrolled away
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Only auto-switch gender after 3D avatar has loaded and appeared
+  useEffect(() => {
+    if (!is3DReady) return;
+    const id = setInterval(() => {
+      if (!interactingRef.current) {
+        setTransitionDirection(1);
+        setHeroGender((g) => (g === "female" ? "male" : "female"));
+      }
+    }, 15000);
+    return () => clearInterval(id);
+  }, [is3DReady]);
+
   const markInteracting = () => { interactingRef.current = true; };
-  const endInteracting = () => { setTimeout(() => (interactingRef.current = false), 2000); };
-  const swapGender = (g: Gender) => { markInteracting(); endInteracting(); setHeroGender(g); };
+  const endInteracting = () => { setTimeout(() => (interactingRef.current = false), 3000); };
+  const swapGender = (g: Gender, dir?: -1 | 1) => { 
+    markInteracting(); 
+    endInteracting(); 
+    if (g !== heroGender) {
+      const computedDir = dir ?? (g === "male" ? 1 : -1);
+      setTransitionDirection(computedDir);
+      setHeroGender(g);
+    }
+  };
 
   // Only run animations if the user hasn't requested reduced motion
   const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-[#fafafa] pt-[56px] text-zinc-900 select-none">
+    <section 
+      ref={sectionRef} 
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      className="relative h-screen w-full overflow-hidden bg-[#fafafa] pt-[56px] text-zinc-900 select-none"
+    >
       
       <div className="relative grid h-full w-full grid-cols-1 items-center px-6 md:px-16 lg:grid-cols-2 lg:px-20 xl:px-28">
         
         {/* ─── Left Column: Typography & CTAs ─── */}
         <motion.div 
           className="z-10 py-8 lg:py-0"
-          variants={prefersReducedMotion ? undefined : containerVariants as any}
+          variants={prefersReducedMotion ? undefined : containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Eyebrow Badge */}
           <motion.div 
-            variants={prefersReducedMotion ? undefined : tumbleVariants as any}
+            variants={prefersReducedMotion ? undefined : tumbleVariants}
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-600 shadow-sm backdrop-blur-md"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-plum-600 animate-pulse" />
@@ -138,20 +201,20 @@ const HeroSection = () => {
 
           {/* Heading with Tumble sequence */}
           <h1 className="text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold tracking-tight leading-[0.96] text-zinc-950">
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block origin-bottom-left">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block origin-bottom-left">
               {t("hero.title1", "Wear it")}
             </motion.span>
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block italic text-plum-600 font-serif font-light origin-bottom-left">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block italic text-plum-600 font-serif font-light origin-bottom-left">
               {t("hero.title2", "before you")}
             </motion.span>
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants as any} className="block origin-bottom-left">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block origin-bottom-left">
               {t("hero.title3", "buy it.")}
             </motion.span>
           </h1>
 
           {/* Subtitle */}
           <motion.p 
-            variants={prefersReducedMotion ? undefined : fadeUpVariants as any}
+            variants={prefersReducedMotion ? undefined : fadeUpVariants}
             className="mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-zinc-600 font-normal"
           >
             {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.")}
@@ -159,7 +222,7 @@ const HeroSection = () => {
 
           {/* Call to Actions */}
           <motion.div 
-            variants={prefersReducedMotion ? undefined : fadeUpVariants as any}
+            variants={prefersReducedMotion ? undefined : fadeUpVariants}
             className="mt-6 sm:mt-8 flex flex-row items-center gap-2 sm:gap-4 w-[85%] sm:w-full max-w-[320px] sm:max-w-none"
           >
             <motion.button
@@ -189,7 +252,7 @@ const HeroSection = () => {
           </motion.div>
 
           {/* Testimonial Stream */}
-          <motion.div variants={prefersReducedMotion ? undefined : fadeUpVariants as any} className="mt-10 pt-4">
+          <motion.div variants={prefersReducedMotion ? undefined : fadeUpVariants} className="mt-10 pt-4">
             <Testimonials />
           </motion.div>
         </motion.div>
@@ -203,28 +266,82 @@ const HeroSection = () => {
           {/* Living Aura Background */}
           <TiletAura />
 
-          {/* Static Hero Fallback instead of heavy WebGL/ThreeJS */}
-          <div className="relative w-full h-[80%] max-h-[600px] flex items-center justify-center pointer-events-none z-10">
-            <img 
-              src={`/models/${heroGender}Avatar_fallback.webp`} 
-              alt={`${heroGender} avatar wearing traditional Ethiopian clothing`}
-              fetchPriority="high"
-              className="object-contain h-full w-full drop-shadow-2xl transition-opacity duration-500"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center -z-10">
+          {/* Visual Stage: Mind-blowing Brand Animation while 3D is preparing -> Seamless dissolve to Live 3D */}
+          <div className="relative w-full h-[80%] max-h-[600px] flex items-center justify-center">
+            {/* 1. Mesmerizing 3D Brand Animation — active until Three.js/GLB is ready */}
+            <AnimatePresence>
+              {!is3DReady && (
+                <motion.div
+                  key="hero-brand-animation"
+                  initial={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.08, filter: "blur(6px)" }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                >
+                  <HeroBrandAnimation gender={heroGender} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 2. Live 3D Experience — mounted immediately, fades in seamlessly once 1st frame is ready */}
+            <div 
+              className={`absolute inset-0 w-full h-full z-20 transition-opacity duration-700 cursor-grab active:cursor-grabbing overflow-hidden ${
+                is3DReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+              }`}
+              style={{
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
+                maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
+              }}
+            >
+
+              <HeroModel 
+                gender={heroGender} 
+                direction={transitionDirection}
+                isInView={isInView}
+                reducedMotion={Boolean(prefersReducedMotion)}
+                pointerRef={pointerRef}
+                onReady={() => {
+                  setIs3DReady(true);
+                }} 
+                onInteractionChange={(interacting) => {
+                  interactingRef.current = interacting;
+                }}
+              />
+            </div>
+
+            {/* Ambient Aura Background */}
+            <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
                <div className="w-32 h-64 sm:w-48 sm:h-96 bg-gradient-to-t from-plum-200 to-plum-400 opacity-60 rounded-[100px] blur-sm animate-pulse" />
             </div>
           </div>
 
-          <HeroSwitch side="left" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
-          <HeroSwitch side="right" onClick={() => swapGender(heroGender === "female" ? "male" : "female")} />
+          <HeroSwitch 
+            side="left" 
+            onClick={() => swapGender(heroGender === "female" ? "male" : "female", -1)} 
+            onMouseEnter={() => preloadGender(heroGender === "female" ? "male" : "female")}
+          />
+          <HeroSwitch 
+            side="right" 
+            onClick={() => swapGender(heroGender === "female" ? "male" : "female", 1)} 
+            onMouseEnter={() => preloadGender(heroGender === "female" ? "male" : "female")}
+          />
+
+          {/* Interactive Hint Indicator */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-black/5 shadow-xs text-[10px] tracking-widest uppercase font-medium text-zinc-500 select-none pointer-events-none transition-opacity duration-300">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-plum-500 animate-pulse" />
+            <span>Drag to rotate · 360° View</span>
+          </div>
 
           <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
                 key={g}
-                onClick={() => swapGender(g)}
+                onClick={() => swapGender(g, g === "male" ? 1 : -1)}
+                onMouseEnter={() => {
+                  if (heroGender !== g) {
+                    preloadGender(g);
+                  }
+                }}
                 className={`relative px-5 py-2 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${
                   heroGender === g ? "text-white" : "text-zinc-500 hover:text-zinc-900"
                 }`}
@@ -295,12 +412,26 @@ const Testimonials = () => {
   );
 };
 
-const HeroSwitch: React.FC<{ side: "left" | "right"; onClick: () => void }> = ({ side, onClick }) => (
+const HeroSwitch: React.FC<{
+  side: "left" | "right";
+  onClick: () => void;
+  onMouseEnter?: () => void;
+}> = ({ side, onClick, onMouseEnter }) => (
   <button
+    type="button"
     onClick={onClick}
-    className={`absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-black/5 bg-white/60 text-zinc-600 shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white hover:text-plum-600 hover:scale-105 active:scale-95 ${side === "left" ? "left-4" : "right-4"}`}
+    onMouseEnter={onMouseEnter}
+    aria-label={side === "left" ? "Previous avatar" : "Next avatar"}
+    title={side === "left" ? "Previous avatar" : "Next avatar"}
+    className={`absolute top-1/2 z-30 pointer-events-auto flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/70 text-zinc-700 shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white hover:text-plum-600 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum-500/40 ${
+      side === "left" ? "left-3 sm:left-5 md:left-6" : "right-3 sm:right-5 md:right-6"
+    }`}
   >
-    {side === "left" ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+    {side === "left" ? (
+      <ChevronLeft className="h-5 w-5 pointer-events-none" />
+    ) : (
+      <ChevronRight className="h-5 w-5 pointer-events-none" />
+    )}
   </button>
 );
 

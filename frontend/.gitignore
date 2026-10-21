@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Testing artifacts
+test-results/
+playwright-report/
+
+# Backup 3D model originals
+*_original.glb

@@ -1,19 +1,17 @@
 // features/account/components/GoogleSignInButton.tsx
 //
-// Custom "Continue with Google" button following Google's branding guidelines
-// (official G logo + "Continue with Google" text) adapted to the site's
-// luxury ink/white aesthetic.
+// Official Google Identity Services (GIS) Sign-In component.
+// Compliant with Google Branding Guidelines and OAuth2 Security Standards.
 //
 // GIS flow:
 //   1. Dynamically load the Google Identity Services script on mount.
-//   2. Initialize GIS with the public VITE_GOOGLE_CLIENT_ID + a credential callback.
-//   3. On button click, call google.accounts.id.prompt() → Google One Tap overlay.
-//   4. Google calls our callback with a signed ID token (credential JWT).
-//   5. We call signInWithGoogle(idToken) from the auth store which POSTs to
-//      /api/auth/google/ and merges the result into the unified auth state.
+//   2. Initialize GIS with VITE_GOOGLE_CLIENT_ID + credential callback.
+//   3. Render Google's official Sign-In button via window.google.accounts.id.renderButton.
+//   4. On user click, Google opens the account chooser modal without popup suppression.
+//   5. Google executes our callback with a cryptographically signed ID token JWT.
+//   6. Backend verifies the JWT against Google's public keys and signs the user in.
 //
-// SECURITY: The Google client SECRET is never referenced here.
-// Only the public client ID is used — this is intentional per Google's design.
+// SECURITY: The Google client SECRET is never present here or anywhere in the frontend.
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -34,6 +32,19 @@ interface GoogleAccountsId {
     cancel_on_tap_outside?: boolean;
   }): void;
   prompt(notification?: (n: GISNotification) => void): void;
+  renderButton(
+    parent: HTMLElement,
+    options: {
+      type?: "standard" | "icon";
+      theme?: "outline" | "filled_blue" | "filled_black";
+      size?: "large" | "medium" | "small";
+      text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+      shape?: "rectangular" | "pill" | "circle" | "square";
+      logo_alignment?: "left" | "center";
+      width?: number;
+      locale?: string;
+    }
+  ): void;
 }
 
 declare global {
@@ -78,25 +89,26 @@ const GoogleLogo: React.FC = () => (
 interface GoogleSignInButtonProps {
   /** Called on successful authentication — parent handles redirect. */
   onSuccess: () => void;
-  /** Optional label override. */
+  /** Optional label override (unused with GIS renderButton standard layout). */
   label?: string;
+  /** Optional custom class name */
+  className?: string;
 }
 
 export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   onSuccess,
-  label = "Continue with Google",
 }) => {
   const [scriptReady, setScriptReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const buttonContainerRef = useRef<HTMLDivElement>(null);
   const gisInitialized = useRef(false);
 
   const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const storeError = useAuthStore((s) => s.error);
   const clearError = useAuthStore((s) => s.clearError);
 
-  // Show store errors (backend rejection) in the button's own error slot.
-  const displayError = localError ?? (storeError && isLoading === false ? storeError : null);
+  const displayError = localError ?? (storeError && !isLoading ? storeError : null);
 
   // ── Load GIS script ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -118,81 +130,106 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     script.defer = true;
     script.onload = () => setScriptReady(true);
     script.onerror = () =>
-      setLocalError("Failed to load Google Sign-In. Check your connection.");
+      setLocalError("Unable to load Google Sign-In. Please check your connection or ad-blocker.");
     document.head.appendChild(script);
   }, []);
 
-  // ── Initialize GIS once script is ready ─────────────────────────────────
+  // ── Initialize and render official Google Sign-In button ─────────────────
   useEffect(() => {
-    if (!scriptReady || gisInitialized.current || !window.google?.accounts?.id) return;
-
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      callback: async ({ credential }) => {
-        setIsLoading(true);
-        setLocalError(null);
-        clearError();
-
-        const err = await signInWithGoogle(credential);
-
-        setIsLoading(false);
-
-        if (err) {
-          setLocalError(err);
-        } else {
-          onSuccess();
-        }
-      },
-    });
-
-    gisInitialized.current = true;
-  }, [scriptReady, signInWithGoogle, onSuccess, clearError]);
-
-  // ── Button click → trigger Google One Tap prompt ─────────────────────────
-  const handleClick = () => {
-    if (!window.google?.accounts?.id || !gisInitialized.current) {
-      setLocalError("Google Sign-In is loading… please try again in a moment.");
+    if (!scriptReady || !window.google?.accounts?.id || !buttonContainerRef.current) return;
+    if (!GOOGLE_CLIENT_ID) {
+      setLocalError("Google Client ID is not configured (VITE_GOOGLE_CLIENT_ID).");
       return;
     }
 
-    setLocalError(null);
-    clearError();
+    try {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        callback: async ({ credential }) => {
+          setIsLoading(true);
+          setLocalError(null);
+          clearError();
 
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // One Tap was suppressed (user dismissed it too many times in the
-        // past 24 h, or third-party cookies are blocked). Inform user.
-        setLocalError(
-          "Google sign-in popup was blocked. Try again or use email & password."
-        );
+          const err = await signInWithGoogle(credential);
+          setIsLoading(false);
+
+          if (err) {
+            setLocalError(err);
+          } else {
+            onSuccess();
+          }
+        },
+      });
+
+      const renderGoogleBtn = () => {
+        if (!buttonContainerRef.current || !window.google?.accounts?.id) return;
+        buttonContainerRef.current.innerHTML = "";
+
+        const containerWidth = buttonContainerRef.current.offsetWidth || 360;
+        const buttonWidth = Math.min(Math.max(containerWidth, 220), 400);
+
+        window.google.accounts.id.renderButton(buttonContainerRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: buttonWidth,
+        });
+      };
+
+      renderGoogleBtn();
+
+      // Ambient One Tap for supported platforms
+      try {
+        window.google.accounts.id.prompt(() => {});
+      } catch {
+        // Silently catch One Tap prompt warnings
       }
-    });
-  };
 
-  const isDisabled = isLoading || !scriptReady;
+      gisInitialized.current = true;
+
+      const handleResize = () => {
+        renderGoogleBtn();
+      };
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    } catch (e) {
+      console.error("GIS initialization error:", e);
+    }
+  }, [scriptReady, signInWithGoogle, onSuccess, clearError]);
 
   return (
-    <div className="w-full space-y-2.5">
-      <motion.button
-        id="google-signin-btn"
-        type="button"
-        onClick={handleClick}
-        disabled={isDisabled}
-        whileTap={{ scale: isDisabled ? 1 : 0.98 }}
-        className="relative flex w-full items-center justify-center gap-3 rounded-full border border-ink/10 bg-white py-3 text-sm font-semibold text-ink shadow-sm transition-all hover:border-ink/20 hover:bg-neutral-50 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label={label}
-      >
-        <span className="shrink-0 flex h-[18px] w-[18px] items-center justify-center">
-          {isLoading ? (
-            <span className="h-[16px] w-[16px] animate-spin rounded-full border-[1.5px] border-ink/20 border-t-ink/60 block" />
-          ) : (
+    <div className="w-full space-y-2">
+      <div className="relative w-full flex justify-center items-center min-h-[44px]">
+        {/* Render container for Google Identity Services */}
+        <div
+          ref={buttonContainerRef}
+          className="w-full flex justify-center [&>div]:w-full [&>div>iframe]:!w-full [&>div>iframe]:!max-w-[400px]"
+          style={{ minHeight: "44px" }}
+        />
+
+        {/* Loading overlay when authenticating with backend */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-[14px] backdrop-blur-[1px] z-10">
+            <div className="flex items-center gap-2.5 text-sm text-[#111111] font-medium">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-purple-200 border-t-purple-600 block" />
+              <span>Verifying with Google…</span>
+            </div>
+          </div>
+        )}
+
+        {/* Fallback skeleton before script finishes loading */}
+        {!scriptReady && !localError && (
+          <div className="flex h-[44px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#E8E5EC] bg-stone-50 px-4 text-[14px] font-medium text-[#686868] animate-pulse">
             <GoogleLogo />
-          )}
-        </span>
-        <span>{isLoading ? "Signing in…" : label}</span>
-      </motion.button>
+            <span>Loading Google Sign-In…</span>
+          </div>
+        )}
+      </div>
 
       {displayError && (
         <motion.div

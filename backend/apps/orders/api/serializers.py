@@ -41,6 +41,7 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -66,8 +67,24 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             # Avatar measurements snapshot — visible in order detail
             'avatar_snapshot',
             'items',
+            'payment',
             'created_at',
         ]
+
+    def get_payment(self, obj):
+        if hasattr(obj, 'payment') and obj.payment:
+            p = obj.payment
+            return {
+                'id': str(p.id),
+                'status': p.status,
+                'provider': p.provider,
+                'amount': str(p.amount),
+                'currency': p.currency,
+                'transaction_id': p.transaction_id,
+                'created_at': p.created_at,
+            }
+        return None
+
 
 
 class CheckoutSerializer(serializers.Serializer):

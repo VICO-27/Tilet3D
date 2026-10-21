@@ -98,4 +98,24 @@ class OrderDetailAPIView(generics.RetrieveAPIView):
             Order.objects
             .filter(user=self.request.user)
             .prefetch_related("items")
+            .select_related("payment")
         )
+
+    def get_object(self):
+        order = super().get_object()
+        # If payment is pending on order, auto-verify with gateway
+        if order.payment_status == 'pending' and hasattr(order, 'payment'):
+            payment = order.payment
+            if payment.status != 'success':
+                try:
+                    from apps.payments.gateway_factory import GatewayFactory
+                    from apps.payments.services import PaymentService
+                    provider = getattr(payment, 'provider', 'chapa')
+                    gateway = GatewayFactory.get_gateway(provider)
+                    if gateway.verify_payment(str(payment.id)):
+                        PaymentService.mark_success(payment)
+                        order.refresh_from_db()
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"Auto-verification failed for order {order.id}: {str(e)}")
+        return order

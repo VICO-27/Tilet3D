@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Play } from 'lucide-react';
 import { ProductMedia } from '../types';
-import { optimizeCloudinaryUrl } from '../../../shared/utils/cloudinary';
+import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from '../../../shared/utils/cloudinary';
 
 interface Props {
   media: ProductMedia[];
@@ -24,7 +24,7 @@ const ProductGallery: React.FC<Props> = ({ media, productName }) => {
         {active.media_type === 'video' ? (
           <video
             key={active.id}
-            src={active.file}
+            src={optimizeCloudinaryVideoUrl(active.file)}
             controls
             autoPlay
             muted
@@ -54,7 +54,7 @@ const ProductGallery: React.FC<Props> = ({ media, productName }) => {
             >
               {m.media_type === 'video' ? (
                 <>
-                  <video src={m.file} className="w-full h-full object-cover" muted />
+                  <video src={optimizeCloudinaryVideoUrl(m.file)} className="w-full h-full object-cover" muted />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                     <Play size={16} className="text-white" fill="white" />
                   </div>

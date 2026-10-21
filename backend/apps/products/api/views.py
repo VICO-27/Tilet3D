@@ -16,6 +16,7 @@ from apps.products.models import (
     ProductLike,
     ProductComment,
     ProductShare,
+    ProductBookmark,
 )
 
 from .serializers import ProductSerializer, ProductListSerializer, ProductCommentSerializer
@@ -35,10 +36,31 @@ class UserLikedProductsAPIView(generics.ListAPIView):
         return Product.objects.filter(
             likes__user=self.request.user,
             is_active=True
-        ).prefetch_related("media", "variants", "likes", "comments", "bookmarks")
+        ).select_related("category").prefetch_related("media", "variants", "likes", "comments", "bookmarks").order_by("-likes__created_at")
 
     def get_serializer_context(self):
         return {"request": self.request}
+
+
+# ==========================================================
+# USER SAVED / BOOKMARKED PRODUCTS LIST
+# ==========================================================
+class UserSavedProductsAPIView(generics.ListAPIView):
+    """
+    Returns a list of all active products saved/bookmarked by the current authenticated user.
+    """
+    serializer_class = ProductListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            bookmarks__user=self.request.user,
+            is_active=True
+        ).select_related("category").prefetch_related("media", "variants", "likes", "comments", "bookmarks").order_by("-bookmarks__created_at")
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
 
 
 # ==========================================================

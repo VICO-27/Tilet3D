@@ -149,6 +149,7 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        log_security_event(self.request, user, "Account Registered")
         otp = generate_otp(user, OTPPurpose.EMAIL_VERIFY)
         send_otp_email(user, otp)
 
@@ -165,6 +166,11 @@ class LoginView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        try:
+            user = User.objects.get(email=serializer.validated_data["user"]["email"])
+            log_security_event(request, user, "Successful Sign-in")
+        except Exception:
+            pass
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 

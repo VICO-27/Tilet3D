@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
-import { optimizeCloudinaryUrl } from "../../../shared/utils/cloudinary";
+import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from "../../../shared/utils/cloudinary";
 
 // ==========================================
 // TYPES & INTERFACES
@@ -89,7 +88,7 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
         {isVideo ? (
           <video
             ref={videoRef}
-            src={inView ? item.mediaUrl : undefined}
+            src={inView ? optimizeCloudinaryVideoUrl(item.mediaUrl) : undefined}
             autoPlay
             loop
             muted
@@ -100,9 +99,10 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
           />
         ) : (
           <img
-            src={inView ? optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_800,q_auto,f_auto') : undefined}
+            src={inView ? optimizeCloudinaryUrl(item.mediaUrl, 'c_fill,w_450,q_auto,f_auto') : undefined}
             alt={item.product.name}
             loading="lazy"
+            decoding="async"
             onLoad={() => setMediaLoaded(true)}
             className={`w-full h-full object-cover transition-opacity duration-700 group-hover:scale-105 transition-transform ${mediaLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
@@ -137,80 +137,268 @@ const FeaturedCollectionSection = () => {
   const trackRef = useRef<HTMLDivElement | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const pageRef = useRef(1);
+  const [hasMore, setHasMore] = useState(true);
+  const hasMoreRef = useRef(true);
   const [isLoading, setIsLoading] = useState(true);
-  const isHovering = useRef(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const isFetchingMoreRef = useRef(false);
 
+  const isHovering = useRef(false);
+  const wasDraggedRef = useRef(false);
+
+  // 1. Initial Load: Fetch featured products + Page 1 of catalog
   useEffect(() => {
-    const fetchFeatured = async () => {
+    let isMounted = true;
+    const fetchInitial = async () => {
+      setIsLoading(true);
       try {
-        const data = await productApi.getFeaturedProducts();
-        setProducts(data.results);
+        const [featuredRes, catalogRes] = await Promise.all([
+          productApi.getFeaturedProducts().catch(() => ({ results: [] })),
+          productApi.getProducts(undefined, 1, 24).catch(() => ({ results: [], next: null })),
+        ]);
+
+        const featList: Product[] = featuredRes.results || (Array.isArray(featuredRes) ? featuredRes : []);
+        const catList: Product[] = catalogRes.results || (Array.isArray(catalogRes) ? catalogRes : []);
+
+        const seen = new Set<string>();
+        const merged: Product[] = [];
+        for (const p of [...featList, ...catList]) {
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            merged.push(p);
+          }
+        }
+
+        if (isMounted) {
+          setProducts(merged);
+          setPage(1);
+          pageRef.current = 1;
+          const moreAvailable = Boolean(catalogRes.next);
+          setHasMore(moreAvailable);
+          hasMoreRef.current = moreAvailable;
+        }
       } catch (error) {
-        console.error("Failed to fetch featured products", error);
+        console.error("Failed to load initial collection products", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
-    fetchFeatured();
+
+    fetchInitial();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Fetch Next Page on Demand
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingMoreRef.current || !hasMoreRef.current) return;
+    isFetchingMoreRef.current = true;
+    setIsFetchingMore(true);
+
+    try {
+      const nextPage = pageRef.current + 1;
+      const data = await productApi.getProducts(undefined, nextPage, 24);
+      const newItems: Product[] = data.results || (Array.isArray(data) ? data : []);
+
+      if (newItems.length === 0) {
+        setHasMore(false);
+        hasMoreRef.current = false;
+      } else {
+        setProducts((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNew = newItems.filter((p) => !existingIds.has(p.id));
+          if (uniqueNew.length === 0) return prev;
+          return [...prev, ...uniqueNew];
+        });
+        pageRef.current = nextPage;
+        setPage(nextPage);
+        const moreAvailable = Boolean(data.next);
+        setHasMore(moreAvailable);
+        hasMoreRef.current = moreAvailable;
+      }
+    } catch (err) {
+      console.error("Failed to fetch more products for featured collection", err);
+    } finally {
+      isFetchingMoreRef.current = false;
+      setIsFetchingMore(false);
+    }
   }, []);
 
   // ==========================================
-  // INTERLEAVING: strict video (odd) → image (even), no same-category neighbours
-  // When a type is exhausted, fall back gracefully but still enforce category rule.
+  // INTERLEAVING & DYNAMIC EXPANSION:
+  // 1. Odd numbers (1, 3, 5, ...) -> STRICTLY VIDEOS
+  //    - Starts with all 14 new showcase videos
+  //    - Appends all 11 working old loop videos
+  // 2. Even numbers (2, 4, 6, ...) -> STRICTLY IMAGES
+  //    - Alternating categories, strictly unique products
+  //    - As user scrolls, new products fetched from catalog appear here!
+  // 3. NO REPEATING: Never loops back through the same products!
   // ==========================================
   const displayItems = useMemo(() => {
     if (products.length === 0) return [];
 
-    const productsByCategory: Record<string, Product[]> = {};
+    const videoItems: { product: Product; mediaUrl: string; mediaType: 'video'; category: string }[] = [];
+    const imagesByCategory: Record<string, { product: Product; mediaUrl: string; mediaType: 'image'; category: string }[]> = {};
+    const videoProductIds = new Set<string>();
 
-    products.forEach(p => {
-      const catName = getCategoryName(p);
-      if (!productsByCategory[catName]) productsByCategory[catName] = [];
-      productsByCategory[catName].push(p);
-    });
-
-    const interleaved: DisplayItem[] = [];
-    let wantVideo = true;
-
-    // To ensure fair round-robin, we will just loop through the categories in order
-    // until all products are exhausted.
-    let catNames = Object.keys(productsByCategory);
-
-    while (true) {
-      catNames = catNames.filter(c => productsByCategory[c].length > 0);
-      if (catNames.length === 0) break;
-
-      for (const catName of catNames) {
-        if (productsByCategory[catName].length === 0) continue;
-
-        const product = productsByCategory[catName].shift();
-        if (!product) continue;
-
-        // Extract one media. Try to match wantVideo
-        let media = product.media.find(m => m.media_type === (wantVideo ? 'video' : 'image'));
-        if (!media) media = product.media[0]; // fallback
-
-        if (media) {
-          interleaved.push({
-            product,
-            mediaUrl: media.file,
-            mediaType: media.media_type,
-            uniqueKey: product.id,
+    products.forEach((p) => {
+      const cat = getCategoryName(p);
+      let hasVideo = false;
+      p.media.forEach((m) => {
+        if (m.media_type === 'video') {
+          hasVideo = true;
+          videoItems.push({
+            product: p,
+            mediaUrl: m.file,
+            mediaType: 'video',
+            category: cat,
           });
         }
+      });
+      if (hasVideo) {
+        videoProductIds.add(p.id);
+      }
 
-        wantVideo = !wantVideo; // alternate video/image
+      const img = p.media.find((m) => m.media_type === 'image') || (p.media[0]?.media_type === 'image' ? p.media[0] : null);
+      if (img) {
+        if (!imagesByCategory[cat]) imagesByCategory[cat] = [];
+        imagesByCategory[cat].push({
+          product: p,
+          mediaUrl: img.file,
+          mediaType: 'image',
+          category: cat,
+        });
+      }
+    });
+
+    if (videoItems.length === 0) return [];
+
+    // 1. All 14 new showcase videos added to backend/media/videos
+    const NEW_FEATURED_VIDEOS = [
+      'blue-kemis',
+      'fenan-kemis',
+      'black-kemis',
+      'white-green-kemis',
+      'dardar-kemis',
+      'lidiana-kemis',
+      'nayo-kemis-',
+      'enkutatash-kemis',
+      'red-kemis',
+      'short-kemis',
+      'yellow-kemis',
+      'oromo-kemis',
+      'raya-kemis',
+      'oromo-2-kemis',
+    ];
+
+    const newVideoItems = videoItems.filter((v) => {
+      const url = v.mediaUrl.toLowerCase();
+      return NEW_FEATURED_VIDEOS.some((name) => url.includes(name));
+    });
+
+    // 2. From the point where the new videos end, append the working old videos
+    const oldVideoItems = videoItems.filter((v) => {
+      const url = v.mediaUrl.toLowerCase();
+      return !NEW_FEATURED_VIDEOS.some((name) => url.includes(name));
+    });
+
+    // Sequence: New videos first, followed immediately by old videos appended
+    const finalVideoPool = [...newVideoItems, ...oldVideoItems];
+    if (finalVideoPool.length === 0) return [];
+
+    // Canonical category rotation order for even (image) cards
+    const catRotation = [
+      'Suri', 'Gabi', 'Oromo', 'Wedding', 'Tigray', 'Amhara', 
+      'Netela', 'Scarf', 'Shash', 'Couple', 'Family', 'Accessories', 'Kemis', 'Shemiz'
+    ];
+
+    const interleaved: DisplayItem[] = [];
+    const usedProductIds = new Set<string>();
+    let videoIndex = 0;
+    let lastImageCategory: string | null = null;
+    let catRotationIndex = 0;
+
+    // Filter images so we don't duplicate video products on image cards
+    const availableImagesByCategory: Record<string, typeof imagesByCategory[string]> = {};
+    let totalAvailableImages = 0;
+    Object.keys(imagesByCategory).forEach((cat) => {
+      const unusedInCat = imagesByCategory[cat].filter((item) => !videoProductIds.has(item.product.id));
+      availableImagesByCategory[cat] = [...unusedInCat];
+      totalAvailableImages += unusedInCat.length;
+    });
+
+    // Generate pairs to showcase all available image products and all video products
+    const totalPairs = Math.max(finalVideoPool.length, totalAvailableImages);
+
+    for (let pair = 0; pair < totalPairs; pair++) {
+      // 1. ODD CARD: VIDEO (1, 3, 5, 7...)
+      const vItem = finalVideoPool[videoIndex % finalVideoPool.length];
+      videoIndex++;
+      interleaved.push({
+        product: vItem.product,
+        mediaUrl: vItem.mediaUrl,
+        mediaType: 'video',
+        uniqueKey: `card-odd-${pair + 1}-${vItem.product.id}`,
+      });
+
+      // 2. EVEN CARD: IMAGE (2, 4, 6, 8...) -> Distinct, alternating category
+      let chosenCategory: string | null = null;
+      for (let step = 0; step < catRotation.length; step++) {
+        const testCat = catRotation[(catRotationIndex + step) % catRotation.length];
+        const itemsInCat = availableImagesByCategory[testCat];
+        if (
+          testCat !== lastImageCategory &&
+          itemsInCat &&
+          itemsInCat.length > 0 &&
+          itemsInCat.some((item) => !usedProductIds.has(item.product.id))
+        ) {
+          chosenCategory = testCat;
+          catRotationIndex = (catRotationIndex + step + 1) % catRotation.length;
+          break;
+        }
+      }
+
+      if (!chosenCategory) {
+        const catWithItems = Object.keys(availableImagesByCategory).find(
+          (c) => c !== lastImageCategory && availableImagesByCategory[c].some((item) => !usedProductIds.has(item.product.id))
+        ) || Object.keys(availableImagesByCategory).find(
+          (c) => availableImagesByCategory[c].some((item) => !usedProductIds.has(item.product.id))
+        );
+        if (catWithItems) chosenCategory = catWithItems;
+      }
+
+      if (chosenCategory && availableImagesByCategory[chosenCategory]?.length > 0) {
+        const itemIndex = availableImagesByCategory[chosenCategory].findIndex((i) => !usedProductIds.has(i.product.id));
+        if (itemIndex !== -1) {
+          const imgItem = availableImagesByCategory[chosenCategory].splice(itemIndex, 1)[0];
+          usedProductIds.add(imgItem.product.id);
+          lastImageCategory = chosenCategory;
+
+          interleaved.push({
+            product: imgItem.product,
+            mediaUrl: imgItem.mediaUrl,
+            mediaType: 'image',
+            uniqueKey: `card-even-${pair + 1}-${imgItem.product.id}`,
+          });
+        }
       }
     }
 
-    // Triplicate for seamless infinite scroll
-    return [...interleaved, ...interleaved, ...interleaved];
+    // Return linear interleaved list — NEVER TRIPLICATE OR LOOP
+    return interleaved;
   }, [products]);
 
   // ==========================================
-  // AUTO-SCROLL ENGINE
-  // Speed: 2.0px/frame (faster) — cinematic
-  // Hover: slows to 0.3x but never stops
+  // AUTO-SCROLL ENGINE & MOUSE DRAG SCROLL
+  // Speed: 2.5px/frame — cinematic
+  // Hover: slows to 0.3x
+  // Scroll threshold: triggers fetchNextPage() when within 1500px of the end
+  // NO LOOPING: stops gracefully when the catalog end is reached
   // ==========================================
   useEffect(() => {
     const track = trackRef.current;
@@ -220,30 +408,67 @@ const FeaturedCollectionSection = () => {
     let isDragging = false;
     let startX = 0;
     let scrollLeftStart = 0;
-    const BASE_SPEED = 3.0;
+    let hasDragged = false;
+    const BASE_SPEED = 2.5;
+
+    const checkFetchThreshold = () => {
+      if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 1500) {
+        fetchNextPage();
+      }
+    };
 
     const tick = () => {
       if (!isDragging) {
-        const speed = isHovering.current ? BASE_SPEED * 0.3 : BASE_SPEED;
-        track.scrollLeft += speed;
-        const third = track.scrollWidth / 3;
-        if (track.scrollLeft >= third * 2) track.scrollLeft -= third;
-        if (track.scrollLeft <= 0) track.scrollLeft += third;
+        const isNearEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 5;
+        if (!isNearEnd || hasMoreRef.current) {
+          const speed = isHovering.current ? BASE_SPEED * 0.3 : BASE_SPEED;
+          track.scrollLeft += speed;
+          checkFetchThreshold();
+        }
       }
       rafId = requestAnimationFrame(tick);
     };
 
-    const onDown = (e: MouseEvent) => {
-      isDragging = true;
-      track.style.cursor = 'grabbing';
-      startX = e.pageX - track.offsetLeft;
-      scrollLeftStart = track.scrollLeft;
-    };
-    const onUp = () => { isDragging = false; track.style.cursor = 'grab'; };
     const onMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      e.preventDefault();
-      track.scrollLeft = scrollLeftStart - (e.pageX - track.offsetLeft - startX) * 1.5;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) {
+        hasDragged = true;
+        wasDraggedRef.current = true;
+      }
+      track.scrollLeft = scrollLeftStart - dx * 1.2;
+      checkFetchThreshold();
+    };
+
+    const onUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      track.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+
+      if (hasDragged) {
+        setTimeout(() => {
+          wasDraggedRef.current = false;
+        }, 120);
+      } else {
+        wasDraggedRef.current = false;
+      }
+    };
+
+    const onDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest('button, input, textarea')) return;
+
+      isDragging = true;
+      hasDragged = false;
+      wasDraggedRef.current = false;
+      track.style.cursor = 'grabbing';
+      startX = e.clientX;
+      scrollLeftStart = track.scrollLeft;
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
     };
 
     // Touch support
@@ -251,45 +476,44 @@ const FeaturedCollectionSection = () => {
     let touchScrollStart = 0;
     const onTouchStart = (e: TouchEvent) => {
       isDragging = true;
-      touchStartX = e.touches[0].pageX;
+      touchStartX = e.touches[0].clientX;
       touchScrollStart = track.scrollLeft;
     };
     const onTouchMove = (e: TouchEvent) => {
       if (!isDragging) return;
-      track.scrollLeft = touchScrollStart - (e.touches[0].pageX - touchStartX);
+      const dx = e.touches[0].clientX - touchStartX;
+      track.scrollLeft = touchScrollStart - dx;
+      checkFetchThreshold();
     };
-    const onTouchEnd = () => { isDragging = false; };
+    const onTouchEnd = () => {
+      isDragging = false;
+    };
 
+    const onScroll = () => {
+      checkFetchThreshold();
+    };
+
+    track.addEventListener('scroll', onScroll, { passive: true });
     track.addEventListener('mousedown', onDown);
-    track.addEventListener('mouseup', onUp);
-    track.addEventListener('mouseleave', onUp);
-    track.addEventListener('mousemove', onMove);
     track.addEventListener('touchstart', onTouchStart, { passive: true });
     track.addEventListener('touchmove', onTouchMove, { passive: true });
     track.addEventListener('touchend', onTouchEnd);
 
-    // Start offset at the middle third so backward dragging doesn't break
-    track.scrollLeft = track.scrollWidth / 3;
     rafId = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(rafId);
+      track.removeEventListener('scroll', onScroll);
       track.removeEventListener('mousedown', onDown);
-      track.removeEventListener('mouseup', onUp);
-      track.removeEventListener('mouseleave', onUp);
-      track.removeEventListener('mousemove', onMove);
       track.removeEventListener('touchstart', onTouchStart);
       track.removeEventListener('touchmove', onTouchMove);
       track.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
     };
-  }, [displayItems]);
+  }, [displayItems, fetchNextPage]);
 
-  const handleManualScroll = (direction: "left" | "right") => {
-    if (trackRef.current) {
-      const cardW = window.innerWidth < 768 ? 260 + 32 : 360 + 48;
-      trackRef.current.scrollBy({ left: direction === "left" ? -cardW : cardW, behavior: "smooth" });
-    }
-  };
+
 
   return (
     // NO bottom-to-top pop-in: section starts fully visible, no y translation.
@@ -315,6 +539,13 @@ const FeaturedCollectionSection = () => {
           scroll-behavior: auto;
           scrollbar-width: none;
           overscroll-behavior-x: contain;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .featured-track img,
+        .featured-track video {
+          -webkit-user-drag: none;
+          user-drag: none;
         }
         .featured-track::-webkit-scrollbar { display: none; }
       `}</style>
@@ -351,27 +582,17 @@ const FeaturedCollectionSection = () => {
       {/* Actual scrolling track */}
       {!isLoading && (
         <>
-          {/* Nav buttons */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-4 md:left-8 z-30 opacity-0 hover:opacity-100 transition-opacity duration-300">
-            <button
-              onClick={() => handleManualScroll("left")}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:scale-105 transition-all duration-300 group shadow-2xl"
-            >
-              <ChevronLeft strokeWidth={1} className="text-white/70 group-hover:text-white" size={28} />
-            </button>
-          </div>
-          <div className="absolute top-1/2 -translate-y-1/2 right-4 md:right-8 z-30 opacity-0 hover:opacity-100 transition-opacity duration-300">
-            <button
-              onClick={() => handleManualScroll("right")}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:scale-105 transition-all duration-300 group shadow-2xl"
-            >
-              <ChevronRight strokeWidth={1} className="text-white/70 group-hover:text-white" size={28} />
-            </button>
-          </div>
+
 
           <div
             ref={trackRef}
-            className="w-full overflow-x-auto featured-track cursor-grab active:cursor-grabbing pb-8 pt-8"
+            onClickCapture={(e) => {
+              if (wasDraggedRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            className="w-full overflow-x-auto featured-track cursor-grab active:cursor-grabbing pb-8 pt-8 select-none"
           >
             <div className="flex gap-8 md:gap-12 px-8 md:px-[15vw] w-max">
               {displayItems.map((item, index) => (
@@ -381,6 +602,14 @@ const FeaturedCollectionSection = () => {
                   onClick={() => navigate(`/products/${item.product.id}`)}
                 />
               ))}
+              {isFetchingMore && (
+                <div className="w-[260px] md:w-[360px] h-[380px] md:h-[520px] rounded-[24px] md:rounded-[32px] overflow-hidden border border-white/[0.08] bg-neutral-900/60 backdrop-blur-xl shrink-0 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 rounded-full border-2 border-amber-400/30 border-t-amber-400 animate-spin" />
+                  <span className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">
+                    Loading More...
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </>

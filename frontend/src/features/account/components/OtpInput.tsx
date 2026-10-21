@@ -43,7 +43,7 @@ export const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, length = 6 
           onPaste={handlePaste}
           inputMode="numeric"
           maxLength={1}
-          className="h-14 w-11 rounded-xl border border-ink/10 bg-neutral-50 text-center text-xl font-bold text-ink transition-colors focus:border-plum-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-plum-100"
+          className="h-13 w-11 sm:h-14 sm:w-12 rounded-[13px] border border-[#E8E5EC] bg-white text-center text-xl font-medium text-[#111111] transition-all duration-200 focus:border-[#6D28D9] focus:outline-none focus:ring-4 focus:ring-[#F3EEFF]"
         />
       ))}
     </div>

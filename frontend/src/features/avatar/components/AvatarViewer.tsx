@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useEffect } from 'react';
+import React, { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 function ResponsiveCamera() {
@@ -68,7 +68,6 @@ function ResponsiveCamera() {
 import {
   OrbitControls,
   ContactShadows,
-  Environment,
   Preload,
 } from '@react-three/drei';
 import * as THREE from 'three';
@@ -120,29 +119,38 @@ function LeftHUD() {
 
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 left-3 md:left-8 transition-all duration-1000 delay-300 pointer-events-none ${
+      className={`absolute top-1/2 -translate-y-1/2 left-1.5 sm:left-3 md:left-8 transition-all duration-1000 delay-300 pointer-events-none ${
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-2 md:p-4 rounded-xl md:rounded-3xl shadow-lg md:shadow-xl w-[70px] md:w-44">
+      <div className="bg-white/45 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-1.5 sm:p-2 md:p-4 rounded-xl md:rounded-3xl shadow-md md:shadow-xl w-[50px] sm:w-[62px] md:w-44 text-center md:text-left">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
         </div>
-        <div className="space-y-2 md:space-y-3">
+        <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
           <div>
-            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Height</p>
-            <p className="text-sm md:text-lg font-light text-[#161616]">{height} <span className="text-[9px] md:text-xs">cm</span></p>
+            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Height</p>
+            <p className="text-[11px] sm:text-sm md:text-lg font-light text-[#161616] leading-none mt-0.5">
+              {height}<span className="text-[7.5px] sm:text-[9px] md:text-xs text-stone-500 ml-0.5">cm</span>
+            </p>
           </div>
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
-            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Weight</p>
-            <p className="text-sm md:text-lg font-light text-[#161616]">{weight} <span className="text-[9px] md:text-xs">kg</span></p>
+            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Weight</p>
+            <p className="text-[11px] sm:text-sm md:text-lg font-light text-[#161616] leading-none mt-0.5">
+              {weight}<span className="text-[7.5px] sm:text-[9px] md:text-xs text-stone-500 ml-0.5">kg</span>
+            </p>
           </div>
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
-            <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Structure</p>
-            <p className="text-sm md:text-base font-light text-[#161616] capitalize truncate">{body_type.replace('_', ' ')}</p>
+            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">
+              <span className="md:hidden">Body</span>
+              <span className="hidden md:inline">Structure</span>
+            </p>
+            <p className="text-[9.5px] sm:text-xs md:text-base font-light text-[#161616] capitalize truncate leading-none mt-0.5">
+              {body_type.replace('_', ' ')}
+            </p>
           </div>
         </div>
       </div>
@@ -161,24 +169,26 @@ function RightHUD() {
 
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 right-3 md:right-8 transition-all duration-1000 delay-300 pointer-events-none ${
+      className={`absolute top-1/2 -translate-y-1/2 right-1.5 sm:right-3 md:right-8 transition-all duration-1000 delay-300 pointer-events-none ${
         isConfirmed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'
       }`}
     >
-      <div className="bg-white/40 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-2 md:p-4 rounded-xl md:rounded-3xl shadow-lg md:shadow-xl w-[70px] md:w-44">
+      <div className="bg-white/45 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-1.5 sm:p-2 md:p-4 rounded-xl md:rounded-3xl shadow-md md:shadow-xl w-[50px] sm:w-[62px] md:w-44 text-center md:text-left">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Ruler className="w-4 h-4 text-[#a21caf]" />
           <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>
         </div>
-        <div className="space-y-2 md:space-y-3">
+        <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
           {[
             { label: 'Chest', value: chest },
             { label: 'Waist', value: waist },
             { label: 'Hips', value: hips },
           ].map(({ label, value }) => (
             <div key={label} className="flex flex-col md:flex-row md:justify-between md:items-end">
-              <p className="text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
-              <p className="text-sm md:text-lg font-light text-[#161616]">{value}<span className="text-[9px] md:hidden">cm</span><span className="hidden md:inline">cm</span></p>
+              <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
+              <p className="text-[11px] sm:text-sm md:text-lg font-light text-[#161616] leading-none mt-0.5">
+                {value}<span className="text-[7.5px] sm:text-[9px] md:text-xs text-stone-500 ml-0.5">cm</span>
+              </p>
             </div>
           ))}
           <div className="hidden md:block pt-4 mt-2 border-t border-stone-200">
@@ -218,10 +228,12 @@ function StudioSkeleton() {
     if (ref.current) ref.current.rotation.y += dt * 2;
   });
   return (
-    <mesh ref={ref} position={[0, 0.9, 0]}>
-      <torusGeometry args={[0.4, 0.02, 16, 100]} />
-      <meshStandardMaterial color="#a21caf" emissive="#a21caf" emissiveIntensity={0.5} wireframe />
-    </mesh>
+    <group position={[0, 0.9, 0]}>
+      <mesh ref={ref}>
+        <torusGeometry args={[0.45, 0.015, 16, 100]} />
+        <meshStandardMaterial color="#7c3aed" emissive="#7c3aed" emissiveIntensity={0.6} wireframe />
+      </mesh>
+    </group>
   );
 }
 
@@ -272,7 +284,7 @@ function TopHUD() {
 
   return (
     <div
-      className={`absolute top-20 md:top-24 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-500 z-10 ${
+      className={`absolute top-14 md:top-20 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-500 z-10 ${
         isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'
       }`}
     >
@@ -293,6 +305,15 @@ function TopHUD() {
 // ─────────────────────────────────────────────────────────────────────────────
 export function AvatarViewer() {
   const setIsInteracting = useAvatarStore((s) => s.setIsInteracting);
+  const [isTabVisible, setIsTabVisible] = useState(() => (typeof document !== 'undefined' ? !document.hidden : true));
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   return (
     <div className="relative h-full w-full bg-gradient-to-b from-[#f8f8f9] to-[#e8e8ed]">
@@ -307,34 +328,36 @@ export function AvatarViewer() {
       <Canvas
         id="avatar-canvas"
         shadows
+        frameloop={isTabVisible ? 'always' : 'never'}
         camera={{ position: [0, 3.5, 4.5], fov: 40 }}
         className="w-full h-full outline-none"
-        gl={{ powerPreference: 'high-performance', antialias: true }}
-        dpr={[1, 1.5]}
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: 'high-performance',
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.05,
+        }}
+        dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 2, 2)]}
+        style={{ width: '100%', height: '100%', background: 'transparent' }}
         onPointerDown={() => setIsInteracting(true)}
         onPointerUp={() => setIsInteracting(false)}
         onPointerLeave={() => setIsInteracting(false)}
       >
-        <Suspense fallback={null}>
-          <Environment preset="city" />
-        </Suspense>
-        <ambientLight intensity={0.6} color="#ffffff" />
-        <spotLight
-          position={[3, 7, 4]}
-          angle={0.5}
-          penumbra={1}
-          intensity={2.5}
+        {/* Balanced Studio Lighting — illuminates evenly with natural skin warmth from frame 0 */}
+        <ambientLight intensity={1.15} color="#ffffff" />
+        <directionalLight
+          position={[3.5, 5.5, 4.5]}
+          intensity={1.65}
+          color="#fffaf2"
           castShadow
           shadow-bias={-0.0001}
-          color="#ffffff"
         />
-        <spotLight
-          position={[-5, 5, -5]}
-          angle={0.5}
-          penumbra={1}
-          intensity={1.5}
-          color="#e0e7ff"
-        />
+        <directionalLight position={[-3.5, 5.0, 4.2]} intensity={1.5} color="#fff7ed" />
+        <directionalLight position={[0, 1.6, 4.0]} intensity={0.85} color="#ffffff" />
+        <directionalLight position={[0, 6.0, -3.5]} intensity={0.8} color="#faf5ff" />
+        <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
+
         <ResponsiveCamera />
 
         <StudioScene />

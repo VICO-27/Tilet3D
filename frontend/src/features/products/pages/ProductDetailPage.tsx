@@ -63,13 +63,20 @@ const ProductDetailPage: React.FC = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedVariantId) {
       showToast("Select a size or variant first", "error");
       return;
     }
-    addToCart(selectedVariantId);
-    showToast("Added to cart");
+    if (!localStorage.getItem("tilet3d_access_token")) {
+      showToast("Please sign in to add to your bag", "error");
+      navigate("/account");
+      return;
+    }
+    const success = await addToCart(selectedVariantId);
+    if (success) {
+      showToast("Added to cart");
+    }
   };
 
   if (loading) {

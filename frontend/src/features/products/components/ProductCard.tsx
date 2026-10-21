@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import EngagementBar from './EngagementBar';
@@ -42,6 +42,8 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobileCentered, setIsMobileCentered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [showCommentInput, setShowCommentInput] = useState(false);
   
@@ -49,6 +51,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   
   const [localCommentCount, setLocalCommentCount] = useState(product.comment_count);
   const navigate = useNavigate();
+
+  // On mobile phone viewports, automatically show action buttons and engagement bar when card is in the horizontal center
+  useEffect(() => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (!isMobile || !cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsMobileCentered(entry.isIntersecting);
+      },
+      {
+        rootMargin: "0px -25% 0px -25%",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const showActions = isHovered || isMobileCentered;
 
   const variantId = product.default_variant_id || product.variants?.[0]?.id || product.id;
   const addToCart = useCartStore((s) => s.addToCart);
@@ -83,6 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   return (
     <>
       <div
+        ref={cardRef}
         className={`relative h-[550px] overflow-hidden group transition-all duration-700 cursor-pointer ${isWide ? 'col-span-2' : 'col-span-1'}`}
         onMouseEnter={() => {
           setIsHovered(true);
@@ -158,10 +182,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           ) : null}
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-10" />
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-opacity duration-500 ease-out z-10 ${showActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
 
         <div
-          className="absolute right-4 bottom-32 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500 ease-out z-30"
+          className={`absolute right-4 bottom-32 transition-all duration-500 ease-out z-30 ${showActions ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0'}`}
           onClick={e => e.stopPropagation()}
         >
           <EngagementBar
@@ -170,12 +194,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           />
         </div>
 
-        <div className="absolute bottom-6 left-6 right-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left">
+        <div className={`absolute bottom-6 left-6 right-6 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left ${showActions ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0'}`}>
 
           {/* Multi-angle view selector pills (Front, Back, Top) */}
           {images.length > 1 && (
             <div 
-              className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30"
+              className={`flex items-center gap-1.5 transition-opacity duration-300 z-30 ${showActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
               onClick={(e) => e.stopPropagation()}
             >
               {images.map((img, idx) => {

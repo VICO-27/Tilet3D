@@ -73,6 +73,74 @@ function ResponsiveCamera() {
   return null;
 }
 
+function MobileTouchScrollHandler() {
+  const { gl, controls } = useThree();
+
+  useEffect(() => {
+    const element = gl.domElement;
+    if (!element) return;
+
+    element.style.touchAction = "pan-y";
+
+    // Intercept touch pointerdown in capture phase so OrbitControls doesn't hijack touch
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (e.pointerType === "touch") {
+        e.stopPropagation();
+      }
+    };
+    element.addEventListener("pointerdown", onPointerDownCapture, { capture: true });
+
+    let startX = 0;
+    let startY = 0;
+    let isHorizontal = false;
+    let decided = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isHorizontal = false;
+        decided = false;
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const curX = e.touches[0].clientX;
+      const curY = e.touches[0].clientY;
+      const dx = curX - startX;
+      const dy = curY - startY;
+
+      if (!decided && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+        decided = true;
+        isHorizontal = Math.abs(dx) > Math.abs(dy);
+      }
+
+      if (isHorizontal && controls && 'rotateLeft' in controls) {
+        if (e.cancelable) e.preventDefault();
+        const factor = (2 * Math.PI) / (element.clientHeight || 500);
+        const ctrl = controls as unknown as { rotateLeft: (angle: number) => void; update: () => void };
+        ctrl.rotateLeft(dx * factor * 0.85);
+        ctrl.update();
+        startX = curX;
+        startY = curY;
+      }
+      // When vertical (not horizontal): do not prevent default, native page scroll takes over!
+    };
+
+    element.addEventListener("touchstart", onTouchStart, { passive: true });
+    element.addEventListener("touchmove", onTouchMove, { passive: false });
+
+    return () => {
+      element.removeEventListener("pointerdown", onPointerDownCapture, { capture: true } as EventListenerOptions);
+      element.removeEventListener("touchstart", onTouchStart);
+      element.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [gl, controls]);
+
+  return null;
+}
+
 interface MaleBones {
   spine1: THREE.Bone | null;
   spine2: THREE.Bone | null;
@@ -586,7 +654,7 @@ const HeroModel = ({
         toneMappingExposure: 1.05,
       }}
       dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
-      style={{ width: "100%", height: "100%", background: "transparent" }}
+      style={{ width: "100%", height: "100%", background: "transparent", touchAction: "pan-y" }}
       onPointerDown={handleInteractionStart}
       onPointerUp={handleInteractionEnd}
       onPointerLeave={handleInteractionEnd}
@@ -604,6 +672,7 @@ const HeroModel = ({
       {/* Top Hair & Shoulder Accent */}
       <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
       <ResponsiveCamera />
+      <MobileTouchScrollHandler />
 
       <group position={[0, 0, 0]}>
         <Suspense fallback={null}>

@@ -602,12 +602,12 @@ const CategoryBlock: React.FC<Props> = ({
                   <ProductCard product={p} index={i + 2} />
                 </RevealOnScroll>
               ))}
-              {hasMoreThan30 && <div className="min-w-[320px] shrink-0" />}
+              {hasMoreThan30 && <div className="hidden md:block min-w-[320px] shrink-0" />}
             </div>
 
-            {/* WATERCOLOR OVERLAY PANEL */}
+            {/* WATERCOLOR OVERLAY PANEL - Desktop only, hidden on phone mode */}
             {hasMoreThan30 && (
-              <div className="absolute top-0 right-28 h-full w-[260px] bg-gradient-to-l from-white via-white/95 to-transparent flex items-center justify-end pr-6 z-40 pointer-events-none">
+              <div className="hidden md:flex absolute top-0 right-28 h-full w-[260px] bg-gradient-to-l from-white via-white/95 to-transparent items-center justify-end pr-6 z-40 pointer-events-none">
                 <button
                   onClick={() => navigate(`/products/category/${categoryName.toLowerCase()}`)}
                   className="pointer-events-auto h-14 px-6 bg-black/5 hover:bg-black/10 text-black border border-black/10 backdrop-blur-md rounded-full flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group"

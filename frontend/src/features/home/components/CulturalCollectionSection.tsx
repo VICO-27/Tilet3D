@@ -158,8 +158,10 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     let scrollLeftStart: number;
     let hasDragged = false;
     
-    // Auto-scroll speed
-    const speed = direction === "left" ? 1.0 : -1.0;
+    // Auto-scroll speed: slow, graceful drift on mobile so users can admire cultural heritage
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const baseSpeed = isMobile ? 0.35 : 0.8;
+    const speed = direction === "left" ? baseSpeed : -baseSpeed;
 
     // If moving right (negative speed), start the scrollbar in the middle so it doesn't get stuck at 0 immediately
     if (speed < 0 && track.scrollLeft === 0) {
@@ -238,6 +240,15 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       window.addEventListener('mouseup', onMouseUp);
     };
 
+    const onTouchStart = () => {
+      isDown = true;
+    };
+
+    const onTouchEnd = () => {
+      isDown = false;
+      wrapTrack();
+    };
+
     // 3. Trackpad/Wheel Seamless Wrap Engine
     const onScroll = () => {
       const third = track.scrollWidth / 3;
@@ -250,6 +261,8 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 
     // Attach listeners
     track.addEventListener('mousedown', onMouseDown);
+    track.addEventListener('touchstart', onTouchStart, { passive: true });
+    track.addEventListener('touchend', onTouchEnd, { passive: true });
     track.addEventListener('scroll', onScroll, { passive: true });
 
     // Start auto-scroll
@@ -258,6 +271,8 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     return () => {
       cancelAnimationFrame(animationFrameId);
       track.removeEventListener('mousedown', onMouseDown);
+      track.removeEventListener('touchstart', onTouchStart);
+      track.removeEventListener('touchend', onTouchEnd);
       track.removeEventListener('scroll', onScroll);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);

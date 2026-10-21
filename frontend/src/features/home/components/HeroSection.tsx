@@ -323,12 +323,12 @@ const HeroSection = () => {
           />
 
           {/* Interactive Hint Indicator */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-black/5 shadow-xs text-[10px] tracking-widest uppercase font-medium text-zinc-500 select-none pointer-events-none transition-opacity duration-300">
+          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-black/5 shadow-xs text-[10px] tracking-widest uppercase font-medium text-zinc-500 select-none pointer-events-none transition-opacity duration-300">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-plum-500 animate-pulse" />
             <span>Drag to rotate · 360° View</span>
           </div>
 
-          <div className="absolute bottom-10 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
+          <div className="absolute bottom-14 sm:bottom-16 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
                 key={g}

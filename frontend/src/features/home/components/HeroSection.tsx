@@ -178,14 +178,14 @@ const HeroSection = () => {
       ref={sectionRef} 
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      className="relative h-screen w-full overflow-hidden bg-[#fafafa] pt-[56px] text-zinc-900 select-none"
+      className="relative min-h-[100dvh] lg:h-screen w-full overflow-x-hidden lg:overflow-hidden bg-[#fafafa] pt-[56px] pb-12 lg:pb-0 text-zinc-900 select-none"
     >
       
-      <div className="relative grid h-full w-full grid-cols-1 items-center px-6 md:px-16 lg:grid-cols-2 lg:px-20 xl:px-28">
+      <div className="relative grid h-full w-full grid-cols-1 items-center px-4 sm:px-8 md:px-16 lg:grid-cols-2 lg:px-20 xl:px-28">
         
         {/* ─── Left Column: Typography & CTAs ─── */}
         <motion.div 
-          className="z-10 py-8 lg:py-0"
+          className="z-10 py-6 sm:py-8 lg:py-0"
           variants={prefersReducedMotion ? undefined : containerVariants}
           initial="hidden"
           animate="visible"
@@ -193,21 +193,21 @@ const HeroSection = () => {
           {/* Eyebrow Badge */}
           <motion.div 
             variants={prefersReducedMotion ? undefined : tumbleVariants}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-600 shadow-sm backdrop-blur-md"
+            className="mb-4 sm:mb-6 inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-3.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-zinc-600 shadow-sm backdrop-blur-md"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-plum-600 animate-pulse" />
             {t("hero.badge", "Fashion, reimagined in 3D")}
           </motion.div>
 
-          {/* Heading with Tumble sequence */}
-          <h1 className="text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold tracking-tight leading-[0.96] text-zinc-950">
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block origin-bottom-left">
+          {/* Heading with Tumble sequence: Horizontal on mobile, editorial 3-lines on desktop */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[clamp(2.75rem,6.5vw,5.5rem)] font-semibold tracking-tight leading-tight lg:leading-[0.96] text-zinc-950">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="inline-block lg:block mr-2 lg:mr-0 origin-bottom-left">
               {t("hero.title1", "Wear it")}
             </motion.span>
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block italic text-plum-600 font-serif font-light origin-bottom-left">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="inline-block lg:block mr-2 lg:mr-0 italic text-plum-600 font-serif font-light origin-bottom-left">
               {t("hero.title2", "before you")}
             </motion.span>
-            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="block origin-bottom-left">
+            <motion.span variants={prefersReducedMotion ? undefined : tumbleVariants} className="inline-block lg:block origin-bottom-left">
               {t("hero.title3", "buy it.")}
             </motion.span>
           </h1>
@@ -215,7 +215,7 @@ const HeroSection = () => {
           {/* Subtitle */}
           <motion.p 
             variants={prefersReducedMotion ? undefined : fadeUpVariants}
-            className="mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-zinc-600 font-normal"
+            className="mt-3 sm:mt-6 max-w-lg text-sm sm:text-base lg:text-lg leading-relaxed text-zinc-600 font-normal"
           >
             {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.")}
           </motion.p>
@@ -223,13 +223,13 @@ const HeroSection = () => {
           {/* Call to Actions */}
           <motion.div 
             variants={prefersReducedMotion ? undefined : fadeUpVariants}
-            className="mt-6 sm:mt-8 flex flex-row items-center gap-2 sm:gap-4 w-[85%] sm:w-full max-w-[320px] sm:max-w-none"
+            className="mt-5 sm:mt-8 flex flex-row items-center gap-2.5 sm:gap-4 w-full sm:w-auto max-w-[340px] sm:max-w-none"
           >
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/avatar")}
-              className="group flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/70 backdrop-blur-xl border border-white/50 px-4 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-bold tracking-wide text-zinc-900 transition-all duration-300 hover:bg-white hover:border-white shadow-sm hover:shadow-md"
+              className="group flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/70 backdrop-blur-xl border border-white/50 px-4 sm:px-8 py-2.5 sm:py-4 text-xs sm:text-sm font-bold tracking-wide text-zinc-900 transition-all duration-300 hover:bg-white hover:border-white shadow-sm hover:shadow-md"
             >
               {t("hero.createAvatar", "Create your avatar")}
             </motion.button>
@@ -245,14 +245,14 @@ const HeroSection = () => {
                 import('../../products/pages/ProductsPage'); // prefetch route chunk for mobile
                 import('../../products/hooks/useProducts').then(m => m.prefetchProducts()); // prefetch API data
               }}
-              className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-plum-600 px-3 sm:px-8 py-2.5 sm:py-4 text-[10px] sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-plum-700 shadow-lg hover:shadow-plum-600/30"
+              className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-plum-600 px-4 sm:px-8 py-2.5 sm:py-4 text-xs sm:text-sm font-semibold text-white transition-colors duration-300 hover:bg-plum-700 shadow-lg hover:shadow-plum-600/30"
             >
               {t("hero.shopNow", "Shop Now")}
             </motion.button>
           </motion.div>
 
           {/* Testimonial Stream */}
-          <motion.div variants={prefersReducedMotion ? undefined : fadeUpVariants} className="mt-10 pt-4">
+          <motion.div variants={prefersReducedMotion ? undefined : fadeUpVariants} className="mt-8 lg:mt-10 pt-2 lg:pt-4 hidden sm:block">
             <Testimonials />
           </motion.div>
         </motion.div>
@@ -261,13 +261,13 @@ const HeroSection = () => {
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          className="relative h-[50vh] lg:h-full w-full lg:translate-x-6 flex items-center justify-center"
+          className="relative h-[480px] sm:h-[540px] lg:h-full w-full lg:translate-x-6 flex items-center justify-center mt-2 mb-6 lg:my-0"
         >
           {/* Living Aura Background */}
           <TiletAura />
 
           {/* Visual Stage: Mind-blowing Brand Animation while 3D is preparing -> Seamless dissolve to Live 3D */}
-          <div className="relative w-full h-[80%] max-h-[600px] flex items-center justify-center">
+          <div className="relative w-full h-full max-h-[580px] lg:max-h-[600px] flex items-center justify-center">
             {/* 1. Mesmerizing 3D Brand Animation — active until Three.js/GLB is ready */}
             <AnimatePresence>
               {!is3DReady && (
@@ -285,13 +285,9 @@ const HeroSection = () => {
 
             {/* 2. Live 3D Experience — mounted immediately, fades in seamlessly once 1st frame is ready */}
             <div 
-              className={`absolute inset-0 w-full h-full z-20 transition-opacity duration-700 cursor-grab active:cursor-grabbing overflow-hidden ${
+              className={`absolute inset-0 w-full h-full z-20 transition-opacity duration-700 cursor-grab active:cursor-grabbing overflow-hidden [mask-image:none] lg:[mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] [-webkit-mask-image:none] lg:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] ${
                 is3DReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
               }`}
-              style={{
-                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
-                maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
-              }}
             >
 
               <HeroModel 
@@ -423,8 +419,8 @@ const HeroSwitch: React.FC<{
     onMouseEnter={onMouseEnter}
     aria-label={side === "left" ? "Previous avatar" : "Next avatar"}
     title={side === "left" ? "Previous avatar" : "Next avatar"}
-    className={`absolute top-1/2 z-30 pointer-events-auto flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/70 text-zinc-700 shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white hover:text-plum-600 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum-500/40 ${
-      side === "left" ? "left-3 sm:left-5 md:left-6" : "right-3 sm:right-5 md:right-6"
+    className={`absolute top-1/2 z-30 pointer-events-auto flex h-10 w-10 sm:h-12 sm:w-12 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/70 text-zinc-700 shadow-lg backdrop-blur-xl transition-all duration-300 hover:bg-white hover:text-plum-600 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-plum-500/40 ${
+      side === "left" ? "left-2 sm:left-4 md:left-6" : "right-2 sm:right-4 md:right-6"
     }`}
   >
     {side === "left" ? (

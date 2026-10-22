@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Star, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Gender } from "../../avatar/types/avatar.types";
 import HeroModel, { preloadGender, type PointerTracker } from "./HeroModel";
@@ -93,7 +93,6 @@ const HeroSection = () => {
 
   // Mobile Hold-to-Rotate Touch Controller
   const rotateRef = useRef(0);
-  const [isHolding, setIsHolding] = useState(false);
   const mobileTouchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,7 +120,6 @@ const HeroSection = () => {
       // If finger remains still for ~360ms, activate 360° avatar rotation mode
       holdTimer = setTimeout(() => {
         isHoldingActive = true;
-        setIsHolding(true);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
           try {
             navigator.vibrate(25);
@@ -166,10 +164,7 @@ const HeroSection = () => {
         clearTimeout(holdTimer);
         holdTimer = null;
       }
-      if (isHoldingActive) {
-        isHoldingActive = false;
-        setIsHolding(false);
-      }
+      isHoldingActive = false;
     };
 
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -324,9 +319,8 @@ const HeroSection = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/avatar")}
-              className="group relative flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200/90 px-4 sm:px-8 py-2.5 sm:py-4 text-xs sm:text-sm font-bold tracking-wide text-zinc-900 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1),0_2px_6px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_18px_36px_-6px_rgba(124,58,237,0.28),0_4px_12px_-2px_rgba(0,0,0,0.08)] hover:border-plum-300/80 hover:text-plum-950 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300"
+              className="group relative flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-full bg-white/95 backdrop-blur-xl border border-zinc-200/90 px-4 sm:px-8 py-2.5 sm:py-4 text-xs sm:text-sm font-bold tracking-wide text-zinc-900 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1),0_2px_6px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_18px_36px_-6px_rgba(124,58,237,0.28),0_4px_12px_-2px_rgba(0,0,0,0.08)] hover:border-plum-300/80 hover:text-plum-950 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300"
             >
-              <Sparkles className="w-3.5 h-3.5 text-plum-600 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
               <span>{t("hero.createAvatar", "Create your avatar")}</span>
             </motion.button>
             <motion.button
@@ -424,22 +418,7 @@ const HeroSection = () => {
             onMouseEnter={() => preloadGender(heroGender === "female" ? "male" : "female")}
           />
 
-          {/* Interactive Hint Indicator */}
-          <div 
-            className={`absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-[10px] tracking-widest uppercase font-medium select-none pointer-events-none transition-all duration-300 z-30 ${
-              isHolding 
-                ? 'bg-plum-600 text-white border-plum-500 shadow-lg shadow-plum-600/40 scale-105 ring-2 ring-plum-400/50' 
-                : 'bg-white/75 text-zinc-600 border-black/5 shadow-xs'
-            }`}
-          >
-            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isHolding ? 'bg-white animate-ping' : 'bg-plum-500 animate-pulse'}`} />
-            <span className="sm:hidden font-semibold">
-              {isHolding ? 'Rotating · 360° Active' : 'Hold to rotate · 360°'}
-            </span>
-            <span className="hidden sm:inline">
-              Drag to rotate · 360° View
-            </span>
-          </div>
+          {/* Gender Selector */}
 
           <div className="absolute bottom-14 sm:bottom-16 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
             {(["female", "male"] as Gender[]).map((g) => (

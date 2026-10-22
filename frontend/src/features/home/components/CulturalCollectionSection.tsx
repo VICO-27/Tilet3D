@@ -158,14 +158,17 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     let scrollLeftStart: number;
     let hasDragged = false;
     
-    // Auto-scroll speed: slow, graceful drift on mobile so users can admire cultural heritage
+    // Auto-scroll speed: calm, slow drift (in pixels per second, refresh-rate independent)
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const baseSpeed = isMobile ? 0.35 : 0.8;
-    const speed = direction === "left" ? baseSpeed : -baseSpeed;
+    const pixelsPerSecond = isMobile ? 10 : 14;
+    const dirFactor = direction === "left" ? 1 : -1;
+    
+    let currentScroll = track.scrollLeft;
 
     // If moving right (negative speed), start the scrollbar in the middle so it doesn't get stuck at 0 immediately
-    if (speed < 0 && track.scrollLeft === 0) {
-      track.scrollLeft = track.scrollWidth / 3;
+    if (dirFactor < 0 && currentScroll === 0) {
+      currentScroll = track.scrollWidth / 3;
+      track.scrollLeft = currentScroll;
     }
 
     const wrapTrack = () => {
@@ -177,25 +180,35 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
         track.scrollLeft += third;
         scrollLeftStart += third;
       }
+      currentScroll = track.scrollLeft;
     };
 
-    // 1. Auto Scrolling Engine — only runs while the row is in viewport
-    const autoScroll = () => {
+    let lastTime: number | null = null;
+
+    // 1. Auto Scrolling Engine — delta-time driven, slow, graceful, and smooth on both 60Hz and 120Hz
+    const autoScroll = (time: number) => {
+      if (lastTime === null) lastTime = time;
+      const deltaTime = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+
       if (!isDown) {
-        track.scrollLeft += speed;
+        currentScroll += pixelsPerSecond * deltaTime * dirFactor;
         const third = track.scrollWidth / 3;
 
         // Seamless wrap around
-        if (speed > 0 && track.scrollLeft >= third * 2) {
-          track.scrollLeft -= third;
-        } else if (speed < 0 && track.scrollLeft <= 0) {
-          track.scrollLeft += third;
+        if (dirFactor > 0 && currentScroll >= third * 2) {
+          currentScroll -= third;
+        } else if (dirFactor < 0 && currentScroll <= 0) {
+          currentScroll += third;
         }
+
+        track.scrollLeft = currentScroll;
+      } else {
+        currentScroll = track.scrollLeft;
       }
+
       animationFrameId = requestAnimationFrame(autoScroll);
     };
-
-    animationFrameId = requestAnimationFrame(autoScroll);
 
     // 2. Mouse Drag Engine
     const onMouseMove = (e: MouseEvent) => {
@@ -223,6 +236,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       } else {
         wasDraggedRef.current = false;
       }
+      currentScroll = track.scrollLeft;
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -257,6 +271,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
       } else if (track.scrollLeft <= 0) {
         track.scrollLeft += third;
       }
+      currentScroll = track.scrollLeft;
     };
 
     // Attach listeners
@@ -265,7 +280,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
     track.addEventListener('touchend', onTouchEnd, { passive: true });
     track.addEventListener('scroll', onScroll, { passive: true });
 
-    // Start auto-scroll
+    // Single requestAnimationFrame initialization
     animationFrameId = requestAnimationFrame(autoScroll);
 
     return () => {

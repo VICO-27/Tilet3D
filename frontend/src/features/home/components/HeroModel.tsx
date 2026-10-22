@@ -36,6 +36,7 @@ export interface HeroModelProps {
   pointerRef?: { current: PointerTracker };
   onReady?: () => void;
   onInteractionChange?: (isInteracting: boolean) => void;
+  onHoldChange?: (isHolding: boolean) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -73,7 +74,17 @@ function ResponsiveCamera() {
   return null;
 }
 
-function MobileTouchScrollHandler() {
+interface MobileTouchScrollHandlerProps {
+  onHoldChange?: (holding: boolean) => void;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
+}
+
+function MobileTouchScrollHandler({
+  onHoldChange,
+  onInteractionStart,
+  onInteractionEnd,
+}: MobileTouchScrollHandlerProps) {
   const { gl, controls } = useThree();
 
   useEffect(() => {
@@ -92,51 +103,121 @@ function MobileTouchScrollHandler() {
 
     let startX = 0;
     let startY = 0;
-    let isHorizontal = false;
-    let decided = false;
+    let lastX = 0;
+    let lastY = 0;
+    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    let isHoldActive = false;
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isHorizontal = false;
-        decided = false;
+      if (e.touches.length !== 1) {
+        if (holdTimer) clearTimeout(holdTimer);
+        isHoldActive = false;
+        onHoldChange?.(false);
+        onInteractionEnd?.();
+        return;
       }
+
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      lastX = startX;
+      lastY = startY;
+      isHoldActive = false;
+
+      if (holdTimer) clearTimeout(holdTimer);
+
+      // Require user to hold finger on the avatar for 300ms to engage 360° rotation mode
+      holdTimer = setTimeout(() => {
+        isHoldActive = true;
+        onHoldChange?.(true);
+        onInteractionStart?.();
+
+        // Haptic feedback confirmation when entering rotate mode
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try {
+            navigator.vibrate(25);
+          } catch {
+            // vibration API may not be permitted
+          }
+        }
+      }, 300);
     };
 
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
       const curX = e.touches[0].clientX;
       const curY = e.touches[0].clientY;
-      const dx = curX - startX;
-      const dy = curY - startY;
+      const dist = Math.hypot(curX - startX, curY - startY);
 
-      if (!decided && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-        decided = true;
-        isHorizontal = Math.abs(dx) > Math.abs(dy);
+      // If user moves/swipes before the hold timer completes, this is a PAGE SCROLL!
+      if (!isHoldActive) {
+        if (dist > 10) {
+          // Cancel hold timer immediately so fast or normal scrolls pass through
+          if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
+        }
+        // Do NOT call preventDefault: let the browser scroll the page at full speed!
+        return;
       }
 
-      if (isHorizontal && controls && 'rotateLeft' in controls) {
-        if (e.cancelable) e.preventDefault();
-        const factor = (2 * Math.PI) / (element.clientHeight || 500);
-        const ctrl = controls as unknown as { rotateLeft: (angle: number) => void; update: () => void };
-        ctrl.rotateLeft(dx * factor * 0.85);
-        ctrl.update();
-        startX = curX;
-        startY = curY;
+      // If hold IS active, user deliberately held the avatar and wants 360° inspection!
+      if (isHoldActive) {
+        if (e.cancelable) {
+          e.preventDefault(); // Lock page scroll only while actively spinning the avatar
+        }
+        const dx = curX - lastX;
+        const dy = curY - lastY;
+
+        if (controls && 'rotateLeft' in controls) {
+          const factorX = (2 * Math.PI) / (element.clientHeight || 500);
+          const ctrl = controls as unknown as { 
+            rotateLeft: (angle: number) => void; 
+            rotateUp?: (angle: number) => void;
+            update: () => void 
+          };
+          ctrl.rotateLeft(dx * factorX * 0.9);
+          if (Math.abs(dy) > 0 && typeof ctrl.rotateUp === "function") {
+            const factorY = Math.PI / (element.clientHeight || 500);
+            ctrl.rotateUp(dy * factorY * 0.4);
+          }
+          ctrl.update();
+        }
+        lastX = curX;
+        lastY = curY;
       }
-      // When vertical (not horizontal): do not prevent default, native page scroll takes over!
+    };
+
+    const onTouchEnd = () => {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      if (isHoldActive) {
+        isHoldActive = false;
+        onHoldChange?.(false);
+        onInteractionEnd?.();
+      }
     };
 
     element.addEventListener("touchstart", onTouchStart, { passive: true });
     element.addEventListener("touchmove", onTouchMove, { passive: false });
+    element.addEventListener("touchend", onTouchEnd, { passive: true });
+    element.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     return () => {
+      if (holdTimer) clearTimeout(holdTimer);
       element.removeEventListener("pointerdown", onPointerDownCapture, { capture: true } as EventListenerOptions);
       element.removeEventListener("touchstart", onTouchStart);
       element.removeEventListener("touchmove", onTouchMove);
+      element.removeEventListener("touchend", onTouchEnd);
+      element.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [gl, controls]);
+  }, [gl, controls, onHoldChange, onInteractionStart, onInteractionEnd]);
 
   return null;
 }
@@ -546,7 +627,8 @@ const HeroModel = ({
   reducedMotion = false,
   pointerRef,
   onReady, 
-  onInteractionChange 
+  onInteractionChange,
+  onHoldChange,
 }: HeroModelProps) => {
   // Initially mount active gender; warm up alternate gender in background after frame 1
   const [mountedGenders, setMountedGenders] = useState<Record<Gender, boolean>>({
@@ -672,7 +754,11 @@ const HeroModel = ({
       {/* Top Hair & Shoulder Accent */}
       <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
       <ResponsiveCamera />
-      <MobileTouchScrollHandler />
+      <MobileTouchScrollHandler 
+        onHoldChange={onHoldChange}
+        onInteractionStart={handleInteractionStart}
+        onInteractionEnd={handleInteractionEnd}
+      />
 
       <group position={[0, 0, 0]}>
         <Suspense fallback={null}>

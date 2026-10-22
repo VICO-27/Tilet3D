@@ -61,6 +61,18 @@ def send_otp_email(user, otp):
         "If you did not request this code, please ignore this email."
     )
 
+    # When SMTP is not configured or in console mode, print directly to logs so registration never stalls
+    is_console = getattr(settings, "EMAIL_BACKEND", "").endswith("console.EmailBackend")
+    has_credentials = bool(getattr(settings, "EMAIL_HOST_USER", ""))
+    if is_console or not has_credentials:
+        logger.info(f"[OTP LOG] Purpose: {otp.purpose} | User: {user.email} | Code: {otp.code}")
+        print(f"\n==========================================")
+        print(f"[OTP LOG] Purpose: {otp.purpose}")
+        print(f"[OTP LOG] To: {user.email}")
+        print(f"[OTP LOG] OTP Code: {otp.code}")
+        print(f"==========================================\n")
+        return True
+
     try:
         send_mail(
             subject=subject,
@@ -72,11 +84,10 @@ def send_otp_email(user, otp):
         return True
     except Exception as e:
         logger.error(f"Failed to send OTP email to {user.email}: {e}")
-        # When in DEBUG mode or if SMTP is unconfigured, print OTP to console so testing is seamless
-        if getattr(settings, "DEBUG", False):
-            print(f"\n==========================================")
-            print(f"[DEBUG EMAIL] Purpose: {otp.purpose}")
-            print(f"[DEBUG EMAIL] To: {user.email}")
-            print(f"[DEBUG EMAIL] OTP Code: {otp.code}")
-            print(f"==========================================\n")
+        # Always output code to server logs as fallback so user can be verified via logs
+        print(f"\n==========================================")
+        print(f"[OTP FALLBACK] Purpose: {otp.purpose}")
+        print(f"[OTP FALLBACK] To: {user.email}")
+        print(f"[OTP FALLBACK] OTP Code: {otp.code}")
+        print(f"==========================================\n")
         return False

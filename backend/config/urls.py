@@ -15,6 +15,7 @@ def health_check(request):
 
 urlpatterns = [
     # Health checks for deployment / cloud load balancers (Render, AWS, etc.)
+    path("", health_check, name="root-health-check"),
     path("health/", health_check, name="health-check"),
     path("api/health/", health_check, name="api-health-check"),
 

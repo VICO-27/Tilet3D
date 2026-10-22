@@ -7,10 +7,29 @@ if not SECRET_KEY or SECRET_KEY == "django-insecure-change-this-later":
 
 DEBUG = False
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[".onrender.com", "localhost", "127.0.0.1", "yourdomain.com"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[".onrender.com", "localhost", "127.0.0.1", "tilet3d-backend.onrender.com", "yourdomain.com"])
 
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["https://yourdomain.com"])
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["https://yourdomain.com"])
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
+    "https://tilet3d.vercel.app",
+    "https://yourdomain.com",
+])
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+]
+
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
+    "https://tilet3d.vercel.app",
+    "https://*.vercel.app",
+    "https://*.onrender.com",
+    "https://yourdomain.com",
+])
+
+# Email configuration: fallback to console backend if SMTP credentials are not provided in environment
+if not env("EMAIL_HOST_USER", default=""):
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=4)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)

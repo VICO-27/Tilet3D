@@ -86,11 +86,105 @@ const HeroSection = () => {
 
   const [heroGender, setHeroGender] = useState<Gender>("female");
   const [transitionDirection, setTransitionDirection] = useState<-1 | 1>(1);
-  const [isHoldActive, setIsHoldActive] = useState(false);
   const interactingRef = useRef(false);
   const sectionRef = useRef<HTMLElement>(null);
   const [isInView, setIsInView] = useState(true);
   const [is3DReady, setIs3DReady] = useState(false);
+
+  // Mobile Hold-to-Rotate Touch Controller
+  const rotateRef = useRef(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const mobileTouchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = mobileTouchRef.current;
+    if (!el) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastTouchX = 0;
+    let isHoldingActive = false;
+    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      lastTouchX = t.clientX;
+      isHoldingActive = false;
+
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+      }
+
+      // If finger remains still for ~360ms, activate 360° avatar rotation mode
+      holdTimer = setTimeout(() => {
+        isHoldingActive = true;
+        setIsHolding(true);
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try {
+            navigator.vibrate(25);
+          } catch {}
+        }
+      }, 360);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      const dist = Math.hypot(dx, dy);
+
+      // If hold mode is NOT active yet:
+      if (!isHoldingActive) {
+        // Normal scroll or fast flick: any movement > 8px cancels hold timer immediately
+        if (dist > 8) {
+          if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
+        }
+        // Crucial: do NOT call preventDefault! Native vertical browser scroll runs at full speed
+        return;
+      }
+
+      // If hold IS active: user is deliberately rotating the avatar 360°
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+
+      const moveX = t.clientX - lastTouchX;
+      const factor = (2 * Math.PI) / 380;
+      rotateRef.current += moveX * factor * 0.95;
+      lastTouchX = t.clientX;
+    };
+
+    const onTouchEnd = () => {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      if (isHoldingActive) {
+        isHoldingActive = false;
+        setIsHolding(false);
+      }
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      if (holdTimer) clearTimeout(holdTimer);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, []);
 
   // Mutable ref for pointer tracking — prevents React re-renders on mousemove
   const pointerRef = useRef<PointerTracker>({ x: 0, y: 0, active: false });
@@ -285,28 +379,33 @@ const HeroSection = () => {
               )}
             </AnimatePresence>
 
-            {/* 2. Live 3D Experience — mounted immediately, fades in seamlessly once 1st frame is ready */}
+            {/* 2. Live 3D Experience — pointer-events-none on mobile so touches pass through cleanly; md:pointer-events-auto for desktop */}
             <div 
-              className={`absolute inset-0 w-full h-full z-20 transition-opacity duration-700 cursor-grab active:cursor-grabbing overflow-hidden [mask-image:none] lg:[mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] [-webkit-mask-image:none] lg:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] ${
-                is3DReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+              className={`absolute inset-0 w-full h-full z-10 transition-opacity duration-700 pointer-events-none md:pointer-events-auto overflow-hidden [mask-image:none] lg:[mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] [-webkit-mask-image:none] lg:[-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_12%,black_88%,transparent_100%)] ${
+                is3DReady ? 'opacity-100' : 'opacity-0'
               }`}
             >
-
               <HeroModel 
                 gender={heroGender} 
                 direction={transitionDirection}
                 isInView={isInView}
                 reducedMotion={Boolean(prefersReducedMotion)}
                 pointerRef={pointerRef}
+                rotateRef={rotateRef}
                 onReady={() => {
                   setIs3DReady(true);
                 }} 
                 onInteractionChange={(interacting) => {
                   interactingRef.current = interacting;
                 }}
-                onHoldChange={setIsHoldActive}
               />
             </div>
+
+            {/* 3. Mobile Touch Controller: allows native fast vertical scroll; engages 360° avatar spin on 360ms hold */}
+            <div 
+              ref={mobileTouchRef}
+              className="md:hidden absolute inset-0 z-20 touch-pan-y"
+            />
 
             {/* Ambient Aura Background */}
             <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
@@ -327,15 +426,15 @@ const HeroSection = () => {
 
           {/* Interactive Hint Indicator */}
           <div 
-            className={`absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-[10px] tracking-widest uppercase font-medium select-none pointer-events-none transition-all duration-300 ${
-              isHoldActive 
+            className={`absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-[10px] tracking-widest uppercase font-medium select-none pointer-events-none transition-all duration-300 z-30 ${
+              isHolding 
                 ? 'bg-plum-600 text-white border-plum-500 shadow-lg shadow-plum-600/40 scale-105 ring-2 ring-plum-400/50' 
                 : 'bg-white/75 text-zinc-600 border-black/5 shadow-xs'
             }`}
           >
-            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isHoldActive ? 'bg-white animate-ping' : 'bg-plum-500 animate-pulse'}`} />
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isHolding ? 'bg-white animate-ping' : 'bg-plum-500 animate-pulse'}`} />
             <span className="sm:hidden font-semibold">
-              {isHoldActive ? 'Rotating · 360° Active' : 'Hold to rotate · 360°'}
+              {isHolding ? 'Rotating · 360° Active' : 'Hold to rotate · 360°'}
             </span>
             <span className="hidden sm:inline">
               Drag to rotate · 360° View

@@ -13,3 +13,8 @@ body,
 body {
   margin: 0;
 }
+
+#hero-canvas,
+#hero-canvas canvas {
+  touch-action: pan-y !important;
+}

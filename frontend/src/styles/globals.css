@@ -49,3 +49,9 @@ input[type="range"] {
   appearance: none;
   background: transparent;
 }
+
+#hero-canvas,
+#hero-canvas canvas {
+  touch-action: pan-y !important;
+}
+

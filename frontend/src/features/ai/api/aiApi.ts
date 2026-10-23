@@ -10,12 +10,14 @@ export const aiApi = {
     onComplete: () => void
   ) => {
     try {
+      const currentLang = localStorage.getItem("tilet3d_language") || "om";
       const response = await fetch(`${apiClient.defaults.baseURL || '/api'}/ai/chat/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept-Language": currentLang,
         },
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({ message, history, language: currentLang }),
       });
 
       if (!response.body) throw new Error("No response body from stream");

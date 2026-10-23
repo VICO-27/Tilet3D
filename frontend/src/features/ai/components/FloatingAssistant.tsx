@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Mic, ArrowUp, ChevronDown, Sparkles, X, History } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -84,6 +85,7 @@ const ThinkingDots: React.FC = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const FloatingAssistant: React.FC = () => {
+  const { t } = useTranslation();
   const { isOpen, isMinimized, closeAssistant, minimizeAssistant, openAssistant } =
     useAssistantStore();
   const navigate = useNavigate();
@@ -97,7 +99,7 @@ export const FloatingAssistant: React.FC = () => {
   const suggestions = getSuggestions(location.pathname);
 
   const { messages, isGenerating, send } = useAiChat(
-    "Welcome to Tilet3D AI — your personal styling concierge."
+    t("ai.welcome", "Welcome to Tilet3D AI — your personal styling concierge.")
   );
 
   // Auto-focus on typing
@@ -267,10 +269,10 @@ export const FloatingAssistant: React.FC = () => {
                     type="button"
                     onClick={handleMinimise}
                     className="w-16 flex items-center justify-start gap-1 text-white/40 hover:text-white/80 transition-colors text-[11px] font-semibold tracking-wide uppercase"
-                    aria-label="Minimise assistant"
+                    aria-label={t("ai.minimise", "Minimise")}
                   >
                     <ChevronDown size={14} />
-                    <span>Minimise</span>
+                    <span>{t("ai.minimise", "Minimise")}</span>
                   </button>
 
                   <div className="w-8 h-[3px] bg-white/15 rounded-full" />
@@ -282,10 +284,10 @@ export const FloatingAssistant: React.FC = () => {
                       navigate('/account');
                     }}
                     className="w-16 flex items-center justify-end gap-1.5 text-white/40 hover:text-white/80 transition-colors text-[11px] font-semibold tracking-wide uppercase"
-                    aria-label="View Chat History"
+                    aria-label={t("ai.log", "Log")}
                   >
                     <History size={12} />
-                    <span>Log</span>
+                    <span>{t("ai.log", "Log")}</span>
                   </button>
                 </div>
 
@@ -295,7 +297,7 @@ export const FloatingAssistant: React.FC = () => {
                   {!hasConversation && (
                     <div className="py-2">
                       <p className="text-white/35 text-[11px] font-semibold mb-3 uppercase tracking-[0.12em]">
-                        Try asking
+                        {t("ai.tryAsking", "Try asking")}
                       </p>
                       <div className="flex flex-col gap-2">
                         {suggestions.map((s) => (
@@ -402,7 +404,7 @@ export const FloatingAssistant: React.FC = () => {
               <button
                 type="button"
                 onClick={handleClose}
-                aria-label="Close AI assistant"
+                aria-label={t("ai.closeAssistant", "Close AI assistant")}
                 className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
               >
                 <X size={15} />
@@ -420,8 +422,8 @@ export const FloatingAssistant: React.FC = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 placeholder={
                   isMinimized && hasConversation
-                    ? "Continue conversation..."
-                    : "Ask Tilet3D..."
+                    ? t("ai.continueConversation", "Continue conversation...")
+                    : t("ai.askTilet", "Ask Tilet3D...")
                 }
                 className="
                   flex-1 bg-transparent text-[15px] text-white
@@ -439,7 +441,7 @@ export const FloatingAssistant: React.FC = () => {
               <button
                 type="button"
                 className="shrink-0 p-1 text-white/45 hover:text-white/70 transition-colors"
-                aria-label="Voice input"
+                aria-label={t("ai.voiceInput", "Voice input")}
               >
                 <Mic size={18} />
               </button>
@@ -449,7 +451,7 @@ export const FloatingAssistant: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isGenerating}
-                  aria-label="Send message"
+                  aria-label={t("ai.sendMessage", "Send message")}
                   className="shrink-0 w-8 h-8 bg-plum-600 hover:bg-plum-500 active:bg-plum-700 disabled:opacity-40 rounded-full flex items-center justify-center transition-colors shadow-sm"
                 >
                   <ArrowUp size={15} strokeWidth={2.5} className="text-white" />

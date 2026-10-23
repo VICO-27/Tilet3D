@@ -26,6 +26,7 @@ class ChatView(APIView):
 
         message = serializer.validated_data["message"].strip()
         history = serializer.validated_data.get("history", [])
+        language = serializer.validated_data.get("language") or getattr(request, "LANGUAGE_CODE", None) or "om"
 
         if not message:
             return Response(
@@ -35,7 +36,7 @@ class ChatView(APIView):
 
         def event_stream():
             try:
-                for chunk in stream_chat_response(message, history):
+                for chunk in stream_chat_response(message, history, language=language):
                     yield f"data: {json.dumps({'text': chunk})}\n\n"
             except Exception as exc:
                 yield f"data: {json.dumps({'error': str(exc)})}\n\n"

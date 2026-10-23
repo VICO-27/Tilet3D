@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
 import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from "../../../shared/utils/cloudinary";
@@ -41,6 +42,7 @@ const getCategoryName = (product: Product): string => {
 // 1. INDIVIDUAL CARD — starts visible, fades in media
 // ==========================================
 const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -121,7 +123,7 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
           {categoryLabel}
         </span>
         <div className="mt-2 flex items-center gap-2 text-[10px] text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span>View Details</span>
+          <span>{t("featured.viewDetails", "View Details")}</span>
           <span className="text-plum-400">→</span>
         </div>
       </div>
@@ -133,6 +135,7 @@ const FeaturedCard = ({ item, onClick }: FeaturedCardProps) => {
 // 2. MAIN SECTION COMPONENT
 // ==========================================
 const FeaturedCollectionSection = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const trackRef = useRef<HTMLDivElement | null>(null);
 
@@ -553,10 +556,10 @@ const FeaturedCollectionSection = () => {
       {/* Header — always visible, no animation */}
       <div className="absolute top-12 md:top-16 left-0 w-full px-8 md:px-16 flex justify-between items-end z-20">
         <div>
-          <span className="text-[10px] font-mono tracking-[0.4em] text-plum-400 block mb-2">TILET3D ATELIER</span>
-          <h2 className="text-3xl md:text-5xl font-light tracking-tight">Featured Collection</h2>
+          <span className="text-[10px] font-mono tracking-[0.4em] text-plum-400 block mb-2">{t("featured.atelier", "TILET3D ATELIER")}</span>
+          <h2 className="text-3xl md:text-5xl font-light tracking-tight">{t("featured.title", "Featured Collection")}</h2>
         </div>
-        <p className="text-neutral-500 font-normal text-xl hidden md:block">የተኛውን መረጡ?</p>
+        <p className="text-neutral-500 font-normal text-xl hidden md:block">{t("featured.tagline", "የተኛውን መረጡ?")}</p>
       </div>
 
       {/* Skeleton cards — shown while fetching products from API */}
@@ -606,7 +609,7 @@ const FeaturedCollectionSection = () => {
                 <div className="w-[260px] md:w-[360px] h-[380px] md:h-[520px] rounded-[24px] md:rounded-[32px] overflow-hidden border border-white/[0.08] bg-neutral-900/60 backdrop-blur-xl shrink-0 flex flex-col items-center justify-center gap-3">
                   <div className="w-8 h-8 rounded-full border-2 border-amber-400/30 border-t-amber-400 animate-spin" />
                   <span className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">
-                    Loading More...
+                    {t("featured.loadingMore", "Loading More...")}
                   </span>
                 </div>
               )}

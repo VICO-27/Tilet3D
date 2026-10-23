@@ -1,9 +1,11 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const updateParam = (key: string, value: string | null) => {
@@ -56,7 +58,7 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[100] flex flex-col"
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Filters & Sort</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{t("products.filters.drawerTitle", "Filters & Sort")}</h2>
               <button onClick={onClose} className="p-2 -mr-2 text-zinc-400 hover:text-zinc-900">
                 <X size={18} />
               </button>
@@ -66,13 +68,13 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               
               {/* SORT */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Sort By</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">{t("products.sortBy", "Sort By")}</h3>
                 <div className="space-y-2">
                   {[
-                    { value: '', label: 'Relevance' },
-                    { value: 'price_asc', label: 'Price: Low → High' },
-                    { value: 'price_desc', label: 'Price: High → Low' },
-                    { value: 'newest', label: 'Newest Arrivals' },
+                    { value: '', label: t("products.sortRelevance", "Relevance") },
+                    { value: 'price_asc', label: t("products.sortPriceAsc", "Price: Low → High") },
+                    { value: 'price_desc', label: t("products.sortPriceDesc", "Price: High → Low") },
+                    { value: 'newest', label: t("products.sortNewest", "Newest Arrivals") },
                   ].map(opt => (
                     <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${currentSort === opt.value ? 'border-plum-600 bg-plum-600' : 'border-zinc-300 group-hover:border-plum-400'}`}>
@@ -89,17 +91,25 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
               {/* CATEGORY */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Category</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">{t("products.categoriesLabel", "Category")}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['Kemis', 'Netela', 'Gabi', 'Shash', 'Tilf', 'Mens', 'Kaba'].map(cat => (
+                  {[
+                    { id: 'Kemis', key: 'kemis' },
+                    { id: 'Netela', key: 'netela' },
+                    { id: 'Gabi', key: 'gabi' },
+                    { id: 'Shash', key: 'shash' },
+                    { id: 'Tilf', key: 'tilf' },
+                    { id: 'Mens', key: 'mens' },
+                    { id: 'Kaba', key: 'kaba' },
+                  ].map(cat => (
                     <button
-                      key={cat}
-                      onClick={() => updateParam('category', currentCategory === cat ? null : cat)}
+                      key={cat.id}
+                      onClick={() => updateParam('category', currentCategory === cat.id ? null : cat.id)}
                       className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-colors ${
-                        currentCategory === cat ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        currentCategory === cat.id ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                       }`}
                     >
-                      {cat}
+                      {t(`products.categories.${cat.key}`, cat.id)}
                     </button>
                   ))}
                 </div>
@@ -107,17 +117,21 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
               {/* GENDER */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Gender</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">{t("avatar.gender", "Gender")}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['Women', 'Men', 'Unisex'].map(g => (
+                  {[
+                    { id: 'Women', label: t("avatar.female", "Women") },
+                    { id: 'Men', label: t("avatar.male", "Men") },
+                    { id: 'Unisex', label: t("common.unisex", "Unisex") },
+                  ].map(g => (
                     <button
-                      key={g}
-                      onClick={() => updateParam('gender', searchParams.get('gender') === g ? null : g)}
+                      key={g.id}
+                      onClick={() => updateParam('gender', searchParams.get('gender') === g.id ? null : g.id)}
                       className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-colors ${
-                        searchParams.get('gender') === g ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        searchParams.get('gender') === g.id ? 'bg-plum-600 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                       }`}
                     >
-                      {g}
+                      {g.label}
                     </button>
                   ))}
                 </div>
@@ -125,7 +139,7 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
               {/* COLOR */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Color</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">{t("detail.color", "Color")}</h3>
                 <div className="flex flex-wrap gap-2">
                   {['White', 'Black', 'Gold', 'Red', 'Blue', 'Green'].map(c => (
                     <button
@@ -143,11 +157,11 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
               {/* PRICE */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Price Range</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">{t("products.priceRange", "Price Range")}</h3>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <button onClick={() => applyPricePreset('', '2000')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">Budget (Under 2K)</button>
-                  <button onClick={() => applyPricePreset('2000', '6000')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">Mid-range</button>
-                  <button onClick={() => applyPricePreset('6000', '')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">Premium</button>
+                  <button onClick={() => applyPricePreset('', '2000')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">{t("products.budgetPrice", "Budget (<2K)")}</button>
+                  <button onClick={() => applyPricePreset('2000', '6000')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">{t("products.midPrice", "Mid-range")}</button>
+                  <button onClick={() => applyPricePreset('6000', '')} className="px-3 py-1.5 bg-zinc-100 text-zinc-600 text-xs rounded-full hover:bg-zinc-200">{t("products.premiumPrice", "Premium")}</button>
                 </div>
                 <div className="flex items-center gap-3">
                   <input 
@@ -177,7 +191,7 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       checked={searchParams.get('availability') === 'in_stock'}
                       onChange={(e) => updateParam('availability', e.target.checked ? 'in_stock' : null)}
                     />
-                    <span className="text-sm text-zinc-600 font-medium">In Stock Only</span>
+                    <span className="text-sm text-zinc-600 font-medium">{t("products.inStockOnly", "In Stock Only")}</span>
                  </label>
               </div>
 
@@ -188,7 +202,7 @@ export const FilterDrawer = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 onClick={onClose}
                 className="w-full py-4 bg-zinc-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-lg"
               >
-                View Results
+                {t("products.viewResults", "View Results")}
               </button>
             </div>
           </motion.div>

@@ -1,4 +1,5 @@
 import React, { Suspense, useRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 function ResponsiveCamera() {
@@ -111,6 +112,7 @@ function NotificationToast() {
 // Left HUD (biometrics)
 // ─────────────────────────────────────────────────────────────────────────────
 function LeftHUD() {
+  const { t } = useTranslation();
   const isConfirmed = useAvatarStore((s) => s.isConfirmed);
   const height = useAvatarStore((s) => s.height);
   const weight = useAvatarStore((s) => s.weight);
@@ -125,18 +127,18 @@ function LeftHUD() {
       <div className="bg-white/45 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-1.5 sm:p-2 md:p-4 rounded-xl md:rounded-3xl shadow-md md:shadow-xl w-[50px] sm:w-[62px] md:w-44 text-center md:text-left">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Activity className="w-4 h-4 text-[#a21caf]" />
-          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Biometrics</h3>
+          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">{t("avatar.biometrics", "Biometrics")}</h3>
         </div>
         <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
           <div>
-            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Height</p>
+            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{t("avatar.height", "Height")}</p>
             <p className="text-[11px] sm:text-sm md:text-lg font-light text-[#161616] leading-none mt-0.5">
               {height}<span className="text-[7.5px] sm:text-[9px] md:text-xs text-stone-500 ml-0.5">cm</span>
             </p>
           </div>
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
-            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">Weight</p>
+            <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{t("avatar.weight", "Weight")}</p>
             <p className="text-[11px] sm:text-sm md:text-lg font-light text-[#161616] leading-none mt-0.5">
               {weight}<span className="text-[7.5px] sm:text-[9px] md:text-xs text-stone-500 ml-0.5">kg</span>
             </p>
@@ -144,8 +146,8 @@ function LeftHUD() {
           <div className="w-full h-px bg-stone-200/60 md:bg-stone-200" />
           <div>
             <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">
-              <span className="md:hidden">Body</span>
-              <span className="hidden md:inline">Structure</span>
+              <span className="md:hidden">{t("avatar.body", "Body")}</span>
+              <span className="hidden md:inline">{t("avatar.structure", "Structure")}</span>
             </p>
             <p className="text-[9.5px] sm:text-xs md:text-base font-light text-[#161616] capitalize truncate leading-none mt-0.5">
               {body_type.replace('_', ' ')}
@@ -161,6 +163,7 @@ function LeftHUD() {
 // Right HUD (tailoring measurements)
 // ─────────────────────────────────────────────────────────────────────────────
 function RightHUD() {
+  const { t } = useTranslation();
   const isConfirmed = useAvatarStore((s) => s.isConfirmed);
   const chest = useAvatarStore((s) => s.chest);
   const waist = useAvatarStore((s) => s.waist);
@@ -175,13 +178,13 @@ function RightHUD() {
       <div className="bg-white/45 backdrop-blur-md md:backdrop-blur-xl border border-white/60 p-1.5 sm:p-2 md:p-4 rounded-xl md:rounded-3xl shadow-md md:shadow-xl w-[50px] sm:w-[62px] md:w-44 text-center md:text-left">
         <div className="hidden md:flex items-center gap-2 mb-4">
           <Ruler className="w-4 h-4 text-[#a21caf]" />
-          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">Calibration</h3>
+          <h3 className="text-[10px] font-bold tracking-widest text-[#161616] uppercase">{t("avatar.calibration", "Calibration")}</h3>
         </div>
         <div className="space-y-1.5 sm:space-y-2 md:space-y-3">
           {[
-            { label: 'Chest', value: chest },
-            { label: 'Waist', value: waist },
-            { label: 'Hips', value: hips },
+            { label: t("avatar.chestLabel", "Chest"), value: chest },
+            { label: t("avatar.waistLabel", "Waist"), value: waist },
+            { label: t("avatar.hipsLabel", "Hips"), value: hips },
           ].map(({ label, value }) => (
             <div key={label} className="flex flex-col md:flex-row md:justify-between md:items-end">
               <p className="text-[7.5px] sm:text-[9px] md:text-[10px] text-[#161616]/60 uppercase font-bold tracking-wider">{label}</p>
@@ -193,7 +196,7 @@ function RightHUD() {
           <div className="hidden md:block pt-4 mt-2 border-t border-stone-200">
             <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[10px] font-bold tracking-wider uppercase">Couture Match</span>
+              <span className="text-[10px] font-bold tracking-wider uppercase">{t("avatar.coutureMatch", "Couture Match")}</span>
             </div>
           </div>
         </div>
@@ -206,8 +209,11 @@ function RightHUD() {
 // Bottom controls bar
 // ─────────────────────────────────────────────────────────────────────────────
 function BottomControls() {
+  const isEditing = useAvatarStore((s) => s.isEditing);
+  if (isEditing) return null;
+
   return (
-    <div className="absolute bottom-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] md:bottom-10 left-1/2 -translate-x-1/2 z-20 transition-all duration-500">
+    <div className="absolute bottom-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] md:bottom-10 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
       <AvatarControls />
     </div>
   );

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   Package,
@@ -27,6 +28,7 @@ interface AdminSidebarProps {
 }
 
 interface NavItem {
+  key: string;
   name: string;
   path: string;
   icon: LucideIcon;
@@ -36,60 +38,70 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
+    key: "overview",
     name: "Overview",
     path: "/admin",
     icon: LayoutDashboard,
     isAvailable: true,
   },
   {
+    key: "products",
     name: "Products",
     path: "/admin/products",
     icon: Package,
     isAvailable: true,
   },
   {
+    key: "categories",
     name: "Categories",
     path: "/admin/categories",
     icon: Tag,
     isAvailable: true,
   },
   {
+    key: "inventory",
     name: "Inventory",
     path: "/admin/inventory",
     icon: Warehouse,
     isAvailable: true,
   },
   {
+    key: "orders",
     name: "Orders",
     path: "/admin/orders",
     icon: ShoppingBag,
     isAvailable: true,
   },
   {
+    key: "rentals",
     name: "Rentals",
     path: "/admin/rentals",
     icon: Calendar,
     isAvailable: true,
   },
   {
+    key: "customers",
     name: "Customers",
     path: "/admin/customers",
     icon: Users,
     isAvailable: true,
   },
   {
+    key: "payments",
     name: "Payments",
     path: "/admin/payments",
     icon: CreditCard,
     isAvailable: true,
   },
   {
+    key: "analytics",
     name: "Analytics",
     path: "/admin/analytics",
     icon: BarChart3,
     isAvailable: true,
   },
   {
+    key: "promotions",
     name: "Promotions",
     path: "/admin/promotions",
     icon: Percent,
@@ -97,12 +109,14 @@ const NAV_ITEMS: NavItem[] = [
     statusLabel: "Post-Launch",
   },
   {
+    key: "auditLogs",
     name: "Audit Logs",
     path: "/admin/audit-logs",
     icon: ShieldAlert,
     isAvailable: true,
   },
   {
+    key: "settings",
     name: "Settings",
     path: "/admin/settings",
     icon: Settings,
@@ -111,6 +125,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
@@ -154,7 +169,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
                 </span>
               </div>
               <span className="text-[11px] text-gray-400 block font-sans">
-                Management Portal
+                {t("admin.dashboard", "Management Portal")}
               </span>
             </div>
           </Link>
@@ -170,7 +185,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
         {/* Navigation Links */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
           <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-            Administration
+            {t("admin.dashboard", "Administration")}
           </div>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.path);
@@ -195,7 +210,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
                       active ? "text-plum-400" : "text-gray-400"
                     }`}
                   />
-                  <span>{item.name}</span>
+                  <span>{t(`admin.${item.key}`, item.name)}</span>
                 </div>
 
                 {!item.isAvailable && item.statusLabel && (
@@ -231,7 +246,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
               className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 border border-white/10 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Store
+              {t("nav.home", "Store")}
             </Link>
 
             <button
@@ -239,7 +254,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
               className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-red-300 hover:text-red-200 hover:bg-red-500/10 border border-red-500/20 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
-              Sign Out
+              {t("account.signOut", "Sign Out")}
             </button>
           </div>
         </div>

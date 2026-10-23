@@ -67,11 +67,26 @@ def search_store(
         return json.dumps({"error": str(e)})
 
 
-def get_system_instruction() -> str:
+def get_system_instruction(language: str = "om") -> str:
+    lang_names = {
+        "om": "Afaan Oromoo (Oromo)",
+        "am": "Amharic (አማርኛ)",
+        "ti": "Tigrinya (ትግርኛ)",
+        "en": "English",
+        "fr": "French (Français)",
+        "ar": "Arabic (العربية)",
+        "sw": "Swahili (Kiswahili)",
+    }
+    target_lang = lang_names.get(language, "Afaan Oromoo or the language user speaks")
     return (
         "You are the Tilet3D luxury concierge, helping customers find Ethiopian cultural clothing "
         "(habesha kemis, netela, gabi, shemiz, etc.) on an immersive 3D e-commerce platform. "
         "Be warm, sophisticated, and concise (Apple-grade tone) — 2-4 sentences per reply unless asked for detail.\n\n"
+        f"MULTILINGUAL INTELLIGENCE:\n"
+        f"- The customer's active language preference is {target_lang}.\n"
+        "- Fluently understand and converse in Afaan Oromoo, Amharic (አማርኛ), Tigrinya (ትግርኛ), English, French, Arabic (العربية), and Swahili (Kiswahili).\n"
+        "- Reply in the language requested by the user, defaulting to their preference if not specified. If they ask in Amharic, reply in fluent Amharic script. If they ask in Afaan Oromoo, reply in natural, authentic Afaan Oromoo. If they ask in Tigrinya, reply in accurate Tigrinya script. If in Arabic, reply in elegant modern standard Arabic.\n"
+        "- Never invent translations of technical product measurements or prices (always retain prices in ETB).\n\n"
         "You have access to the `search_store` tool. You MUST use it whenever the user asks to find, show, or look for products, "
         "especially when they specify prices, colors, categories, or sorting. "
         "Do not invent products. Always use the search tool to find real inventory.\n\n"
@@ -101,7 +116,7 @@ def embed_text(text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> list[float]:
     except APIError as e:
         raise AIOfflineError(f"Embedding failed: {str(e)}")
 
-def stream_chat_response(message: str, history: list[dict]):
+def stream_chat_response(message: str, history: list[dict], language: str = "om"):
     client = get_client()
     if not client:
         yield "AI Assistant is currently offline. Please set GEMINI_API_KEY."
@@ -117,7 +132,7 @@ def stream_chat_response(message: str, history: list[dict]):
     chat = client.chats.create(
         model=CHAT_MODEL,
         config=types.GenerateContentConfig(
-            system_instruction=get_system_instruction(),
+            system_instruction=get_system_instruction(language=language),
             tools=[search_store],
             temperature=0.3
         )

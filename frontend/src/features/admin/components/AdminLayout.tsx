@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Menu, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import AdminSidebar from "./AdminSidebar";
+import LanguageSelector from "@/shared/components/layout/LanguageSelector";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   title = "Dashboard Overview",
   subtitle = "Live operational and catalog telemetry",
 }) => {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -46,9 +49,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
+            <LanguageSelector variant="nav" />
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-plum-500/10 text-plum-300 border border-plum-500/20">
               <Shield className="w-3.5 h-3.5" />
-              Staff Environment
+              {t("admin.staffAuth", "Staff Environment")}
             </span>
           </div>
         </header>

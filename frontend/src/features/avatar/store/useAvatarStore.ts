@@ -235,11 +235,15 @@ interface AvatarStore extends AvatarState {
     v: boolean,
   ) => void;
 
+  isEditing: boolean;
+
   fetchAvatar: () => Promise<void>;
 
   confirmAvatar: () => Promise<void>;
 
   enterEditMode: () => void;
+
+  exitEditMode: () => void;
 
   resetAvatar: () => Promise<void>;
 
@@ -264,6 +268,8 @@ export const useAvatarStore =
     // ────────────────────────────────────────────────────────────────────────
 
     isConfirmed: false,
+
+    isEditing: false,
 
     currentAnimation: 'idle',
 
@@ -467,6 +473,7 @@ export const useAvatarStore =
         set({
           ...payload,
           isConfirmed: true,
+          isEditing: false,
           currentAnimation: 'idle',
           isLoading: false,
           notification:
@@ -511,7 +518,17 @@ export const useAvatarStore =
 
       set({
         isConfirmed: false,
+        isEditing: true,
         currentAnimation: 'idle',
+      });
+
+    },
+
+    exitEditMode: () => {
+
+      set({
+        isConfirmed: true,
+        isEditing: false,
       });
 
     },

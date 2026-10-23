@@ -5,7 +5,7 @@ import { lazy, Suspense } from 'react';
 const FeaturedCollectionSection = lazy(() => import('../components/FeaturedCollectionSection'));
 const CulturalCollectionSection = lazy(() => import('../components/CulturalCollectionSection'));
 const HowItWorksSection = lazy(() => import('../components/HowItWorksSection'));
-const Footer = lazy(() => import('../components/Footer'));
+const Footer = lazy(() => import('../../../shared/components/layout/Footer'));
 
 const HomePage = () => {
   return (

@@ -16,8 +16,10 @@ import {
 } from 'lucide-react';
 import { rentalApi } from '../api/rentalApi';
 import { RentalBooking, RentalBookingStatus, DepositStatus } from '../types';
+import { useTranslation } from 'react-i18next';
 
 export const CustomerRentalList: React.FC = () => {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState<RentalBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,21 +45,21 @@ export const CustomerRentalList: React.FC = () => {
   const getStatusBadge = (status: RentalBookingStatus) => {
     switch (status) {
       case 'confirmed':
-        return { label: 'Confirmed', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
+        return { label: t("rentals.confirmed", "Confirmed"), color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
       case 'ready_for_pickup':
-        return { label: 'Ready for Pickup', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' };
+        return { label: t("rentals.readyForPickup", "Ready for Pickup"), color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' };
       case 'out_on_rental':
-        return { label: 'Out on Rental', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' };
+        return { label: t("rentals.outOnRental", "Out on Rental"), color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' };
       case 'returned_pending_inspection':
-        return { label: 'Returned (Inspecting)', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' };
+        return { label: t("rentals.returnedPendingInspection", "Returned (Inspecting)"), color: 'bg-purple-500/10 text-purple-400 border-purple-500/30' };
       case 'completed':
-        return { label: 'Completed', color: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
+        return { label: t("rentals.completed", "Completed"), color: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
       case 'overdue':
-        return { label: 'Overdue', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
+        return { label: t("rentals.overdue", "Overdue"), color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
       case 'pending_payment':
-        return { label: 'Payment Pending', color: 'bg-purple-500/10 text-purple-300 border-purple-500/30' };
+        return { label: t("rentals.pendingPayment", "Payment Pending"), color: 'bg-purple-500/10 text-purple-300 border-purple-500/30' };
       case 'cancelled':
-        return { label: 'Cancelled', color: 'bg-zinc-800 text-zinc-500 border-zinc-700' };
+        return { label: t("rentals.cancelled", "Cancelled"), color: 'bg-zinc-800 text-zinc-500 border-zinc-700' };
       default:
         return { label: status, color: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
     }
@@ -66,13 +68,13 @@ export const CustomerRentalList: React.FC = () => {
   const getDepositBadge = (status: DepositStatus) => {
     switch (status) {
       case 'held':
-        return { label: 'Deposit Held', color: 'text-purple-400 bg-purple-500/10' };
+        return { label: t("rentals.depositHeld", "Deposit Held"), color: 'text-purple-400 bg-purple-500/10' };
       case 'released':
-        return { label: 'Deposit Refunded', color: 'text-emerald-400 bg-emerald-500/10' };
+        return { label: t("rentals.depositRefunded", "Deposit Refunded"), color: 'text-emerald-400 bg-emerald-500/10' };
       case 'partially_refunded':
-        return { label: 'Partially Refunded', color: 'text-blue-400 bg-blue-500/10' };
+        return { label: t("rentals.partiallyRefunded", "Partially Refunded"), color: 'text-blue-400 bg-blue-500/10' };
       case 'forfeited':
-        return { label: 'Deposit Forfeited', color: 'text-rose-400 bg-rose-500/10' };
+        return { label: t("rentals.depositForfeited", "Deposit Forfeited"), color: 'text-rose-400 bg-rose-500/10' };
       default:
         return { label: status, color: 'text-zinc-400 bg-zinc-800' };
     }
@@ -82,7 +84,7 @@ export const CustomerRentalList: React.FC = () => {
     return (
       <div className="py-20 flex flex-col items-center justify-center text-zinc-400 gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-        <p className="text-xs font-mono uppercase tracking-widest">Loading your rental reservations...</p>
+        <p className="text-xs font-mono uppercase tracking-widest">{t("common.loading", "Loading your rental reservations...")}</p>
       </div>
     );
   }
@@ -96,7 +98,7 @@ export const CustomerRentalList: React.FC = () => {
           onClick={fetchRentals}
           className="mt-4 px-6 py-2 bg-white text-black text-xs font-bold uppercase rounded-full hover:bg-zinc-200"
         >
-          Try Again
+          {t("common.tryAgain", "Try Again")}
         </button>
       </div>
     );
@@ -108,16 +110,15 @@ export const CustomerRentalList: React.FC = () => {
         <div className="h-16 w-16 mx-auto mb-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
           <Sparkles className="h-8 w-8" />
         </div>
-        <h3 className="text-xl font-serif text-white">No Rentals Yet</h3>
+        <h3 className="text-xl font-serif text-white">{t("rentals.noRentals", "No Rentals Yet")}</h3>
         <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-          Experience Ethiopia's finest traditional Kemis and bespoke cultural garments without purchasing.
-          Rent for weddings, holidays, or special celebrations.
+          {t("rentals.modalSubtitle", "Experience Ethiopia's finest traditional Kemis and bespoke cultural garments without purchasing. Rent for weddings, holidays, or special celebrations.")}
         </p>
         <a
           href="/products"
           className="inline-block mt-6 px-8 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white text-xs font-bold uppercase tracking-widest rounded-full hover:brightness-110 shadow-lg shadow-purple-900/30"
         >
-          Browse Rentable Pieces
+          {t("rentals.browseRentals", "Browse Rentable Pieces")}
         </a>
       </div>
     );
@@ -169,13 +170,13 @@ export const CustomerRentalList: React.FC = () => {
                       {booking.product_name}
                     </h4>
                     {booking.variant_name && (
-                      <p className="text-[11px] text-zinc-400 mt-0.5">Size: {booking.variant_name}</p>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">{t("rentals.size", "Size:")} {booking.variant_name}</p>
                     )}
 
                     <div className="flex items-center gap-2 mt-2 text-xs text-zinc-400 font-medium">
                       <Calendar className="h-3.5 w-3.5 text-purple-400" />
                       <span>
-                        {booking.start_date} → {booking.end_date} ({booking.duration_days} days)
+                        {booking.start_date} → {booking.end_date} ({booking.duration_days} {t("rentals.days", "days")})
                       </span>
                     </div>
                   </div>
@@ -184,7 +185,7 @@ export const CustomerRentalList: React.FC = () => {
                 {/* Financial Summary */}
                 <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
                   <div>
-                    <span className="text-zinc-400 text-[11px]">Total Paid:</span>
+                    <span className="text-zinc-400 text-[11px]">{t("rentals.totalDue", "Total Paid:")}</span>
                     <span className="ml-1.5 font-mono font-bold text-white">
                       {booking.total_amount} ETB
                     </span>
@@ -201,12 +202,12 @@ export const CustomerRentalList: React.FC = () => {
                   {booking.fulfillment_method === 'shop_pickup' ? (
                     <>
                       <Building2 className="h-3.5 w-3.5 text-purple-400" />
-                      <span>Atelier Pickup</span>
+                      <span>{t("rentals.pickupTitle", "Atelier Pickup")}</span>
                     </>
                   ) : (
                     <>
                       <Truck className="h-3.5 w-3.5 text-purple-400" />
-                      <span>Doorstep Delivery</span>
+                      <span>{t("rentals.deliveryTitle", "Doorstep Delivery")}</span>
                     </>
                   )}
                 </div>
@@ -215,7 +216,7 @@ export const CustomerRentalList: React.FC = () => {
                   onClick={() => setSelectedBooking(booking)}
                   className="px-4 py-1.5 text-xs font-semibold text-purple-400 hover:text-white hover:bg-purple-600 border border-purple-400/40 rounded-full transition-all flex items-center gap-1"
                 >
-                  <span>Details</span>
+                  <span>{t("common.details", "Details")}</span>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -252,28 +253,28 @@ export const CustomerRentalList: React.FC = () => {
               {/* Dates & Status */}
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-zinc-400">Rental Period:</span>
+                  <span className="text-zinc-400">{t("rentals.periodLabel", "Rental Period:")}</span>
                   <span className="font-medium text-white">
-                    {selectedBooking.start_date} to {selectedBooking.end_date} ({selectedBooking.duration_days} days)
+                    {selectedBooking.start_date} to {selectedBooking.end_date} ({selectedBooking.duration_days} {t("rentals.days", "days")})
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-zinc-400">Current Status:</span>
+                  <span className="text-zinc-400">{t("rentals.statusLabel", "Current Status:")}</span>
                   <span className="font-semibold text-purple-400 uppercase tracking-wider">
-                    {selectedBooking.status.replace(/_/g, ' ')}
+                    {getStatusBadge(selectedBooking.status).label}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-zinc-400">Fulfillment Method:</span>
+                  <span className="text-zinc-400">{t("rentals.fulfillmentLabel", "Fulfillment Method:")}</span>
                   <span className="text-white">
                     {selectedBooking.fulfillment_method === 'shop_pickup'
-                      ? 'Shop Pickup at Bole Atelier'
-                      : 'Doorstep Courier Delivery'}
+                      ? t("rentals.pickupLocation", "Shop Pickup at Bole Atelier")
+                      : t("rentals.courierDelivery", "Doorstep Courier Delivery")}
                   </span>
                 </div>
                 {selectedBooking.address_line && (
                   <div className="flex justify-between py-1 border-b border-white/5">
-                    <span className="text-zinc-400">Delivery Address:</span>
+                    <span className="text-zinc-400">{t("rentals.addressLabel", "Delivery Address:")}</span>
                     <span className="text-white text-right max-w-xs">{selectedBooking.address_line}</span>
                   </div>
                 )}
@@ -282,21 +283,21 @@ export const CustomerRentalList: React.FC = () => {
               {/* Financial Snapshot */}
               <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Rental Subtotal:</span>
+                  <span className="text-zinc-400">{t("rentals.subtotalLabel", "Rental Subtotal:")}</span>
                   <span className="font-mono text-white">{selectedBooking.rental_subtotal} ETB</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">Security Deposit:</span>
+                  <span className="text-zinc-400">{t("rentals.depositLabel", "Security Deposit:")}</span>
                   <span className="font-mono text-purple-400">+{selectedBooking.deposit_amount} ETB</span>
                 </div>
                 {selectedBooking.delivery_fee && Number(selectedBooking.delivery_fee) > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-zinc-400">Delivery Fee:</span>
+                    <span className="text-zinc-400">{t("rentals.deliveryFeeLabel", "Delivery Fee:")}</span>
                     <span className="font-mono text-white">+{selectedBooking.delivery_fee} ETB</span>
                   </div>
                 )}
                 <div className="pt-2 border-t border-white/10 flex justify-between font-bold">
-                  <span>Total Amount:</span>
+                  <span>{t("rentals.totalLabel", "Total Amount:")}</span>
                   <span className="font-mono text-white">{selectedBooking.total_amount} ETB</span>
                 </div>
               </div>
@@ -305,7 +306,7 @@ export const CustomerRentalList: React.FC = () => {
               <div className="p-3 rounded-2xl bg-purple-500/5 border border-purple-500/20 text-xs text-purple-300 flex items-start gap-2.5">
                 <ShieldCheck className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed text-[11px]">
-                  Deposit status: <strong className="uppercase">{selectedBooking.deposit_status}</strong>.
+                  Deposit status: <strong className="uppercase">{getDepositBadge(selectedBooking.deposit_status).label}</strong>.
                   Please return the garment on or before <strong>{selectedBooking.end_date}</strong>.
                   Our atelier will inspect the piece and release your deposit within 24 hours.
                 </p>
@@ -316,7 +317,7 @@ export const CustomerRentalList: React.FC = () => {
                   onClick={() => setSelectedBooking(null)}
                   className="px-6 py-2 bg-white text-black font-semibold text-xs uppercase tracking-wider rounded-full hover:bg-zinc-200"
                 >
-                  Close
+                  {t("common.close", "Close")}
                 </button>
               </div>
             </motion.div>

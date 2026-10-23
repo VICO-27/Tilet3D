@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { 
   CheckCircle2, 
   Printer, 
@@ -18,6 +19,7 @@ import { orderApi, OrderDetailType, PaymentInfoType } from "../api/orderApi";
 import { useCartStore } from "../../../app/store/useCartStore";
 
 const CheckoutSuccessPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const orderId = searchParams.get("order_id") || searchParams.get("orderId");
@@ -113,10 +115,10 @@ const CheckoutSuccessPage = () => {
               <ShieldCheck className="h-8 w-8 text-plum-600 absolute inset-0 m-auto animate-pulse" />
             </div>
             <h2 className="font-serif text-2xl font-normal text-stone-900">
-              Verifying Payment with Chapa...
+              {t("checkout.verifyingPayment", "Verifying Payment with Chapa...")}
             </h2>
             <p className="text-sm text-stone-500 max-w-md">
-              Please wait a moment while we confirm your transaction and generate your official order receipt.
+              {t("checkout.verifyingDesc", "Please wait a moment while we confirm your transaction and generate your official order receipt.")}
             </p>
           </div>
         ) : error || !order ? (
@@ -125,23 +127,23 @@ const CheckoutSuccessPage = () => {
               <AlertCircle className="h-8 w-8" />
             </div>
             <h2 className="font-serif text-2xl font-normal text-stone-900">
-              Receipt Unavailable
+              {t("checkout.receiptUnavailable", "Receipt Unavailable")}
             </h2>
             <p className="text-stone-600 text-sm max-w-md mx-auto">
-              {error || "We couldn't retrieve the receipt details for this order."}
+              {error || t("checkout.receiptUnavailableDesc", "We couldn't retrieve the receipt details for this order.")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
               <Link
                 to="/orders"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-plum-600 text-white text-sm font-medium hover:bg-plum-700 transition"
               >
-                <Package className="h-4 w-4" /> Go to My Orders
+                <Package className="h-4 w-4" /> {t("checkout.goToOrders", "Go to My Orders")}
               </Link>
               <Link
                 to="/"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-stone-300 bg-white text-stone-700 text-sm font-medium hover:bg-stone-50 transition"
               >
-                Return to Home
+                {t("checkout.returnHome", "Return to Home")}
               </Link>
             </div>
           </div>
@@ -153,11 +155,10 @@ const CheckoutSuccessPage = () => {
                 <CheckCircle2 className="h-9 w-9 stroke-[2.2]" />
               </div>
               <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-stone-900">
-                Payment Successful!
+                {t("checkout.successTitle", "Payment Successful!")}
               </h1>
               <p className="text-stone-600 text-sm sm:text-base max-w-lg mx-auto">
-                Thank you for your order, <span className="font-semibold text-stone-800">{order.full_name}</span>. 
-                Your payment has been verified and your custom Habesha couture is now being processed.
+                {t("checkout.successDesc", "Your cultural couture order has been placed successfully and sent to our master weavers.")}
               </p>
 
               {/* Action Toolbar */}
@@ -168,21 +169,21 @@ const CheckoutSuccessPage = () => {
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-800 text-xs sm:text-sm font-medium shadow-sm transition-all"
                 >
                   <Printer className="h-4 w-4 text-plum-600" />
-                  Print / Save Receipt
+                  {t("checkout.printReceipt", "Print / Save Receipt")}
                 </button>
                 <Link
                   to={`/orders/${order.id}`}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-plum-600 hover:bg-plum-700 text-white text-xs sm:text-sm font-medium shadow-sm transition-all"
                 >
                   <Package className="h-4 w-4" />
-                  View Order Status
+                  {t("checkout.viewOrderStatus", "View Order Status")}
                 </Link>
                 <Link
                   to="/products"
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 text-stone-800 text-xs sm:text-sm font-medium shadow-sm transition-all"
                 >
                   <ShoppingBag className="h-4 w-4 text-stone-500" />
-                  Continue Shopping
+                  {t("checkout.continueShopping", "Continue Shopping")}
                 </Link>
               </div>
             </div>
@@ -200,24 +201,24 @@ const CheckoutSuccessPage = () => {
                       TILET3D
                     </span>
                     <span className="text-[10px] tracking-widest font-mono uppercase bg-plum-50 text-plum-700 px-2 py-0.5 rounded-full border border-plum-100">
-                      Official Receipt
+                      {t("checkout.officialReceipt", "Official Receipt")}
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 mt-1">
-                    Ethiopian Heritage Fashion & Custom 3D Tailoring
+                    {t("checkout.atelierSubtitle", "Ethiopian Heritage Fashion & Custom 3D Tailoring")}
                   </p>
                   <p className="text-xs text-stone-400">
-                    Addis Ababa, Ethiopia • support@tilet3d.com
+                    {t("checkout.atelierLocation", "Addis Ababa, Ethiopia • support@tilet3d.com")}
                   </p>
                 </div>
 
                 <div className="sm:text-right space-y-1 text-xs">
-                  <div className="text-stone-400 uppercase font-mono tracking-wider text-[10px]">Order Number</div>
+                  <div className="text-stone-400 uppercase font-mono tracking-wider text-[10px]">{t("checkout.orderNumber", "Order Number")}</div>
                   <div className="font-mono font-bold text-sm sm:text-base text-stone-900">
                     {order.order_number}
                   </div>
                   <div className="text-stone-500">
-                    Date: <span className="font-medium text-stone-700">{formatDate(order.created_at)}</span>
+                    {t("checkout.orderDate", "Date:")} <span className="font-medium text-stone-700">{formatDate(order.created_at)}</span>
                   </div>
                 </div>
               </div>
@@ -225,23 +226,23 @@ const CheckoutSuccessPage = () => {
               {/* Status and Gateway Badges */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-stone-50 border border-stone-100 mb-8 text-xs">
                 <div>
-                  <span className="text-stone-400 block uppercase font-mono text-[10px]">Payment Status</span>
+                  <span className="text-stone-400 block uppercase font-mono text-[10px]">{t("checkout.paymentStatus", "Payment Status")}</span>
                   <div className="mt-1 inline-flex items-center gap-1.5 font-bold text-emerald-700">
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    PAID (Verified via Chapa)
+                    {t("checkout.paidVerified", "PAID (Verified via Chapa)")}
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-stone-400 block uppercase font-mono text-[10px]">Payment Provider</span>
+                  <span className="text-stone-400 block uppercase font-mono text-[10px]">{t("checkout.paymentProvider", "Payment Provider")}</span>
                   <div className="mt-1 inline-flex items-center gap-1.5 font-medium text-stone-800">
                     <CreditCard className="h-4 w-4 text-plum-600" />
-                    Chapa Gateway
+                    {t("checkout.chapaGateway", "Chapa Gateway")}
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-stone-400 block uppercase font-mono text-[10px]">Transaction ID</span>
+                  <span className="text-stone-400 block uppercase font-mono text-[10px]">{t("checkout.transactionId", "Transaction ID")}</span>
                   <div className="mt-1 font-mono text-stone-700 truncate" title={payment?.transaction_id || payment?.id || "N/A"}>
                     {payment?.transaction_id || payment?.id || "Verified"}
                   </div>
@@ -278,16 +279,16 @@ const CheckoutSuccessPage = () => {
               {/* Order Items Table */}
               <div className="py-8">
                 <h3 className="text-xs font-mono uppercase tracking-wider text-stone-400 mb-4">
-                  Purchased Items
+                  {t("checkout.itemsOrdered", "Items Ordered")}
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-stone-200 text-stone-400 font-mono text-[11px] uppercase tracking-wider">
-                        <th className="pb-3 font-normal">Item Description</th>
-                        <th className="pb-3 font-normal text-center">Qty</th>
-                        <th className="pb-3 font-normal text-right">Price</th>
-                        <th className="pb-3 font-normal text-right">Total</th>
+                        <th className="pb-3 font-normal">{t("checkout.itemDescription", "Item Description")}</th>
+                        <th className="pb-3 font-normal text-center">{t("checkout.qty", "Qty")}</th>
+                        <th className="pb-3 font-normal text-right">{t("checkout.price", "Price")}</th>
+                        <th className="pb-3 font-normal text-right">{t("checkout.total", "Total")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100 text-stone-800">
@@ -328,25 +329,25 @@ const CheckoutSuccessPage = () => {
 
                   <div className="w-full sm:w-72 space-y-2.5 text-sm">
                     <div className="flex justify-between text-stone-600">
-                      <span>Subtotal</span>
+                      <span>{t("checkout.subtotal", "Subtotal")}</span>
                       <span className="font-mono">ETB {Number(order.subtotal).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-stone-600">
-                      <span>Shipping Fee</span>
+                      <span>{t("checkout.shippingFee", "Shipping")}</span>
                       <span className="font-mono">ETB {Number(order.shipping_fee).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-stone-600">
-                      <span>VAT (15%)</span>
+                      <span>{t("checkout.tax", "Tax (15% VAT)")}</span>
                       <span className="font-mono">ETB {Number(order.tax).toLocaleString()}</span>
                     </div>
                     {Number(order.discount) > 0 && (
                       <div className="flex justify-between text-emerald-600">
-                        <span>Discount</span>
+                        <span>{t("checkout.discount", "Discount")}</span>
                         <span className="font-mono">- ETB {Number(order.discount).toLocaleString()}</span>
                       </div>
                     )}
                     <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline">
-                      <span className="font-serif font-bold text-stone-900 text-base">Total Amount Paid</span>
+                      <span className="font-serif font-bold text-stone-900 text-base">{t("checkout.totalDue", "Total Amount Paid")}</span>
                       <span className="font-mono font-bold text-xl text-plum-700">
                         ETB {Number(order.total).toLocaleString()}
                       </span>

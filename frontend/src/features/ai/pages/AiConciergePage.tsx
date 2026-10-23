@@ -1,22 +1,26 @@
-import React, { useState, useRef, useEffect, FormEvent } from "react";
+import React, { useState, useRef, useEffect, FormEvent, useMemo } from "react";
 import { Sparkles, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import PageLayout from "@/shared/components/layout/PageLayout";
 import { useAiChat } from "../hooks/useAiChat";
 import { ProductPreviewCard } from "../components/ProductPreviewCard";
 
-const SUGGESTIONS = [
-  "What's new in Habesha Kemis?",
-  "Find me a wedding outfit",
-  "What colors are available in Netela?",
-  "How does the 3D avatar try-on work?",
-];
-
 const AiConciergePage: React.FC = () => {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
-  const { messages, isGenerating, send } = useAiChat(
-    "Welcome to the Tilet3D Atelier. I'm your personal styling concierge — ask me about our collections, sizing, custom orders, or how the 3D try-on works."
-  );
+  const initialGreeting = useMemo(() => {
+    return t("ai.subtitle", "Welcome to the Tilet3D Atelier. I'm your personal styling concierge — ask me about our collections, sizing, custom orders, or how the 3D try-on works.");
+  }, [t]);
+
+  const { messages, isGenerating, send } = useAiChat(initialGreeting);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = useMemo(() => [
+    t("ai.suggestions.wedding", "Find me a wedding outfit"),
+    t("ai.suggestions.kemis", "What's new in Habesha Kemis?"),
+    t("ai.suggestions.netela", "What colors are available in Netela?"),
+    t("ai.suggestions.tryon", "How does the 3D avatar try-on work?"),
+  ], [t]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,7 +47,7 @@ const AiConciergePage: React.FC = () => {
                   <Sparkles size={14} /> Tilet3D Atelier
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900 dark:text-white">
-                  How can I help you today?
+                  {t("ai.title", "How can I help you today?")}
                 </h1>
               </div>
             )}
@@ -81,7 +85,7 @@ const AiConciergePage: React.FC = () => {
           <div className="max-w-3xl mx-auto px-6">
             {!hasStarted && (
               <div className="flex gap-2 overflow-x-auto mb-3 text-xs">
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
@@ -99,7 +103,7 @@ const AiConciergePage: React.FC = () => {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about styles, sizing, custom orders..."
+                placeholder={t("ai.placeholder", "Ask about styles, sizing, custom orders...")}
                 className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none py-2"
               />
               <button

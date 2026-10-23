@@ -13,10 +13,13 @@ export const PreferencesSetting: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
 
   const languageOptions = [
-    { code: "en", label: "English", nativeLabel: "English" },
+    { code: "om", label: t("settings.languages.om", "Afaan Oromoo"), nativeLabel: "Afaan Oromoo" },
     { code: "am", label: t("settings.languages.am", "Amharic"), nativeLabel: "አማርኛ" },
-    { code: "om", label: t("settings.languages.om", "Afaan Oromo"), nativeLabel: "Afaan Oromo" },
+    { code: "en", label: t("settings.languages.en", "English"), nativeLabel: "English" },
+    { code: "ti", label: t("settings.languages.ti", "Tigrinya"), nativeLabel: "ትግርኛ" },
     { code: "fr", label: t("settings.languages.fr", "French"), nativeLabel: "Français" },
+    { code: "ar", label: t("settings.languages.ar", "Arabic"), nativeLabel: "العربية" },
+    { code: "sw", label: t("settings.languages.sw", "Swahili"), nativeLabel: "Kiswahili" },
   ];
 
   const handleLanguageChange = (code: string) => {

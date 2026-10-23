@@ -7,3 +7,4 @@ class ChatMessageSerializer(serializers.Serializer):
         required=False,
         default=list
     )
+    language = serializers.CharField(required=False, default="om")

@@ -1,7 +1,7 @@
-// cspell:ignore Tilet
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { productApi } from '../api/productApi';
 import { useProducts } from '../hooks/useProducts';
 import { useCartStore } from '@/app/store/useCartStore';
@@ -19,6 +19,7 @@ import RentalBookingModal from '@/features/rentals/components/RentalBookingModal
 import { Sparkles } from 'lucide-react';
 
 const ProductDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { products } = useProducts(); // for the related-products strip
@@ -49,7 +50,7 @@ const ProductDetailPage: React.FC = () => {
         setLoading(false);
       } catch {
         if (!cancelled) {
-          setError('Product not found');
+          setError(t('detail.notFound', "This product couldn't be found."));
           setLoading(false);
         }
       }
@@ -60,7 +61,7 @@ const ProductDetailPage: React.FC = () => {
     return () => { 
       cancelled = true; 
     };
-  }, [id]);
+  }, [id, t]);
 
   const scrollToComments = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -68,17 +69,17 @@ const ProductDetailPage: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!selectedVariantId) {
-      showToast("Select a size or variant first", "error");
+      showToast(t("detail.selectSizeFirst", "Select a size or variant first"), "error");
       return;
     }
     if (!localStorage.getItem("tilet3d_access_token")) {
-      showToast("Please sign in to add to your bag", "error");
+      showToast(t("account.auth.signInToAddBag", "Please sign in to add to your bag"), "error");
       navigate("/account");
       return;
     }
     const success = await addToCart(selectedVariantId);
     if (success) {
-      showToast("Added to cart");
+      showToast(t("cart.addedToCart", "Added to cart"));
     }
   };
 
@@ -94,9 +95,9 @@ const ProductDetailPage: React.FC = () => {
     return (
       <PageLayout>
         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-          <p className="text-zinc-500">This product couldn't be found.</p>
+          <p className="text-zinc-500">{error || t('detail.notFound', "This product couldn't be found.")}</p>
           <button onClick={() => navigate('/products')} className="text-sm font-semibold text-plum-600 underline">
-            Back to collection
+            {t("products.backToCollection", "Back to collection")}
           </button>
         </div>
       </PageLayout>
@@ -115,7 +116,7 @@ const ProductDetailPage: React.FC = () => {
           className="fixed top-28 left-6 md:left-10 z-40 flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 bg-white/90 backdrop-blur-md border border-zinc-200 hover:border-zinc-400 rounded-full px-4 py-2.5 transition-colors shadow-lg"
         >
           <ArrowLeft size={16} />
-          Back
+          {t("common.back", "Back")}
         </button>
 
         {/* Gallery + Buy Box */}
@@ -135,7 +136,7 @@ const ProductDetailPage: React.FC = () => {
             </h1>
 
             <p className="text-xl font-semibold text-zinc-900 mt-4">
-              {selectedVariant?.price ? `${selectedVariant.price} ETB` : 'Bespoke Order'}
+              {selectedVariant?.price ? `${selectedVariant.price} ETB` : t("products.bespoke", "Bespoke Order")}
             </p>
 
             <p className="text-[15px] leading-relaxed text-zinc-600 mt-6">
@@ -146,7 +147,7 @@ const ProductDetailPage: React.FC = () => {
             {product.variants.length > 1 && (
               <div className="mt-8">
                 <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Select variant
+                  {t("detail.selectSize", "Select variant")}
                 </span>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {product.variants.map((v) => (
@@ -173,7 +174,7 @@ const ProductDetailPage: React.FC = () => {
                 disabled={addedToCart}
                 className="w-full py-4 bg-zinc-900 text-white text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-60"
               >
-                {addedToCart ? 'Added to Cart' : 'Add to Cart (Purchase)'}
+                {addedToCart ? t("products.card.addedToCart", "Added to Cart") : t("products.card.addToCart", "Add to Cart (Purchase)")}
               </button>
 
               <button
@@ -181,14 +182,14 @@ const ProductDetailPage: React.FC = () => {
                 className="w-full py-4 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:brightness-110 transition-all shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2 border border-purple-400/40"
               >
                 <Sparkles className="h-4 w-4 text-white" />
-                Rent This Garment
+                {t("detail.rentNow", "Rent This Garment")}
               </button>
 
               <button
                 onClick={() => navigate('/avatar')}
                 className="w-full py-4 bg-white text-zinc-900 border border-zinc-900 text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-colors"
               >
-                Try-on Avatar
+                {t("detail.tryOnNow", "Try-on Avatar")}
               </button>
             </div>
 

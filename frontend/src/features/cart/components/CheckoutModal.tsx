@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Phone, User, CreditCard, MapPin, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import apiClient from "../../../shared/api/apiClient";
 import { useCartStore } from "../../../app/store/useCartStore";
@@ -24,6 +25,7 @@ interface AddressItem {
 }
 
 export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps) => {
+  const { t } = useTranslation();
   const { cartTotal, fetchCart } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -163,9 +165,9 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
             <div className="flex items-center justify-between px-5 sm:px-8 py-4 sm:py-6 border-b border-stone-100 bg-stone-50/50 shrink-0">
               <div>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 mb-0.5 sm:mb-1">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Secure Encryption
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> {t("checkout.secureEncryption", "Secure Encryption")}
                 </div>
-                <h2 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight">Express Checkout</h2>
+                <h2 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight">{t("checkout.title", "Express Checkout")}</h2>
               </div>
               <button
                 onClick={onClose}
@@ -187,10 +189,10 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
               
               {/* Section 1: Contact Information */}
               <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">1. Contact & Recipient</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t("checkout.contact", "1. Contact & Recipient")}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Full Name</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.fullName", "Full Name")}</label>
                     <div className="relative">
                       <User className="absolute left-4 top-3.5 h-4 w-4 text-stone-400" />
                       <input
@@ -206,7 +208,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Phone Number</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.phone", "Phone Number")}</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-3.5 h-4 w-4 text-stone-400" />
                       <input
@@ -225,11 +227,11 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
 
               {/* Section 2: Delivery Location */}
               <div className="space-y-4 pt-2">
-                <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">2. Delivery Address</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-stone-400">{t("checkout.shipping", "2. Delivery Address")}</p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Region</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.region", "Region")}</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-3.5 h-4 w-4 text-stone-400" />
                       <input
@@ -245,7 +247,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">City</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.city", "City")}</label>
                     <input
                       type="text"
                       name="city"
@@ -260,7 +262,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Sub City</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.subCity", "Sub City")}</label>
                     <input
                       type="text"
                       name="sub_city"
@@ -271,7 +273,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Woreda</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.woreda", "Woreda")}</label>
                     <input
                       type="text"
                       name="woreda"
@@ -282,7 +284,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">House No.</label>
+                    <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.houseNo", "House No.")}</label>
                     <input
                       type="text"
                       name="house_no"
@@ -295,7 +297,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Delivery Note (Optional)</label>
+                  <label className="block text-[11px] font-medium text-stone-600 mb-1.5">{t("checkout.deliveryNote", "Delivery Note (Optional)")}</label>
                   <textarea
                     name="note"
                     rows={2}
@@ -311,22 +313,22 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
               <div className="pt-4 sm:pt-6 border-t border-stone-100 bg-white sticky bottom-0 space-y-3 sm:space-y-4 pb-2">
                 <div className="space-y-2 sm:space-y-3 px-1">
                   <div className="flex justify-between text-xs text-stone-500">
-                    <span>Subtotal</span>
+                    <span>{t("cart.subtotal", "Subtotal")}</span>
                     <span>ETB {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs text-stone-500">
-                    <span>Tax (15% VAT)</span>
+                    <span>{t("checkout.tax", "Tax (15% VAT)")}</span>
                     <span>ETB {tax.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs text-stone-500">
-                    <span>Shipping ({formData.city || "Pending"})</span>
+                    <span>{t("checkout.shippingFee", "Shipping")} ({formData.city || "Pending"})</span>
                     <span>ETB {shipping.toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-dashed border-stone-200">
                   <div className="w-full sm:w-auto text-left flex flex-col justify-center">
-                    <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-stone-400">Total Due</p>
+                    <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-stone-400">{t("checkout.totalDue", "Total Due")}</p>
                     <p className="font-serif text-xl sm:text-2xl font-bold text-stone-900">
                       ETB {grandTotal.toLocaleString()}
                     </p>
@@ -341,11 +343,11 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                     {loading ? (
                       <>
                         <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Processing...
+                        {t("common.loading", "Processing...")}
                       </>
                     ) : (
                       <>
-                        Pay with Chapa <CreditCard className="h-4 w-4" />
+                        {t("checkout.chapa", "Pay with Chapa")} <CreditCard className="h-4 w-4" />
                       </>
                     )}
                   </motion.button>

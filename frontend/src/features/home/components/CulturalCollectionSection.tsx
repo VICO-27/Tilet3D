@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { productApi } from "../../products/api/productApi";
 import { Product } from "../../products/types";
 import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from "../../../shared/utils/cloudinary";
@@ -101,6 +102,7 @@ interface CulturalRowProps {
 }
 
 const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalRowProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const trackRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -313,8 +315,8 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
           onClick={() => navigate(`/products/category/${dbCategory.toLowerCase()}`)}
           className="text-xs md:text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors uppercase tracking-widest whitespace-nowrap ml-4"
         >
-          <span className="hidden md:inline">Explore All →</span>
-          <span className="md:hidden">Explore →</span>
+          <span className="hidden md:inline">{t("cultural.exploreAll", "Explore All →")}</span>
+          <span className="md:hidden">{t("cultural.explore", "Explore →")}</span>
         </button>
       </div>
 
@@ -331,7 +333,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
         </div>
       ) : displayItems.length === 0 ? (
         <div className="w-full h-[100px] flex items-center justify-center text-gray-400">
-          No products found for {displayTitle}.
+          {t("cultural.noProducts", "No products found for")} {displayTitle}.
         </div>
       ) : (
         /* FIXED STRUCTURE: overflow-x-auto is on the bounded w-full wrapper! */
@@ -367,6 +369,7 @@ const CulturalRow = ({ dbCategory, displayTitle, topText, direction }: CulturalR
 // 2. MAIN SECTION COMPONENT
 // ==========================================
 const CulturalCollectionSection = () => {
+  const { t } = useTranslation();
   return (
     <motion.section 
       initial={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -397,41 +400,41 @@ const CulturalCollectionSection = () => {
 
       <div className="w-full px-8 md:px-16 mb-24 text-center z-20">
         <h2 className="text-5xl md:text-7xl font-semibold tracking-tight text-gray-900 mb-6">
-          Cultural Heritage.
+          {t("cultural.title", "Cultural Heritage.")}
         </h2>
         <div className="flex flex-wrap justify-center gap-4 text-lg md:text-2xl font-normal text-gray-400">
-          <span className="text-gray-900">Wedding.</span>
-          <span className="text-gray-900">Oromo.</span>
-          <span className="text-gray-900">Tigray.</span>
-          <span className="text-gray-900">Amhara.</span>
+          <span className="text-gray-900">{t("cultural.wedding", "Wedding.")}</span>
+          <span className="text-gray-900">{t("cultural.oromo", "Oromo.")}</span>
+          <span className="text-gray-900">{t("cultural.tigray", "Tigray.")}</span>
+          <span className="text-gray-900">{t("cultural.amhara", "Amhara.")}</span>
         </div>
       </div>
 
       <CulturalRow 
         dbCategory="Wedding"
-        displayTitle="Wedding Collection" 
+        displayTitle={t("cultural.weddingDesc", "Wedding Collection")} 
         direction="left"
       />
       
       <CulturalRow 
         dbCategory="Oromo"
-        displayTitle="Oromo" 
+        displayTitle={t("cultural.oromo", "Oromo")} 
         direction="right"
-        topText="A tapestry of tradition. Each thread tells a story of generations past, woven into the fabric of modern elegance."
+        topText={t("cultural.oromoDesc", "A tapestry of tradition. Each thread tells a story of generations past, woven into the fabric of modern elegance.")}
       />
 
       <CulturalRow 
         dbCategory="Tigray"
-        displayTitle="Tigray" 
+        displayTitle={t("cultural.tigray", "Tigray")} 
         direction="left"
-        topText="Rooted in history. The vibrant patterns and meticulous craftsmanship reflect a rich, diverse heritage spanning centuries."
+        topText={t("cultural.tigrayDesc", "Rooted in history. The vibrant patterns and meticulous craftsmanship reflect a rich, diverse heritage spanning centuries.")}
       />
 
       <CulturalRow 
         dbCategory="Amhara"
-        displayTitle="Amhara" 
+        displayTitle={t("cultural.amhara", "Amhara")} 
         direction="right"
-        topText="Timeless grace. Celebrating the distinct beauty and enduring spirit of Ethiopian artistry in every stitch."
+        topText={t("cultural.amharaDesc", "Timeless grace. Celebrating the distinct beauty and enduring spirit of Ethiopian artistry in every stitch.")}
       />
     </motion.section>
   );

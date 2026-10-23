@@ -9,6 +9,7 @@ import { CartDrawer } from "../../../features/cart/components/CartDrawer";
 import { MobileDock } from "./MobileDock";
 import { useScrollDirection } from "../../hooks/useScrollDirection";
 import { useAssistantStore } from "../../../features/ai/store/useAssistantStore";
+import { LanguageSelector } from "./LanguageSelector";
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -164,7 +165,9 @@ const Navbar = () => {
             </button>
           </nav>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <LanguageSelector variant="nav" />
+
             <button
               onClick={() => setSearchOpen((v) => !v)}
               aria-label="Search"

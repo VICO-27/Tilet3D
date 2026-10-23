@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShoppingBag, Sparkles, Sliders, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '../../../shared/components/layout/Navbar';
 import { AvatarViewer } from '../components/AvatarViewer';
 import { AvatarForm } from '../components/AvatarForm';
 import { useAvatarStore } from '../store/useAvatarStore';
 
 const AvatarPage = () => {
+  const { t } = useTranslation();
   const fetchAvatar = useAvatarStore((s) => s.fetchAvatar);
-  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
+  const isEditing = useAvatarStore((s) => s.isEditing);
+  const enterEditMode = useAvatarStore((s) => s.enterEditMode);
+  const exitEditMode = useAvatarStore((s) => s.exitEditMode);
   const hasAttemptedFetch = useAvatarStore((s) => s.hasAttemptedFetch);
   const isLoading = useAvatarStore((s) => s.isLoading);
 
   // Prevent the measurement card from flashing before the initial fetch completes
   const [isInitializing, setIsInitializing] = useState(true);
-  const [showPanel, setShowPanel] = useState(false);
   const [isCardDismissed, setIsCardDismissed] = useState(false);
 
   useEffect(() => {
@@ -27,7 +30,14 @@ const AvatarPage = () => {
     }
   }, [hasAttemptedFetch, isLoading]);
 
-  const isHidden = isInitializing || isConfirmed || !showPanel;
+  // When edit mode is entered, dismiss announcement card automatically
+  useEffect(() => {
+    if (isEditing) {
+      setIsCardDismissed(true);
+    }
+  }, [isEditing]);
+
+  const isHidden = isInitializing || !isEditing;
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#f8f8f9] overflow-hidden">
@@ -50,7 +60,7 @@ const AvatarPage = () => {
                 type="button"
                 onClick={() => setIsCardDismissed(true)}
                 className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-                title="Dismiss to view 3D model"
+                title={t("common.close", "Dismiss")}
                 aria-label="Dismiss announcement"
               >
                 <X className="w-4 h-4" />
@@ -58,15 +68,15 @@ const AvatarPage = () => {
 
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-mono font-medium tracking-[0.25em] uppercase bg-plum-500/10 text-plum-700 dark:text-plum-300 border border-plum-500/20 mb-3.5 shadow-xs">
                 <Sparkles className="w-3 h-3 text-plum-600 animate-spin" style={{ animationDuration: '6s' }} />
-                <span>Virtual Fitting Atelier</span>
+                <span>{t("avatar.title", "Virtual Fitting Atelier")}</span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-stone-900 dark:text-white mb-2.5">
-                Coming Soon!
+                {t("avatar.comingSoon", "Coming Soon")}
               </h1>
 
               <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 font-light leading-relaxed max-w-xs sm:max-w-sm mb-6">
-                Our personalized 3D avatar calibration and virtual fitting room experience is currently being crafted.
+                {t("avatar.subtitle", "Our personalized 3D avatar calibration and virtual fitting room experience is currently being crafted.")}
               </p>
 
               {/* Action buttons — formatted cleanly without any overlap on phone screens */}
@@ -76,20 +86,17 @@ const AvatarPage = () => {
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-plum-600 hover:bg-plum-700 text-white shadow-md hover:shadow-lg transition-all duration-200 shrink-0"
                 >
                   <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                  <span>Shop Collection</span>
+                  <span>{t("nav.collection", "Shop Collection")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowPanel(true);
-                    useAvatarStore.setState({ isConfirmed: false });
-                  }}
+                  onClick={enterEditMode}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase border border-stone-300 hover:border-stone-400 bg-white/80 hover:bg-white text-stone-800 transition-all duration-200 shrink-0"
                 >
                   <Sliders className="w-3.5 h-3.5 text-plum-600" />
-                  <span>{showPanel ? "Controls Active" : "Studio Controls"}</span>
+                  <span>{isEditing ? t("avatar.controlsActive", "Controls Active") : t("avatar.controls", "Studio Controls")}</span>
                 </button>
               </div>
             </div>
@@ -109,7 +116,7 @@ const AvatarPage = () => {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-plum-600"></span>
                 </span>
                 <span className="font-serif text-xs sm:text-sm font-medium text-stone-900 dark:text-stone-100 tracking-wide">
-                  Coming Soon!
+                  {t("avatar.comingSoon", "Coming Soon")}
                 </span>
               </button>
 
@@ -120,7 +127,7 @@ const AvatarPage = () => {
                 className="group inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-plum-700 dark:text-plum-400 hover:text-stone-900 dark:hover:text-white transition-colors shrink-0"
               >
                 <ShoppingBag className="w-3.5 h-3.5 text-plum-600 dark:text-plum-400" />
-                <span>Shop Collection</span>
+                <span>{t("nav.collection", "Shop Collection")}</span>
                 <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-stone-700 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
               </Link>
             </div>
@@ -146,10 +153,7 @@ const AvatarPage = () => {
           {/* Close button for calibration panel */}
           <button
             type="button"
-            onClick={() => {
-              setShowPanel(false);
-              useAvatarStore.setState({ isConfirmed: true });
-            }}
+            onClick={exitEditMode}
             className="absolute top-3.5 right-4 p-2 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition-colors z-10"
             title="Close editor"
             aria-label="Close editor"

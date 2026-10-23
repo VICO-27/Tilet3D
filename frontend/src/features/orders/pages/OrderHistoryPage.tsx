@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Package, ArrowUpRight, ChevronRight, Clock, CheckCircle2,
   Truck, XCircle, Search, LogIn, ShoppingBag, CreditCard,
@@ -162,6 +163,7 @@ function UnauthenticatedOrdersView() {
 }
 
 const OrderHistoryPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -202,7 +204,7 @@ const OrderHistoryPage = () => {
       {error !== "session_expired" && (
         <main className="mx-auto max-w-4xl px-6 py-12 md:px-8">
           <header className="mb-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-600 mb-3">Your Atelier</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-600 mb-3">{t("orders.subtitle", "Your Atelier")}</p>
             
             {/* Top Navigation Tabs: Purchases vs Rentals */}
             <div className="flex items-center gap-2 mb-6 p-1 bg-slate-200/80 rounded-full w-fit">
@@ -214,7 +216,7 @@ const OrderHistoryPage = () => {
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                Purchases
+                {t("orders.title", "Purchases")}
               </button>
               <button
                 onClick={() => setActiveTab("rentals")}
@@ -225,13 +227,13 @@ const OrderHistoryPage = () => {
                 }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Rentals
+                {t("rentals.title", "Rentals")}
               </button>
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-                {activeTab === "purchases" ? "Order History" : "Rental Reservations"}
+                {activeTab === "purchases" ? t("orders.title", "Order History") : t("rentals.modalTitle", "Rental Reservations")}
               </h1>
 
               {activeTab === "purchases" && !isLoading && orders.length > 0 && (
@@ -244,7 +246,7 @@ const OrderHistoryPage = () => {
                         filter === f ? "bg-slate-900 text-white" : "bg-white text-slate-500 border border-slate-200 hover:border-slate-300"
                       }`}
                     >
-                      {f}
+                      {f === "all" ? t("orders.statuses.all", "All") : t(`orders.statuses.${f}`, f)}
                     </button>
                   ))}
                 </div>
@@ -260,7 +262,7 @@ const OrderHistoryPage = () => {
           {isLoading ? (
             <div className="py-24 text-center flex flex-col items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-              <p className="mt-4 text-sm text-slate-500">Loading your orders...</p>
+              <p className="mt-4 text-sm text-slate-500">{t("common.loading", "Loading your orders...")}</p>
             </div>
           ) : error ? (
             <div className="py-12 text-center text-rose-500">{error}</div>
@@ -269,21 +271,21 @@ const OrderHistoryPage = () => {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-violet-600">
                 <Package className="h-7 w-7" />
               </div>
-              <h2 className="mt-6 font-serif text-2xl font-semibold">Nothing here yet</h2>
-              <p className="mt-2 max-w-sm text-sm text-slate-500">Explore the collection, try a piece on your avatar, and place your first custom-fit order.</p>
+              <h2 className="mt-6 font-serif text-2xl font-semibold">{t("orders.noOrders", "Nothing here yet")}</h2>
+              <p className="mt-2 max-w-sm text-sm text-slate-500">{t("orders.subtitle", "Explore the collection, try a piece on your avatar, and place your first custom-fit order.")}</p>
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate("/products")}
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-violet-600"
               >
-                Browse Collection
+                {t("orders.startShopping", "Browse Collection")}
                 <ArrowUpRight className="h-4 w-4" />
               </motion.button>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="py-12 text-center text-slate-500 flex flex-col items-center">
               <Search className="h-8 w-8 mb-3 opacity-20" />
-              <p>No orders found for this status.</p>
+              <p>{t("orders.noOrders", "No orders found for this status.")}</p>
             </div>
           ) : (
             <div className="space-y-4">

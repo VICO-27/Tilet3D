@@ -10,6 +10,7 @@ import BrandLoader from '@/shared/components/BrandLoader';
 import ProductCard, { Product } from '../components/ProductCard';
 import ProductsSkeleton from '../components/ProductsSkeleton';
 import { Search, X, ArrowRight, SlidersHorizontal, Sparkles, Clock, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { FilterDrawer } from '../components/FilterDrawer';
 
 const STORY_VARIATIONS = [
@@ -27,6 +28,7 @@ const CUTOFF_CATEGORY = "netela";
 // MAIN PAGE COMPONENT
 // ==========================================
 const ProductsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const navigate = useNavigate();
@@ -376,9 +378,9 @@ const ProductsPage: React.FC = () => {
                   <Search className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold">Search Filter Active</p>
+                  <p className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold">{t("products.filters.activeFilter", "Search Filter Active")}</p>
                   <h1 className="font-serif text-2xl font-medium text-stone-900">
-                    {searchQuery ? `Results for "${searchQuery}"` : "Filtered Results"}
+                    {searchQuery ? `${t("common.search", "Search")}: "${searchQuery}"` : t("products.filters.title", "Filtered Results")}
                   </h1>
                 </div>
               </div>
@@ -387,13 +389,13 @@ const ProductsPage: React.FC = () => {
                   onClick={() => setIsFilterOpen(true)}
                   className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-stone-700 hover:bg-stone-900 hover:text-white transition-colors"
                 >
-                  <SlidersHorizontal size={14} /> Filters
+                  <SlidersHorizontal size={14} /> {t("products.filters.title", "Filters")}
                 </button>
                 <button
                   onClick={clearSearch}
                   className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-stone-700 hover:bg-stone-900 hover:text-white transition-colors"
                 >
-                  <X className="h-4 w-4" /> Clear All
+                  <X className="h-4 w-4" /> {t("common.clearAll", "Clear All")}
                 </button>
               </div>
             </div>
@@ -403,8 +405,8 @@ const ProductsPage: React.FC = () => {
             ) : !searchData || searchData.results.length === 0 ? (
               <div className="py-24 text-center space-y-8 animate-fade-in">
                 <div className="space-y-3">
-                  <p className="font-serif text-2xl text-stone-900">We couldn't find an exact match</p>
-                  <p className="text-xs text-stone-400">But we think you'll love these pieces from our collection.</p>
+                  <p className="font-serif text-2xl text-stone-900">{t("products.filters.noMatch", "We couldn't find an exact match")}</p>
+                  <p className="text-xs text-stone-400">{t("products.filters.noMatchSubtitle", "But we think you'll love these pieces from our collection.")}</p>
                 </div>
                 
                 {/* Fallback to showing normal products instead of a dead end! */}
@@ -430,7 +432,7 @@ const ProductsPage: React.FC = () => {
                       disabled={isSearchFetchingNext}
                       className="px-10 py-4 bg-black text-white text-[12px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-50"
                     >
-                      {isSearchFetchingNext ? "Loading..." : "Load More"}
+                      {isSearchFetchingNext ? t("common.loading", "Loading...") : t("products.drops.loadMore", "Load More")}
                     </button>
                   </div>
                 )}
@@ -445,13 +447,13 @@ const ProductsPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold tracking-wider uppercase">
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>✦ አዲስ ጥበብ · Curated Drops</span>
+                  <span>{t("products.drops.curatedDrops", "✦ Curated Drops")}</span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-zinc-900 tracking-tight">
-                  New In Collection
+                  {t("products.drops.newTitle", "New In Collection")}
                 </h1>
                 <p className="text-xs sm:text-sm text-zinc-500 max-w-2xl">
-                  Handcrafted Habesha attire fresh from our master weavers. Categorized by arrival timeframe: Day, Week, and Month.
+                  {t("products.drops.newSubtitle", "Handcrafted Habesha attire fresh from our master weavers. Categorized by arrival timeframe: Day, Week, and Month.")}
                 </p>
               </div>
 
@@ -466,7 +468,7 @@ const ProductsPage: React.FC = () => {
                   }`}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>All New</span>
+                  <span>{t("products.drops.allNew", "All New")}</span>
                   <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'all' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
                     {allNewProducts.length}
                   </span>
@@ -481,7 +483,7 @@ const ProductsPage: React.FC = () => {
                   }`}
                 >
                   <Clock className="h-3.5 w-3.5" />
-                  <span>Day / Today</span>
+                  <span>{t("products.drops.day", "Day / Today")}</span>
                   <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'day' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
                     {dayProducts.length}
                   </span>
@@ -496,7 +498,7 @@ const ProductsPage: React.FC = () => {
                   }`}
                 >
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>This Week</span>
+                  <span>{t("products.drops.week", "This Week")}</span>
                   <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'week' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
                     {weekProducts.length}
                   </span>
@@ -511,7 +513,7 @@ const ProductsPage: React.FC = () => {
                   }`}
                 >
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>This Month</span>
+                  <span>{t("products.drops.month", "This Month")}</span>
                   <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'month' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
                     {monthProducts.length}
                   </span>
@@ -526,15 +528,15 @@ const ProductsPage: React.FC = () => {
                 <section>
                   <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
                     <div>
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ ዛሬ የተጨመሩ</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">{t("products.drops.day", "Day / Today")}</span>
                       <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
-                        Today's New Drops
+                        {t("products.drops.dayTitle", "Today's New Drops")}
                         <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-                          {dayProducts.length} pieces
+                          {dayProducts.length} {t("common.pieces", "pieces")}
                         </span>
                       </h2>
                     </div>
-                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 24 hours</span>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">{t("products.drops.daySubtitle", "Past 24 hours")}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                     {dayProducts.map((product, idx) => (
@@ -549,15 +551,15 @@ const ProductsPage: React.FC = () => {
                 <section>
                   <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
                     <div>
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ የዚህ ሳምንት ልብሶች</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">{t("products.drops.week", "This Week")}</span>
                       <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
-                        Released This Week
+                        {t("products.drops.weekTitle", "Released This Week")}
                         <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-                          {weekProducts.length} pieces
+                          {weekProducts.length} {t("common.pieces", "pieces")}
                         </span>
                       </h2>
                     </div>
-                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 7 days</span>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">{t("products.drops.weekSubtitle", "Past 7 days")}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                     {weekProducts.map((product, idx) => (
@@ -572,15 +574,15 @@ const ProductsPage: React.FC = () => {
                 <section>
                   <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
                     <div>
-                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ የዚህ ወር ስብስብ</span>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">{t("products.drops.month", "This Month")}</span>
                       <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
-                        This Month's Drops
+                        {t("products.drops.monthTitle", "This Month's Drops")}
                         <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-                          {monthProducts.length} pieces
+                          {monthProducts.length} {t("common.pieces", "pieces")}
                         </span>
                       </h2>
                     </div>
-                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 30 days</span>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">{t("products.drops.monthSubtitle", "Past 30 days")}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                     {monthProducts.map((product, idx) => (
@@ -597,7 +599,7 @@ const ProductsPage: React.FC = () => {
                 onClick={() => handleCategoryNavigation('all')}
                 className="px-8 py-3.5 border-2 border-black text-[12px] font-black tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-all duration-300 rounded-full shadow-lg"
               >
-                ← Back to All Collections
+                {t("products.drops.backToAll", "← Back to All Collections")}
               </button>
             </div>
           </div>
@@ -652,15 +654,15 @@ const ProductsPage: React.FC = () => {
                     }}
                     className="inline-flex items-center gap-4 px-10 py-5 bg-black text-white rounded-full shadow-xl hover:bg-zinc-800 transition-all duration-300 hover:-translate-y-1 group"
                   >
-                    <span className="text-sm font-black tracking-widest uppercase">Next Clothes</span>
+                    <span className="text-sm font-black tracking-widest uppercase">{t("products.drops.nextClothes", "Next Clothes")}</span>
                     <div className="bg-white/20 p-2 rounded-full">
                       <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </button>
                   <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-zinc-500">
-                    Next: {(visibleCount >= activeCategories.length 
+                    {t("common.next", "Next")}: {(visibleCount >= activeCategories.length 
                       ? activeCategories.slice(0, 2) 
-                      : activeCategories.slice(visibleCount, visibleCount + 2)).join(" & ")}
+                      : activeCategories.slice(visibleCount, visibleCount + 2)).map(c => t(`products.categories.${c}`, c)).join(" & ")}
                   </p>
                 </div>
               </div>
@@ -672,7 +674,7 @@ const ProductsPage: React.FC = () => {
                   onClick={() => handleCategoryNavigation('all')}
                   className="px-8 py-4 border-2 border-black text-[12px] font-black tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-all duration-300 rounded-full shadow-lg"
                 >
-                  ← Back to All Collections
+                  {t("products.drops.backToAll", "← Back to All Collections")}
                 </button>
               </div>
             )}
@@ -684,7 +686,7 @@ const ProductsPage: React.FC = () => {
                   disabled={isFetchingNext}
                   className="px-10 py-4 bg-black text-white text-[12px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-50"
                 >
-                  {isFetchingNext ? "Loading..." : "Load More"}
+                  {isFetchingNext ? t("common.loading", "Loading...") : t("products.drops.loadMore", "Load More")}
                 </button>
               </div>
             )}

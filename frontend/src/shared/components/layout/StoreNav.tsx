@@ -7,6 +7,7 @@ import { useCartStore } from "../../../app/store/useCartStore";
 import { CartDrawer } from "../../../features/cart/components/CartDrawer";
 import { useAiSearch } from "../../../features/ai/hooks/useAiSearch";
 import { ProductPreviewCard } from "../../../features/ai/components/ProductPreviewCard";
+import { LanguageSelector } from "./LanguageSelector";
 
 const StoreNav = () => {
   const { t } = useTranslation();
@@ -108,6 +109,9 @@ const StoreNav = () => {
                 </Link>
               );
             })}
+
+            {/* Language Selector */}
+            <LanguageSelector variant="nav" />
 
             {/* AI-powered search */}
             <div ref={searchContainerRef} className="relative">

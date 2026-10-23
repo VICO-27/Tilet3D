@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Gender, BodyType, SkinTone } from '../types/avatar.types';
 import { useAvatarStore } from '../store/useAvatarStore';
 
@@ -101,6 +102,7 @@ function EditableNumberInput({ id, label, value, min, max, step = 1, suffix, onC
 }
 
 export function AvatarForm() {
+  const { t } = useTranslation();
   const {
     nickname, age, gender, body_type: bodyType, skin_tone: skinTone, 
     height, weight, chest, waist, shoulder_width: shoulderWidth, hips, 
@@ -121,8 +123,8 @@ export function AvatarForm() {
     >
       <div className="flex shrink-0 items-center justify-between mb-2">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">Create Your Avatar</h2>
-          <p className="mt-0.5 text-xs sm:text-sm text-stone-500">Customize your 3D body profile</p>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">{t("avatar.title", "Create Your Avatar")}</h2>
+          <p className="mt-0.5 text-xs sm:text-sm text-stone-500">{t("avatar.subtitle", "Customize your 3D body profile")}</p>
         </div>
         {isLoading && <div className="h-6 w-6 animate-spin rounded-full border-2 border-stone-200 border-t-stone-700" />}
       </div>
@@ -139,7 +141,7 @@ export function AvatarForm() {
           <div className="grid grid-cols-[1.4fr_1fr] gap-3 sm:gap-4">
             <div className="min-w-0">
               <label htmlFor="avatar-nickname" className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">
-                Nickname
+                {t("avatar.nickname", "Nickname")}
               </label>
               <input
                 id="avatar-nickname"
@@ -151,11 +153,11 @@ export function AvatarForm() {
                 className="h-11 sm:h-12 w-full rounded-xl border border-stone-200 bg-white/90 px-3.5 sm:px-4 text-sm sm:text-base font-semibold text-stone-800 outline-none transition-all duration-200 placeholder:text-stone-300 focus:border-plum-500 focus:ring-2 focus:ring-plum-100"
               />
             </div>
-            <EditableNumberInput id="avatar-age" label="Age" value={age} min={1} max={120} onCommit={(value) => setAvatarData({ age: value })} />
+            <EditableNumberInput id="avatar-age" label={t("avatar.age", "Age")} value={age} min={1} max={120} onCommit={(value) => setAvatarData({ age: value })} />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">Gender</label>
+            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">{t("avatar.gender", "Gender")}</label>
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
               {(['male', 'female'] as Gender[]).map((option) => (
                 <button
@@ -168,14 +170,14 @@ export function AvatarForm() {
                       : 'bg-white/80 text-stone-600 hover:bg-white border border-stone-200/80'
                   }`}
                 >
-                  {option === 'male' ? 'Male' : 'Female'}
+                  {option === 'male' ? t("avatar.male", "Male") : t("avatar.female", "Female")}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">Body Type</label>
+            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">{t("avatar.bodyType", "Body Type")}</label>
             <div className="flex flex-wrap gap-2">
               {BODY_TYPES.map((option) => (
                 <button
@@ -196,7 +198,7 @@ export function AvatarForm() {
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs sm:text-sm font-medium text-stone-500">Skin Tone</label>
+              <label className="text-xs sm:text-sm font-medium text-stone-500">{t("avatar.skinTone", "Skin Tone")}</label>
               <span className="text-xs sm:text-sm font-semibold text-stone-600">{selectedSkinTone?.label}</span>
             </div>
             <div className="grid grid-cols-6 sm:grid-cols-12 gap-2.5 sm:gap-2">
@@ -223,17 +225,17 @@ export function AvatarForm() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <EditableNumberInput id="avatar-height" label="Height" value={height} min={120} max={230} suffix="cm" onCommit={(value) => setAvatarData({ height: value })} />
-            <EditableNumberInput id="avatar-weight" label="Weight" value={weight} min={30} max={250} suffix="kg" onCommit={(value) => setAvatarData({ weight: value })} />
+            <EditableNumberInput id="avatar-height" label={t("avatar.height", "Height")} value={height} min={120} max={230} suffix="cm" onCommit={(value) => setAvatarData({ height: value })} />
+            <EditableNumberInput id="avatar-weight" label={t("avatar.weight", "Weight")} value={weight} min={30} max={250} suffix="kg" onCommit={(value) => setAvatarData({ weight: value })} />
           </div>
 
           <div>
-            <label className="mb-2 block text-xs sm:text-sm font-medium text-stone-500">Measurements</label>
+            <label className="mb-2 block text-xs sm:text-sm font-medium text-stone-500">{t("detail.measurements", "Measurements")}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
-              <EditableNumberInput id="avatar-chest" label="Chest" value={chest} min={40} max={200} suffix="cm" onCommit={(value) => setAvatarData({ chest: value })} />
-              <EditableNumberInput id="avatar-waist" label="Waist" value={waist} min={35} max={200} suffix="cm" onCommit={(value) => setAvatarData({ waist: value })} />
-              <EditableNumberInput id="avatar-shoulder" label="Shoulder" value={shoulderWidth} min={20} max={100} suffix="cm" onCommit={(value) => setAvatarData({ shoulder_width: value })} />
-              <EditableNumberInput id="avatar-hips" label="Hips" value={hips} min={40} max={220} suffix="cm" onCommit={(value) => setAvatarData({ hips: value })} />
+              <EditableNumberInput id="avatar-chest" label={t("avatar.chest", "Chest")} value={chest} min={40} max={200} suffix="cm" onCommit={(value) => setAvatarData({ chest: value })} />
+              <EditableNumberInput id="avatar-waist" label={t("avatar.waist", "Waist")} value={waist} min={35} max={200} suffix="cm" onCommit={(value) => setAvatarData({ waist: value })} />
+              <EditableNumberInput id="avatar-shoulder" label={t("avatar.shoulder", "Shoulder")} value={shoulderWidth} min={20} max={100} suffix="cm" onCommit={(value) => setAvatarData({ shoulder_width: value })} />
+              <EditableNumberInput id="avatar-hips" label={t("avatar.hips", "Hips")} value={hips} min={40} max={220} suffix="cm" onCommit={(value) => setAvatarData({ hips: value })} />
             </div>
           </div>
           
@@ -246,7 +248,7 @@ export function AvatarForm() {
           disabled={isLoading}
           className="h-12 sm:h-14 w-full rounded-xl sm:rounded-2xl bg-[#161616] px-6 text-sm sm:text-base font-bold tracking-wide text-white shadow-lg transition-all duration-200 hover:bg-plum-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? 'Saving...' : 'Confirm Avatar'}
+          {isLoading ? t("common.loading", "Saving...") : t("avatar.confirmAvatar", "Confirm Avatar")}
         </button>
       </div>
     </form>

@@ -209,7 +209,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
               onClick={(e) => e.stopPropagation()}
             >
               {images.map((img, idx) => {
-                const label = idx === 0 ? "Front" : idx === 1 ? "Back" : idx === 2 ? "Top" : `View ${idx + 1}`;
+                const label = idx === 0 ? t("products.card.front", "Front") : idx === 1 ? t("products.card.back", "Back") : idx === 2 ? t("products.card.top", "Top") : `${t("products.card.view", "View")} ${idx + 1}`;
                 const isCurrent = activeImageIndex === idx || (activeImageIndex === null && (idx === 1 ? isHovered : !isHovered));
                 return (
                   <button
@@ -238,21 +238,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
 
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full">
             <button
+              type="button"
               onClick={handleTryOnAvatar}
-              className="py-2.5 sm:py-3 px-1 sm:px-3 bg-white text-black text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center truncate whitespace-nowrap"
+              className="min-w-0 py-2 sm:py-2.5 px-1.5 sm:px-3 bg-white text-black text-[9px] sm:text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center truncate cursor-pointer active:scale-95"
             >
               {t("products.tryOn", "Try-on Avatar")}
             </button>
 
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowRentalModal(true);
               }}
-              className="py-2.5 sm:py-3 px-1 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-1.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white border border-purple-400/40 shadow-lg shadow-purple-950/40 hover:shadow-purple-600/30 active:scale-95 truncate whitespace-nowrap"
+              className="min-w-0 py-2 sm:py-2.5 px-1.5 sm:px-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg transition-all duration-300 flex items-center justify-center gap-1 sm:gap-1.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white border border-purple-400/40 hover:shadow-purple-600/30 active:scale-95 truncate cursor-pointer"
             >
               <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white shrink-0" />
-              <span>{t("products.rent", "Rent")}</span>
+              <span className="truncate">{t("products.rent", "Rent")}</span>
             </button>
           </div>
 

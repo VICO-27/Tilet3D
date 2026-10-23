@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from './LanguageSelector';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -92,8 +93,8 @@ const Footer = () => {
             <span className="text-zinc-300">|</span>
             <a href="#" className="hover:underline hover:text-black transition-colors">{t("footer.legal", "Legal & Compliance")}</a>
             
-            <div className="lg:ml-6 mt-1 lg:mt-0 flex items-center text-[#1d1d1f] font-medium hover:underline cursor-pointer">
-              <span>{t("footer.region", "ኢትዮጵያ (Ethiopia)")}</span>
+            <div className="lg:ml-6 mt-1 lg:mt-0 flex items-center">
+              <LanguageSelector variant="footer" />
             </div>
           </div>
         </div>

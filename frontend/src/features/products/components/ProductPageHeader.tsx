@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from "react-i18next";
 import { useScrollDirection } from "../../../shared/hooks/useScrollDirection";
 
 interface Props {
@@ -19,6 +20,7 @@ const ProductPageHeader: React.FC<Props> = ({
   isNewActive = false,
   onSelectNew,
 }) => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { navbarHidden, categoryHidden } = useScrollDirection();
   const navScrollRef = useRef<HTMLDivElement>(null);
@@ -138,7 +140,7 @@ const ProductPageHeader: React.FC<Props> = ({
                       ${isActive ? 'text-purple-600 font-black' : 'text-ink/65 hover:text-purple-600'}
                     `}
                   >
-                    {category}
+                    {t(`products.categories.${category}`, category)}
                   </button>
                 );
               })}
@@ -161,7 +163,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-ink/75 hover:text-purple-600 rounded-full border border-black/10 bg-white/70 active:scale-95 transition-all"
               >
                 <SlidersHorizontal size={12} />
-                <span>Filter</span>
+                <span>{t("common.filter", "Filter")}</span>
               </button>
 
               <button
@@ -173,7 +175,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 }`}
               >
                 <Sparkles className="h-3 w-3" />
-                <span>New</span>
+                <span>{t("products.drops.allNew", "New")}</span>
               </button>
             </div>
           </div>
@@ -221,7 +223,7 @@ const ProductPageHeader: React.FC<Props> = ({
                       ${isActive ? 'text-purple-600 font-black' : 'text-ink/65 hover:text-purple-600'}
                     `}
                   >
-                    {category}
+                    {t(`products.categories.${category}`, category)}
                   </button>
                 );
               })}
@@ -233,7 +235,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 className="flex items-center gap-1.5 text-[12px] font-bold text-ink/75 hover:text-purple-600 transition-colors"
               >
                 <SlidersHorizontal size={14} />
-                <span>Filters</span>
+                <span>{t("products.filters.title", "Filters")}</span>
               </button>
 
               <button
@@ -245,7 +247,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>New</span>
+                <span>{t("products.drops.allNew", "New")}</span>
               </button>
             </div>
           </div>
@@ -277,7 +279,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
               }}
             >
-              ✦ ጥ Tilet3D · THE COLLECTION
+              {t("products.badge", "✦ ጥ Tilet3D · THE COLLECTION")}
             </span>
 
             <h1
@@ -286,7 +288,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 fontFamily: "'Iowan Old Style','Palatino Linotype','Book Antiqua','Times New Roman',serif",
               }}
             >
-              Heritage couture, woven for now.
+              {t("products.title", "Heritage couture, woven for now.")}
             </h1>
           </div>
 
@@ -299,7 +301,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 fontFeatureSettings: '"kern" 1',
               }}
             >
-              በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።
+              {t("products.amharicQuote", "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።")}
             </p>
           </div>
 

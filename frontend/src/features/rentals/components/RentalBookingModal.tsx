@@ -133,9 +133,14 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
           setPricingMode('flexible_daily');
         }
       })
-      .catch(() => {
+      .catch((err: any) => {
         if (isMounted) {
-          setErrorMsg('Failed to load rental options for this piece.');
+          const is404 = err.response?.status === 404;
+          setErrorMsg(
+            is404
+              ? 'Rental service is currently synchronizing with the cloud backend.'
+              : 'Failed to load rental options for this piece.'
+          );
         }
       })
       .finally(() => {
@@ -679,7 +684,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
               <div className="shrink-0 p-3 sm:p-4 bg-zinc-950/95 border-t border-white/10 backdrop-blur-md">
                 <button
                   type="submit"
-                  disabled={isSubmitting || isQuoting || Boolean(availability && !availability.is_available)}
+                  disabled={isSubmitting || isQuoting || !rentalConfig || !quote || Boolean(errorMsg) || Boolean(availability && !availability.is_available)}
                   className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs font-bold uppercase tracking-[0.18em] rounded-full shadow-lg hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-purple-900/30 cursor-pointer"
                 >
                   {isSubmitting ? (

@@ -1,5 +1,4 @@
-// frontend/src/features/avatar/components/AvatarForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Gender, BodyType, SkinTone } from '../types/avatar.types';
 import { useAvatarStore } from '../store/useAvatarStore';
 
@@ -42,6 +41,11 @@ interface EditableNumberInputProps {
 function EditableNumberInput({ id, label, value, min, max, step = 1, suffix, onCommit }: EditableNumberInputProps) {
   const [draft, setDraft] = useState(String(value));
 
+  // Sync draft when store updates externally
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
   const commitValue = (rawValue: string) => {
     const trimmed = rawValue.trim();
     if (trimmed === '') { setDraft(String(value)); return; }
@@ -56,7 +60,7 @@ function EditableNumberInput({ id, label, value, min, max, step = 1, suffix, onC
 
   return (
     <div className="min-w-0">
-      <label htmlFor={id} className="mb-2 block text-sm font-medium text-stone-500">
+      <label htmlFor={id} className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">
         {label}
       </label>
       <div className="relative">
@@ -84,10 +88,10 @@ function EditableNumberInput({ id, label, value, min, max, step = 1, suffix, onC
               event.currentTarget.blur();
             }
           }}
-          className="h-12 w-full rounded-xl border border-stone-200 bg-white/80 px-4 text-base font-medium text-stone-800 outline-none transition-all duration-200 focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
+          className="h-11 sm:h-12 w-full rounded-xl border border-stone-200 bg-white/90 pl-3.5 pr-8 sm:pl-4 sm:pr-9 text-sm sm:text-base font-semibold text-stone-800 outline-none transition-all duration-200 focus:border-plum-500 focus:ring-2 focus:ring-plum-100"
         />
         {suffix && (
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400">
+          <span className="pointer-events-none absolute right-2.5 sm:right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-stone-400">
             {suffix}
           </span>
         )}
@@ -113,28 +117,28 @@ export function AvatarForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-full min-h-0 w-full flex-col overflow-y-auto rounded-[2rem] bg-white/70 p-7 backdrop-blur-2xl"
+      className="flex w-full flex-col rounded-2xl md:rounded-[2rem] bg-white/80 md:bg-white/70 p-4 sm:p-6 md:p-7 border border-stone-200/70 shadow-sm backdrop-blur-xl"
     >
-      <div className="flex shrink-0 items-center justify-between mb-3">
+      <div className="flex shrink-0 items-center justify-between mb-2">
         <div>
-          <h2 className="text-2xl font-semibold text-stone-900">Create Your Avatar</h2>
-          <p className="mt-1 text-base text-stone-500">Customize your body profile</p>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">Create Your Avatar</h2>
+          <p className="mt-0.5 text-xs sm:text-sm text-stone-500">Customize your 3D body profile</p>
         </div>
-        {isLoading && <div className="h-7 w-7 animate-spin rounded-full border-2 border-stone-200 border-t-stone-700" />}
+        {isLoading && <div className="h-6 w-6 animate-spin rounded-full border-2 border-stone-200 border-t-stone-700" />}
       </div>
 
       {notification && (
-        <div className={`mt-3 shrink-0 rounded-xl px-4 py-3 text-base font-medium ${notificationType === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+        <div className={`mt-3 shrink-0 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium ${notificationType === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
           {notification}
         </div>
       )}
 
-      <div className="min-h-0 flex-1 pt-5">
-        <div className="grid content-start gap-5">
+      <div className="min-h-0 flex-1 pt-3 sm:pt-4">
+        <div className="grid content-start gap-4 sm:gap-5">
           
-          <div className="grid grid-cols-[1.5fr_1fr] gap-5">
+          <div className="grid grid-cols-[1.4fr_1fr] gap-3 sm:gap-4">
             <div className="min-w-0">
-              <label htmlFor="avatar-nickname" className="mb-2 block text-sm font-medium text-stone-500">
+              <label htmlFor="avatar-nickname" className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">
                 Nickname
               </label>
               <input
@@ -143,22 +147,26 @@ export function AvatarForm() {
                 type="text"
                 value={nickname}
                 onChange={(event) => setAvatarData({ nickname: event.target.value })}
-                placeholder="Your avatar name"
-                className="h-12 w-full rounded-xl border border-stone-200 bg-white/80 px-4 text-base font-medium text-stone-800 outline-none transition-all duration-200 placeholder:text-stone-300 focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
+                placeholder="Avatar name"
+                className="h-11 sm:h-12 w-full rounded-xl border border-stone-200 bg-white/90 px-3.5 sm:px-4 text-sm sm:text-base font-semibold text-stone-800 outline-none transition-all duration-200 placeholder:text-stone-300 focus:border-plum-500 focus:ring-2 focus:ring-plum-100"
               />
             </div>
             <EditableNumberInput id="avatar-age" label="Age" value={age} min={1} max={120} onCommit={(value) => setAvatarData({ age: value })} />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-500">Gender</label>
-            <div className="grid grid-cols-2 gap-3">
+            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">Gender</label>
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
               {(['male', 'female'] as Gender[]).map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => setAvatarData({ gender: option })}
-                  className={`h-12 rounded-xl text-base font-semibold transition-all duration-200 ${gender === option ? 'bg-[#161616] text-white shadow-md' : 'bg-white/70 text-stone-600 hover:bg-white border border-stone-100'}`}
+                  className={`h-11 sm:h-12 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 ${
+                    gender === option 
+                      ? 'bg-[#161616] text-white shadow-md' 
+                      : 'bg-white/80 text-stone-600 hover:bg-white border border-stone-200/80'
+                  }`}
                 >
                   {option === 'male' ? 'Male' : 'Female'}
                 </button>
@@ -167,14 +175,18 @@ export function AvatarForm() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-500">Body Type</label>
-            <div className="grid grid-cols-4 gap-2.5">
+            <label className="mb-1.5 block text-xs sm:text-sm font-medium text-stone-500">Body Type</label>
+            <div className="flex flex-wrap gap-2">
               {BODY_TYPES.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setAvatarData({ body_type: option.value })}
-                  className={`h-11 rounded-lg px-2 text-xs font-semibold transition-all duration-200 ${bodyType === option.value ? 'bg-plum-50 text-plum-700 ring-1 ring-plum-200' : 'bg-white/70 text-stone-600 hover:bg-white border border-stone-100'}`}
+                  className={`h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                    bodyType === option.value 
+                      ? 'bg-plum-600 text-white shadow-sm ring-1 ring-plum-600' 
+                      : 'bg-white/80 text-stone-600 hover:bg-white border border-stone-200/80'
+                  }`}
                 >
                   {option.label}
                 </button>
@@ -183,11 +195,11 @@ export function AvatarForm() {
           </div>
 
           <div>
-            <div className="mb-3 flex items-center justify-between">
-              <label className="text-sm font-medium text-stone-500">Skin Tone</label>
-              <span className="text-sm font-medium text-stone-400">{selectedSkinTone?.label}</span>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-xs sm:text-sm font-medium text-stone-500">Skin Tone</label>
+              <span className="text-xs sm:text-sm font-semibold text-stone-600">{selectedSkinTone?.label}</span>
             </div>
-            <div className="grid grid-cols-12 gap-2">
+            <div className="grid grid-cols-6 sm:grid-cols-12 gap-2.5 sm:gap-2">
               {SKIN_TONES.map((tone) => (
                 <button
                   key={tone.value}
@@ -195,7 +207,11 @@ export function AvatarForm() {
                   title={tone.label}
                   aria-label={`Select ${tone.label} skin tone`}
                   onClick={() => setAvatarData({ skin_tone: tone.value })}
-                  className={`relative aspect-square rounded-full transition-all duration-200 ${skinTone === tone.value ? 'scale-110 ring-2 ring-stone-900 ring-offset-2' : 'hover:scale-110'}`}
+                  className={`relative aspect-square min-h-[36px] sm:min-h-0 rounded-full transition-all duration-200 ${
+                    skinTone === tone.value 
+                      ? 'scale-110 ring-2 ring-stone-900 ring-offset-2 shadow-sm' 
+                      : 'hover:scale-105 border border-black/10'
+                  }`}
                   style={{ backgroundColor: tone.color }}
                 >
                   {skinTone === tone.value && (
@@ -206,14 +222,14 @@ export function AvatarForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <EditableNumberInput id="avatar-height" label="Height" value={height} min={120} max={230} suffix="cm" onCommit={(value) => setAvatarData({ height: value })} />
             <EditableNumberInput id="avatar-weight" label="Weight" value={weight} min={30} max={250} suffix="kg" onCommit={(value) => setAvatarData({ weight: value })} />
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-medium text-stone-500">Measurements</label>
-            <div className="grid grid-cols-4 gap-3.5">
+            <label className="mb-2 block text-xs sm:text-sm font-medium text-stone-500">Measurements</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
               <EditableNumberInput id="avatar-chest" label="Chest" value={chest} min={40} max={200} suffix="cm" onCommit={(value) => setAvatarData({ chest: value })} />
               <EditableNumberInput id="avatar-waist" label="Waist" value={waist} min={35} max={200} suffix="cm" onCommit={(value) => setAvatarData({ waist: value })} />
               <EditableNumberInput id="avatar-shoulder" label="Shoulder" value={shoulderWidth} min={20} max={100} suffix="cm" onCommit={(value) => setAvatarData({ shoulder_width: value })} />
@@ -224,11 +240,11 @@ export function AvatarForm() {
         </div>
       </div>
 
-      <div className="mt-5 shrink-0 border-t border-stone-200/60 pt-5">
+      <div className="mt-6 shrink-0 border-t border-stone-200/60 pt-4">
         <button
           type="submit"
           disabled={isLoading}
-          className="h-14 w-full rounded-2xl bg-[#161616] px-6 text-lg font-semibold text-white shadow-md transition-all duration-200 hover:bg-plum-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-12 sm:h-14 w-full rounded-xl sm:rounded-2xl bg-[#161616] px-6 text-sm sm:text-base font-bold tracking-wide text-white shadow-lg transition-all duration-200 hover:bg-plum-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : 'Confirm Avatar'}
         </button>

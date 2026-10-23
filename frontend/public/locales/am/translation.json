@@ -3,6 +3,8 @@
     "home": "ዋና ገጽ",
     "collection": "ስብስብ",
     "fittingRoom": "ልብስ መለኪያ",
+    "avatar": "አምሳያ",
+    "chat": "ውይይት",
     "bag": "ቦርሳ",
     "shoppingBag": "የገበያ ቦርሳ",
     "orders": "ትዕዛዞች",
@@ -100,6 +102,15 @@
     "salesRefunds": "ሽያጭ እና ተመላሽ",
     "legal": "ህጋዊ መረጃ",
     "region": "ኢትዮጵያ (Ethiopia)"
+  },
+  "hero": {
+    "badge": "ፋሽን፣ በ3D እንደገና ተፈጠረ",
+    "createAvatar": "አምሳያዎን ይፍጠሩ",
+    "shopNow": "አሁን ይግዙ",
+    "gender": {
+      "female": "ሴት",
+      "male": "ወንድ"
+    },
+    "explore": "ስብስቡን ያስሱ"
   }
-  
 }

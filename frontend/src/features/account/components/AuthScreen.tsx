@@ -126,7 +126,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     if (err) {
       setLocalError(err);
     } else {
-      redirectAfterAuth();
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser && !currentUser.is_verified) {
+        setResendCooldown(60);
+        setLocalSuccess("Please enter the verification code sent to your email.");
+        setMode("verify");
+      } else {
+        redirectAfterAuth();
+      }
     }
   };
 
@@ -155,9 +162,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     if (err) {
       setLocalError(err);
     } else {
-      setResendCooldown(60);
-      setLocalSuccess("Verification code sent to your email.");
-      setMode("verify");
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.is_verified) {
+        setLocalSuccess("Account created successfully. Welcome to Tilet3D!");
+        setTimeout(() => {
+          if (onVerified) {
+            onVerified();
+          } else {
+            redirectAfterAuth();
+          }
+        }, 600);
+      } else {
+        setResendCooldown(60);
+        setLocalSuccess("Verification code sent to your email.");
+        setMode("verify");
+      }
     }
   };
 
@@ -264,7 +283,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
   };
 
-  const activeError = localError || storeError;
+  const activeError = localError;
 
   return (
     <div className="min-h-screen w-full bg-[#FAF9F7] flex flex-col lg:flex-row font-sans selection:bg-[#F3EEFF] selection:text-[#6D28D9]">

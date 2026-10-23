@@ -31,11 +31,21 @@ class GoogleLoginView(APIView):
 
         try:
             # 1. VERIFY GOOGLE TOKEN
-            audience = settings.GOOGLE_CLIENT_ID or None
+            # Allow configured ID and known valid client IDs to prevent audience mismatch
+            audiences = []
+            if getattr(settings, "GOOGLE_CLIENT_ID", None):
+                audiences.append(settings.GOOGLE_CLIENT_ID)
+            for cid in [
+                "313469957062-17hi3689s6d5prr9l88ehcfh9u3lch29.apps.googleusercontent.com",
+                "20804747116-j3hej0jvqmiftqasji18hll1p2hs6a5f.apps.googleusercontent.com",
+            ]:
+                if cid not in audiences:
+                    audiences.append(cid)
+
             id_info = id_token.verify_oauth2_token(
                 token,
                 requests.Request(),
-                audience=audience
+                audience=audiences if audiences else None
             )
 
             email = id_info.get("email")
@@ -95,8 +105,9 @@ class GoogleLoginView(APIView):
 
         except ValueError as e:
             logger.warning(f"Invalid Google token received: {e}")
+            message = f"Invalid Google token ({e})" if settings.DEBUG else "Invalid Google token or expired session."
             return Response(
-                {"error": "Invalid Google token or expired session."},
+                {"error": message},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:

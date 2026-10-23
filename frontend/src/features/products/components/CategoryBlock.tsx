@@ -478,7 +478,7 @@ const CategoryBlock: React.FC<Props> = ({
     <section 
       ref={sectionRef}
       id={`category-${categoryName}`} 
-      className="w-full bg-white py-6 select-none overflow-hidden"
+      className="w-full bg-white pt-1 sm:pt-2 pb-6 select-none overflow-hidden"
       style={{
         contain: 'layout paint',
         transform: 'translateZ(0)',

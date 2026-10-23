@@ -29,7 +29,7 @@ function ResponsiveCamera() {
         const formWidth = Math.max(400, size.width * 0.35);
         targetOffset.current = { x: formWidth / 2, y: 0 };
       } else {
-        const formHeight = size.height * 0.55;
+        const formHeight = size.height * 0.60;
         targetOffset.current = { x: 0, y: -formHeight / 2 };
       }
     } else {

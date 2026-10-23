@@ -4,6 +4,7 @@ from .views import (
     LoginView,
     ProfileView,
     LogoutView,
+    AuthConfigView,
     RequestOTPView,
     VerifyOTPView,
     PasswordResetView,
@@ -18,6 +19,7 @@ from .views import AddressListCreateView, AddressDetailView
 
 urlpatterns = [
     # AUTH
+    path("config/", AuthConfigView.as_view(), name="auth-config"),
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),

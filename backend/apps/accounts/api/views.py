@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
-from apps.accounts.models import Profile, User, OTPPurpose, SecurityAuditLog, Address
+from apps.accounts.models import Profile, User, OTPPurpose, SecurityAuditLog, Address, SystemConfiguration
 from apps.accounts.utils import generate_otp, send_otp_email, log_security_event
 from .serializers import (
     RegisterSerializer,
@@ -18,6 +18,16 @@ from .serializers import (
     ChangePasswordSerializer,
     AddressSerializer,
 )
+
+
+class AuthConfigView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        config = SystemConfiguration.get_solo()
+        return Response({
+            "otp_verification_enabled": config.otp_verification_enabled
+        }, status=status.HTTP_200_OK)
 
 
 # 1. Security Audit Log View
@@ -148,10 +158,17 @@ class RegisterView(generics.CreateAPIView):
     throttle_scope = 'auth'
 
     def perform_create(self, serializer):
-        user = serializer.save()
-        log_security_event(self.request, user, "Account Registered")
-        otp = generate_otp(user, OTPPurpose.EMAIL_VERIFY)
-        send_otp_email(user, otp)
+        config = SystemConfiguration.get_solo()
+        if not config.otp_verification_enabled:
+            user = serializer.save()
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
+            log_security_event(self.request, user, "Account Registered (Instant - OTP Disabled)")
+        else:
+            user = serializer.save()
+            log_security_event(self.request, user, "Account Registered")
+            otp = generate_otp(user, OTPPurpose.EMAIL_VERIFY)
+            send_otp_email(user, otp)
 
 
 # -------------------------
@@ -168,6 +185,11 @@ class LoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         try:
             user = User.objects.get(email=serializer.validated_data["user"]["email"])
+            config = SystemConfiguration.get_solo()
+            if not config.otp_verification_enabled and not user.is_verified:
+                user.is_verified = True
+                user.save(update_fields=["is_verified"])
+                serializer.validated_data["user"]["is_verified"] = True
             log_security_event(request, user, "Successful Sign-in")
         except Exception:
             pass

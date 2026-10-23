@@ -165,7 +165,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
       </nav>
 
       {/* ================= HERO ================= */}
-      <section className="pt-32 pb-16 px-8 md:px-10 relative overflow-hidden select-none w-full max-w-[100vw]">
+      <section className="pt-28 sm:pt-32 pb-4 sm:pb-6 md:pb-8 px-6 sm:px-8 md:px-10 relative overflow-hidden select-none w-full max-w-[100vw]">
         
         {/* GIANT BACKGROUND WATERMARK TEXT (AMHARIC FORM) */}
         <div 
@@ -178,12 +178,12 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
         </div>
 
         {/* FOREGROUND CONTENT */}
-        <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row justify-between items-end gap-12 relative z-10">
+        <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 sm:gap-6 lg:gap-12 relative z-10">
           
           {/* LEFT */}
           <div className="max-w-3xl">
             <span
-              className="block mb-5 uppercase tracking-[0.32em] text-[11px] font-semibold text-plum-500"
+              className="block mb-3 sm:mb-5 uppercase tracking-[0.32em] text-[11px] font-semibold text-plum-500"
               style={{
                 fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
               }}
@@ -204,7 +204,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           {/* RIGHT - LUXURY EDITORIAL AMHARIC STYLE */}
           <div className="max-w-md lg:pb-1">
             <p
-              className="text-[16px] md:text-[17px] leading-[1.8] text-ink/80 font-normal tracking-wide antialiased"
+              className="text-[15px] sm:text-[16px] md:text-[17px] leading-[1.7] sm:leading-[1.8] text-ink/80 font-normal tracking-wide antialiased"
               style={{
                 fontFamily: "'Nyala', 'Kefa', 'Abyssinica SIL', 'Power Ge'ez', serif",
                 fontFeatureSettings: '"kern" 1',

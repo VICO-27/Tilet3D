@@ -289,6 +289,14 @@ class AdminApi {
     const response = await apiClient.get<AdminSettingsResponse>("/admin/settings/");
     return response.data;
   }
+
+  /**
+   * Updates platform operational and security policies (e.g. OTP verification).
+   */
+  async updateSettings(data: { otp_verification_enabled: boolean }): Promise<AdminSettingsResponse> {
+    const response = await apiClient.patch<AdminSettingsResponse>("/admin/settings/", data);
+    return response.data;
+  }
 }
 
 export const adminApi = new AdminApi();

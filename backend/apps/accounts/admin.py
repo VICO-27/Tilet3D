@@ -96,3 +96,11 @@ class ProfileAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         "user",
     )
+
+
+from .models import SystemConfiguration
+
+@admin.register(SystemConfiguration)
+class SystemConfigurationAdmin(admin.ModelAdmin):
+    list_display = ("id", "otp_verification_enabled", "updated_at")
+    list_editable = ("otp_verification_enabled",)

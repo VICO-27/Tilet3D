@@ -8,6 +8,15 @@ import { useAuthStore } from "./app/store/useAuthStore";
 
 import "./i18n"; // Add this line!
 
+// Suppress benign THREE.Clock deprecation warning internally emitted by @react-three/fiber v9
+const _origWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  if (typeof args[0] === "string" && args[0].includes("THREE.Clock: This module has been deprecated")) {
+    return;
+  }
+  _origWarn.apply(console, args);
+};
+
 
 
 

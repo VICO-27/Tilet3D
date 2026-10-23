@@ -307,7 +307,7 @@ const HeroSection = () => {
             variants={prefersReducedMotion ? undefined : fadeUpVariants}
             className="mt-3 sm:mt-6 max-w-lg text-sm sm:text-base lg:text-lg leading-relaxed text-zinc-600 font-normal"
           >
-            {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.")}
+            {t("hero.subtitle", "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions before the first thread is spun.")}
           </motion.p>
 
           {/* Call to Actions */}
@@ -357,7 +357,7 @@ const HeroSection = () => {
           <TiletAura />
 
           {/* Visual Stage: Mind-blowing Brand Animation while 3D is preparing -> Seamless dissolve to Live 3D */}
-          <div className="relative w-full h-full max-h-[580px] lg:max-h-[600px] flex items-center justify-center">
+          <div className="relative w-full h-full max-h-[580px] lg:max-h-[600px] -translate-y-5 sm:-translate-y-6 lg:translate-y-0 flex items-center justify-center">
             {/* 1. Mesmerizing 3D Brand Animation — active until Three.js/GLB is ready */}
             <AnimatePresence>
               {!is3DReady && (
@@ -420,7 +420,7 @@ const HeroSection = () => {
 
           {/* Gender Selector */}
 
-          <div className="absolute bottom-14 sm:bottom-16 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
+          <div className="absolute bottom-5 sm:bottom-6 lg:bottom-12 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/70 p-1.5 shadow-lg backdrop-blur-xl z-20 pointer-events-auto">
             {(["female", "male"] as Gender[]).map((g) => (
               <button
                 key={g}

@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.models import User, SecurityAuditLog
+from apps.accounts.models import User, SecurityAuditLog, SystemConfiguration
+from apps.accounts.utils import log_security_event
 from apps.orders.models import Order, OrderItem, OrderStatus, PaymentStatus
 from apps.payments.models import Payment
 from apps.products.models import Product, ProductVariant
@@ -33,31 +34,47 @@ class AdminOverviewView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        # 1. Product & Catalog metrics
-        total_products = Product.objects.count()
-        active_products = Product.objects.filter(is_active=True).count()
+        # 1. Product & Catalog metrics (single query)
+        prod_agg = Product.objects.aggregate(
+            total=Count("id"),
+            active=Count("id", filter=Q(is_active=True)),
+        )
+        total_products = prod_agg["total"]
+        active_products = prod_agg["active"]
 
-        # 2. Inventory metrics
-        low_stock_variants = ProductVariant.objects.filter(stock__lte=5, is_active=True).count()
-        out_of_stock_variants = ProductVariant.objects.filter(stock=0, is_active=True).count()
+        # 2. Inventory metrics (single query)
+        variant_agg = ProductVariant.objects.aggregate(
+            low_stock=Count("id", filter=Q(stock__lte=5, is_active=True)),
+            out_of_stock=Count("id", filter=Q(stock=0, is_active=True)),
+        )
+        low_stock_variants = variant_agg["low_stock"]
+        out_of_stock_variants = variant_agg["out_of_stock"]
 
-        # 3. Order metrics
-        total_orders = Order.objects.count()
-        pending_orders = Order.objects.filter(status=OrderStatus.PENDING).count()
-        confirmed_orders = Order.objects.filter(status=OrderStatus.CONFIRMED).count()
-        processing_orders = Order.objects.filter(status=OrderStatus.PROCESSING).count()
-        shipped_orders = Order.objects.filter(status=OrderStatus.SHIPPED).count()
-        delivered_orders = Order.objects.filter(status=OrderStatus.DELIVERED).count()
-        cancelled_orders = Order.objects.filter(status=OrderStatus.CANCELLED).count()
+        # 3. Order & Revenue metrics (single consolidated query instead of 9 queries)
+        order_agg = Order.objects.aggregate(
+            all_orders=Count("id"),
+            pending=Count("id", filter=Q(status=OrderStatus.PENDING)),
+            confirmed=Count("id", filter=Q(status=OrderStatus.CONFIRMED)),
+            processing=Count("id", filter=Q(status=OrderStatus.PROCESSING)),
+            shipped=Count("id", filter=Q(status=OrderStatus.SHIPPED)),
+            delivered=Count("id", filter=Q(status=OrderStatus.DELIVERED)),
+            cancelled=Count("id", filter=Q(status=OrderStatus.CANCELLED)),
+            paid=Count("id", filter=Q(payment_status=PaymentStatus.PAID)),
+            revenue=Sum("total", filter=Q(payment_status=PaymentStatus.PAID)),
+        )
 
-        # 4. Revenue & paid orders
-        paid_orders_qs = Order.objects.filter(payment_status=PaymentStatus.PAID)
-        paid_orders = paid_orders_qs.count()
-        revenue_aggregate = paid_orders_qs.aggregate(total_revenue=Sum("total"))
-        raw_revenue = revenue_aggregate["total_revenue"]
+        total_orders = order_agg["all_orders"]
+        pending_orders = order_agg["pending"]
+        confirmed_orders = order_agg["confirmed"]
+        processing_orders = order_agg["processing"]
+        shipped_orders = order_agg["shipped"]
+        delivered_orders = order_agg["delivered"]
+        cancelled_orders = order_agg["cancelled"]
+        paid_orders = order_agg["paid"]
+        raw_revenue = order_agg["revenue"]
         total_revenue = f"{Decimal(str(raw_revenue)):.2f}" if raw_revenue is not None else "0.00"
 
-        # 5. Customer metrics (non-staff registered users)
+        # 4. Customer metrics (non-staff registered users)
         total_customers = User.objects.filter(is_staff=False).count()
 
         return Response(
@@ -290,24 +307,31 @@ class AdminAnalyticsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        # 1. Revenue & Order values
-        paid_orders = Order.objects.filter(payment_status=PaymentStatus.PAID)
-        paid_count = paid_orders.count()
-        rev_agg = paid_orders.aggregate(total_rev=Sum("total"))["total_rev"]
+        # 1 & 2. Consolidated Order and Revenue analytics (single query instead of 8 queries)
+        order_agg = Order.objects.aggregate(
+            all_orders=Count("id"),
+            paid_count=Count("id", filter=Q(payment_status=PaymentStatus.PAID)),
+            total_rev=Sum("total", filter=Q(payment_status=PaymentStatus.PAID)),
+            pending=Count("id", filter=Q(status=OrderStatus.PENDING)),
+            confirmed=Count("id", filter=Q(status=OrderStatus.CONFIRMED)),
+            processing=Count("id", filter=Q(status=OrderStatus.PROCESSING)),
+            shipped=Count("id", filter=Q(status=OrderStatus.SHIPPED)),
+            delivered=Count("id", filter=Q(status=OrderStatus.DELIVERED)),
+            cancelled=Count("id", filter=Q(status=OrderStatus.CANCELLED)),
+        )
+
+        paid_count = order_agg["paid_count"]
+        rev_agg = order_agg["total_rev"]
         total_revenue = Decimal(str(rev_agg)) if rev_agg is not None else Decimal("0.00")
         avg_order_value = (total_revenue / paid_count) if paid_count > 0 else Decimal("0.00")
 
-        # 2. Orders by Status
         status_counts = {
-            s: Order.objects.filter(status=s).count()
-            for s in [
-                OrderStatus.PENDING,
-                OrderStatus.CONFIRMED,
-                OrderStatus.PROCESSING,
-                OrderStatus.SHIPPED,
-                OrderStatus.DELIVERED,
-                OrderStatus.CANCELLED,
-            ]
+            OrderStatus.PENDING: order_agg["pending"],
+            OrderStatus.CONFIRMED: order_agg["confirmed"],
+            OrderStatus.PROCESSING: order_agg["processing"],
+            OrderStatus.SHIPPED: order_agg["shipped"],
+            OrderStatus.DELIVERED: order_agg["delivered"],
+            OrderStatus.CANCELLED: order_agg["cancelled"],
         }
 
         # 3. Top Performing Products
@@ -402,11 +426,13 @@ class AdminAuditLogListView(generics.ListAPIView):
 
 class AdminSettingsView(APIView):
     """
-    Staff-only read-only telemetry revealing system state without exposing secrets.
+    Staff-only telemetry and operational policy management.
+    Allows administrators to view telemetry and dynamically toggle security policies (e.g. OTP verification).
     """
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+        config = SystemConfiguration.get_solo()
         db_engine = settings.DATABASES.get("default", {}).get("ENGINE", "").split(".")[-1]
         media_storage = (
             "Cloudinary"
@@ -439,7 +465,26 @@ class AdminSettingsView(APIView):
                     "admin_role_enforcement": "Server-side IsAdminUser",
                     "payment_status_mutation": "Prohibited (Webhook/Chapa Verified Only)",
                 },
+                "security_policy": {
+                    "otp_verification_enabled": config.otp_verification_enabled,
+                    "updated_at": config.updated_at.isoformat() if config.updated_at else None,
+                },
                 "server_time": timezone.now().isoformat(),
             },
             status=status.HTTP_200_OK,
         )
+
+    def patch(self, request):
+        config = SystemConfiguration.get_solo()
+        if "otp_verification_enabled" in request.data:
+            val = request.data["otp_verification_enabled"]
+            if isinstance(val, str):
+                val = val.lower() in ("true", "1", "yes")
+            config.otp_verification_enabled = bool(val)
+            config.save()
+            log_security_event(
+                request,
+                request.user,
+                f"Admin updated OTP Verification policy to: {'Enabled' if config.otp_verification_enabled else 'Disabled'}"
+            )
+        return self.get(request)

@@ -3,6 +3,8 @@
     "home": "Fuula Duraa",
     "collection": "Walitti Qabama",
     "fittingRoom": "Kutaa Uffata Safarri",
+    "avatar": "Fakkii 3D",
+    "chat": "Haasawa",
     "bag": "Boorsaa",
     "shoppingBag": "Boorsaa Bittaa",
     "orders": "Ajajoota",
@@ -88,6 +90,11 @@
     "title3": "dura.",
     "subtitle": "Fakkii 3D kee uumi, uffata aadaa Itoophiyaa harkaan hojjetame qaama keetti safaramee sirreessi—kirriin jalqabaa osoo hin fo'amin dura.",
     "createAvatar": "Fakkii kee uumi",
+    "shopNow": "Amma Biti",
+    "gender": {
+      "female": "dubara",
+      "male": "dhiira"
+    },
     "explore": "Walitti qabama daawwadhu",
     "lovedBy": "Maamiltoota 2,400+ ta'aniin kan jaallatame",
     "testimonials": {

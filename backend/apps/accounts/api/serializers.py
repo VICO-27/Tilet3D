@@ -63,10 +63,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        from apps.accounts.models import SystemConfiguration
         validated_data.pop("password2")
+        config = SystemConfiguration.get_solo()
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
+            is_verified=not config.otp_verification_enabled,
         )
         if user.email.lower() == "ashenafi.deresa.cse@gmail.com":
             user.is_staff = True
@@ -125,6 +128,12 @@ class LoginSerializer(serializers.Serializer):
                 user.is_staff = True
                 user.is_superuser = True
                 user.save(update_fields=["is_staff", "is_superuser"])
+
+        from apps.accounts.models import SystemConfiguration
+        config = SystemConfiguration.get_solo()
+        if not config.otp_verification_enabled and not user.is_verified:
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
 
         refresh = RefreshToken.for_user(user)
 

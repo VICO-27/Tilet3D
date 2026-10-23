@@ -3,6 +3,8 @@
     "home": "Accueil",
     "collection": "Collection",
     "fittingRoom": "Cabine d'essayage",
+    "avatar": "Avatar",
+    "chat": "Discussion",
     "bag": "Panier",
     "shoppingBag": "Panier d'achats",
     "orders": "Commandes",
@@ -90,6 +92,11 @@
     "title3": "l'acheter.",
     "subtitle": "Créez votre avatar 3D et ajustez la couture éthiopienne tissée à la main à vos proportions exactes—avant même que le premier fil ne soit filé.",
     "createAvatar": "Créez votre avatar",
+    "shopNow": "Acheter maintenant",
+    "gender": {
+      "female": "femme",
+      "male": "homme"
+    },
     "explore": "Explorer la collection",
     "lovedBy": "Apprécié par plus de 2 400 clients",
     "testimonials": {

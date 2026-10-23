@@ -54,18 +54,21 @@ function ResponsiveCamera() {
 
     if (aspect < 0.6) {
       // Ultra-narrow phone (e.g. 20:9 / 20.5:9 Tecno, Infinix, Xperia)
-      camera.position.set(0, 0.95, 5.0);
+      camera.position.set(0, 0.82, 5.0);
     } else if (isMobile) {
       // Standard mobile portrait (e.g. iPhone, Galaxy)
-      camera.position.set(0, 0.95, 4.7);
+      camera.position.set(0, 0.84, 4.7);
     } else if (aspect < 1.15) {
       // Tablet / square viewports
-      camera.position.set(0, 1.0, 4.1);
+      camera.position.set(0, 0.95, 4.1);
     } else {
       // Desktop widescreen
-      camera.position.set(0, 1.05, 3.4);
+      camera.position.set(0, 1.02, 3.4);
     }
     camera.updateProjectionMatrix();
+    if (controls && 'target' in controls && (controls as any).target) {
+      (controls as any).target.set(0, isMobile ? 0.84 : 0.95, 0);
+    }
     if (controls && 'update' in controls && typeof (controls as { update?: () => void }).update === 'function') {
       (controls as { update: () => void }).update();
     }
@@ -74,33 +77,51 @@ function ResponsiveCamera() {
   return null;
 }
 
-function MobileRotationConsumer({
+function AvatarSpinController({
   rotateRef,
   controlsRef,
+  isUserInteracting,
+  reducedMotion,
   onRotateActive,
   onRotateIdle,
 }: {
   rotateRef?: React.MutableRefObject<number>;
   controlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null>;
+  isUserInteracting: boolean;
+  reducedMotion: boolean;
   onRotateActive?: () => void;
   onRotateIdle?: () => void;
 }) {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useFrame(() => {
-    if (!rotateRef || rotateRef.current === 0) return;
-    const ctrl = controlsRef.current as unknown as { rotateLeft?: (angle: number) => void; update?: () => void } | null;
-    if (ctrl && typeof ctrl.rotateLeft === "function") {
+  useFrame((_, delta) => {
+    const ctrl = controlsRef.current as unknown as { 
+      getAzimuthalAngle?: () => number;
+      setAzimuthalAngle?: (angle: number) => void;
+      update?: () => void;
+    } | null;
+    if (!ctrl || typeof ctrl.setAzimuthalAngle !== "function" || typeof ctrl.getAzimuthalAngle !== "function") return;
+
+    // 1. Mobile touch manual rotation
+    if (rotateRef && rotateRef.current !== 0) {
       onRotateActive?.();
-      ctrl.rotateLeft(rotateRef.current);
-      ctrl.update?.();
+      const currentTheta = ctrl.getAzimuthalAngle();
+      ctrl.setAzimuthalAngle(currentTheta - rotateRef.current);
+      rotateRef.current = 0;
 
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       idleTimerRef.current = setTimeout(() => {
         onRotateIdle?.();
       }, 700);
+      return;
     }
-    rotateRef.current = 0;
+
+    // 2. Continuous slow 360° circular spin when idle (hero showcase)
+    if (!isUserInteracting && !reducedMotion) {
+      const safeDelta = Math.min(delta, 0.05);
+      const currentTheta = ctrl.getAzimuthalAngle();
+      ctrl.setAzimuthalAngle(currentTheta - 0.35 * safeDelta);
+    }
   });
 
   return null;
@@ -648,9 +669,11 @@ const HeroModel = ({
       {/* Top Hair & Shoulder Accent */}
       <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
       <ResponsiveCamera />
-      <MobileRotationConsumer 
+      <AvatarSpinController 
         rotateRef={rotateRef} 
         controlsRef={controlsRef}
+        isUserInteracting={isUserInteracting}
+        reducedMotion={reducedMotion}
         onRotateActive={handleInteractionStart}
         onRotateIdle={handleInteractionEnd}
       />
@@ -700,14 +723,13 @@ const HeroModel = ({
         ref={controlsRef}
         makeDefault
         enabled={!isMobile}
-        target={[0, 0.95, 0]}
+        target={isMobile ? [0, 0.84, 0] : [0, 0.95, 0]}
         enableZoom={false}
         enablePan={false}
         rotateSpeed={0.8}
         enableDamping={true}
         dampingFactor={0.06}
-        autoRotate={!isUserInteracting && !reducedMotion}
-        autoRotateSpeed={5.5}
+        autoRotate={false}
         minPolarAngle={Math.PI * 0.38}
         maxPolarAngle={Math.PI * 0.58}
         onStart={handleInteractionStart}

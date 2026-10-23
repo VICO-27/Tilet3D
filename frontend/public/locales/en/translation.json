@@ -3,6 +3,8 @@
     "home": "Home",
     "collection": "Collection",
     "fittingRoom": "Fitting Room",
+    "avatar": "Avatar",
+    "chat": "Chat",
     "bag": "Bag",
     "shoppingBag": "Shopping Bag",
     "orders": "Orders",
@@ -86,8 +88,13 @@
     "title1": "Wear it",
     "title2": "before you",
     "title3": "buy it.",
-    "subtitle": "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions—before the first thread is spun.",
+    "subtitle": "Build your 3D avatar and fit hand-woven Ethiopian couture to your exact proportions before the first thread is spun.",
     "createAvatar": "Create your avatar",
+    "shopNow": "Shop Now",
+    "gender": {
+      "female": "female",
+      "male": "male"
+    },
     "explore": "Explore the collection",
     "lovedBy": "Loved by 2,400+ clients",
     "testimonials": {

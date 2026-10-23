@@ -211,3 +211,27 @@ class OTPCode(BaseModel):
 
     def __str__(self):
         return f"{self.user.email} - {self.purpose} - {self.code}"
+
+
+class SystemConfiguration(models.Model):
+    """
+    Platform-wide operational settings configurable by administrators.
+    """
+    otp_verification_enabled = models.BooleanField(
+        default=True,
+        help_text="When enabled, requires email OTP verification for user registration and unverified sign-in."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "System Configuration"
+        verbose_name_plural = "System Configurations"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+    def __str__(self):
+        status_text = "Enabled" if self.otp_verification_enabled else "Disabled"
+        return f"System Configuration (OTP: {status_text})"

@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
+  KeyRound,
+  Zap,
 } from "lucide-react";
 import adminApi from "../api/adminApi";
 import type { AdminSettingsResponse } from "../types/admin";
@@ -36,6 +38,8 @@ export const AdminSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isForbidden, setIsForbidden] = useState(false);
+  const [isTogglingOtp, setIsTogglingOtp] = useState(false);
+  const [toggleSuccess, setToggleSuccess] = useState<string | null>(null);
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -60,6 +64,32 @@ export const AdminSettingsPage: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  const handleToggleOtp = async () => {
+    if (!settingsData || isTogglingOtp) return;
+    const currentVal = settingsData.security_policy?.otp_verification_enabled ?? true;
+    const nextVal = !currentVal;
+
+    setIsTogglingOtp(true);
+    setToggleSuccess(null);
+    setError(null);
+
+    try {
+      const updated = await adminApi.updateSettings({ otp_verification_enabled: nextVal });
+      setSettingsData(updated);
+      setToggleSuccess(
+        nextVal
+          ? "OTP verification enabled: New registrations and sign-ins will require a 6-digit email OTP."
+          : "OTP verification disabled: Users can now register and sign in instantly without email OTP codes."
+      );
+      setTimeout(() => setToggleSuccess(null), 6000);
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosLikeError;
+      setError(axiosErr?.response?.data?.detail || "Failed to update OTP verification policy.");
+    } finally {
+      setIsTogglingOtp(false);
+    }
+  };
 
   useEffect(() => {
     fetchSettings();
@@ -103,6 +133,13 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         )}
 
+        {toggleSuccess && (
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-2.5 animate-fade-in shadow-lg shadow-emerald-950/20">
+            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+            <span>{toggleSuccess}</span>
+          </div>
+        )}
+
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-3">
             <RotateCw className="w-8 h-8 text-plum-400 animate-spin" />
@@ -110,6 +147,125 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         ) : settingsData ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dynamic Security Policy: OTP Verification Control */}
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-plum-950/30 via-stone-900/60 to-black/80 border border-plum-500/30 backdrop-blur-md space-y-5 md:col-span-2 shadow-xl shadow-plum-950/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-plum-500/20 text-plum-300 border border-plum-500/30">
+                      <KeyRound className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white tracking-tight">
+                        Email OTP Verification Policy
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Enable or disable the 6-digit one-time password requirement on user registration and sign-in.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-start sm:self-auto shrink-0">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                      settingsData.security_policy?.otp_verification_enabled
+                        ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                        : "bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                    }`}
+                  >
+                    {settingsData.security_policy?.otp_verification_enabled ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> OTP REQUIRED
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5" /> OTP BYPASSED
+                      </>
+                    )}
+                  </span>
+
+                  {/* Luxury Animated Toggle Switch */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={settingsData.security_policy?.otp_verification_enabled ?? true}
+                    disabled={isTogglingOtp}
+                    onClick={handleToggleOtp}
+                    title={
+                      settingsData.security_policy?.otp_verification_enabled
+                        ? "Click to disable OTP verification"
+                        : "Click to enable OTP verification"
+                    }
+                    className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-plum-500 focus:ring-offset-2 focus:ring-offset-stone-900 ${
+                      settingsData.security_policy?.otp_verification_enabled
+                        ? "bg-plum-600 hover:bg-plum-500"
+                        : "bg-stone-700 hover:bg-stone-600"
+                    } ${isTogglingOtp ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    <span className="sr-only">Toggle OTP Verification</span>
+                    <span
+                      className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out flex items-center justify-center ${
+                        settingsData.security_policy?.otp_verification_enabled ? "translate-x-6" : "translate-x-0"
+                      }`}
+                    >
+                      {isTogglingOtp ? (
+                        <RotateCw className="w-3.5 h-3.5 text-stone-700 animate-spin" />
+                      ) : settingsData.security_policy?.otp_verification_enabled ? (
+                        <span className="w-2 h-2 rounded-full bg-plum-600" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-stone-400" />
+                      )}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Policy explanation cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+                <div
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    settingsData.security_policy?.otp_verification_enabled
+                      ? "bg-plum-500/[0.08] border-plum-500/40 text-gray-200"
+                      : "bg-white/[0.02] border-white/5 text-gray-400 opacity-60"
+                  }`}
+                >
+                  <div className="font-semibold text-white mb-1 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-plum-400" />
+                    Strict Verification Mode (Active)
+                  </div>
+                  <p className="leading-relaxed">
+                    New users receive a 6-digit verification code sent via email upon registration and unverified sign-in. Protects your store against fake accounts and spam.
+                  </p>
+                </div>
+
+                <div
+                  className={`p-3.5 rounded-xl border transition-all ${
+                    !settingsData.security_policy?.otp_verification_enabled
+                      ? "bg-amber-500/[0.08] border-amber-500/40 text-gray-200"
+                      : "bg-white/[0.02] border-white/5 text-gray-400 opacity-60"
+                  }`}
+                >
+                  <div className="font-semibold text-white mb-1 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    Instant Access Mode (Active)
+                  </div>
+                  <p className="leading-relaxed">
+                    Users are automatically verified upon sign-up and sign-in. No email OTP is sent or required. Ideal for rapid testing, presentations, or frictionless onboarding.
+                  </p>
+                </div>
+              </div>
+
+              {settingsData.security_policy?.updated_at && (
+                <div className="text-[11px] text-gray-500 flex items-center gap-1.5 pt-1">
+                  <Clock className="w-3 h-3 text-gray-500" />
+                  <span>
+                    Policy last updated: {new Date(settingsData.security_policy.updated_at).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Platform Identity */}
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm space-y-4">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-2">

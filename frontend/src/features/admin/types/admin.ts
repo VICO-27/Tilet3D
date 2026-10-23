@@ -311,6 +311,10 @@ export interface AdminSettingsResponse {
     admin_role_enforcement: string;
     payment_status_mutation: string;
   };
+  security_policy?: {
+    otp_verification_enabled: boolean;
+    updated_at: string | null;
+  };
   server_time: string;
 }
 

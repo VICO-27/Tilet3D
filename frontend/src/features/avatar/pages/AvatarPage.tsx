@@ -71,7 +71,7 @@ const AvatarPage = () => {
                 <span>{t("avatar.title", "Virtual Fitting Atelier")}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-stone-900 dark:text-white mb-2.5">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-purple-700 dark:text-purple-400 mb-2.5">
                 {t("avatar.comingSoon", "Coming Soon")}
               </h1>
 
@@ -83,19 +83,19 @@ const AvatarPage = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
                 <Link
                   to="/products"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-plum-600 hover:bg-plum-700 text-white shadow-md hover:shadow-lg transition-all duration-200 shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg hover:brightness-105 active:scale-95 transition-all duration-200 shrink-0"
                 >
                   <ShoppingBag className="w-3.5 h-3.5 text-white" />
                   <span>{t("nav.collection", "Shop Collection")}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
                 </Link>
 
                 <button
                   type="button"
                   onClick={enterEditMode}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase border border-stone-300 hover:border-stone-400 bg-white/80 hover:bg-white text-stone-800 transition-all duration-200 shrink-0"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase border border-purple-200 hover:border-purple-400 bg-purple-50/50 hover:bg-purple-50 text-purple-900 transition-all duration-200 shrink-0"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-plum-600" />
+                  <Sliders className="w-3.5 h-3.5 text-purple-600" />
                   <span>{isEditing ? t("avatar.controlsActive", "Controls Active") : t("avatar.controls", "Studio Controls")}</span>
                 </button>
               </div>
@@ -104,31 +104,31 @@ const AvatarPage = () => {
         ) : (
           /* Minimized top single-line pill when user dismisses the card to inspect the 3D model */
           <div className="absolute top-3 sm:top-5 left-1/2 -translate-x-1/2 z-20 pointer-events-auto max-w-[calc(100vw-1.5rem)]">
-            <div className="flex items-center gap-2.5 sm:gap-3.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full backdrop-blur-xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/90 dark:border-stone-700/80 shadow-[0_6px_24px_rgba(0,0,0,0.08)] whitespace-nowrap">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full backdrop-blur-xl bg-white/95 dark:bg-stone-900/95 border border-purple-200/90 dark:border-purple-800/80 shadow-[0_6px_24px_rgba(147,51,234,0.12)] whitespace-nowrap">
               <button
                 type="button"
                 onClick={() => setIsCardDismissed(false)}
-                className="flex items-center gap-1.5 shrink-0 group hover:opacity-80 transition-opacity"
+                className="flex items-center gap-1.5 shrink-0 group hover:opacity-85 transition-opacity"
                 title="Expand announcement"
               >
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-plum-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-plum-600"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
                 </span>
-                <span className="font-serif text-xs sm:text-sm font-medium text-stone-900 dark:text-stone-100 tracking-wide">
+                <span className="font-serif text-xs sm:text-sm font-semibold text-purple-700 dark:text-purple-300 tracking-wide">
                   {t("avatar.comingSoon", "Coming Soon")}
                 </span>
               </button>
 
-              <div className="w-px h-3.5 sm:h-4 bg-stone-300 dark:bg-stone-700 shrink-0" />
+              <div className="w-px h-3.5 sm:h-4 bg-purple-200 dark:bg-purple-800 shrink-0" />
 
               <Link
                 to="/products"
-                className="group inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-plum-700 dark:text-plum-400 hover:text-stone-900 dark:hover:text-white transition-colors shrink-0"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider shadow-sm transition-all shrink-0"
               >
-                <ShoppingBag className="w-3.5 h-3.5 text-plum-600 dark:text-plum-400" />
-                <span>{t("nav.collection", "Shop Collection")}</span>
-                <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-stone-700 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                <span>{t("nav.collection", "Shop Now")}</span>
+                <ArrowRight className="w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </div>

@@ -296,20 +296,20 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full max-w-lg max-h-[92vh] bg-zinc-950 border border-purple-500/25 text-zinc-100 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden select-text"
+          className="relative w-full max-w-lg max-h-[92vh] bg-white border border-stone-200 text-stone-900 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden select-text"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Banner — Pinned at top */}
-          <div className="relative px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-zinc-900 via-purple-950/40 to-zinc-900 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+          <div className="relative px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-stone-50 via-purple-50/70 to-stone-50 border-b border-stone-200 flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 shrink-0">
+              <div className="p-2 rounded-xl bg-purple-100 border border-purple-200 text-purple-700 shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-purple-400 block truncate">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-purple-700 block truncate">
                   {t("rentals.modalTitle", "Reserve Cultural Couture")}
                 </span>
-                <h2 className="text-sm sm:text-base font-serif text-white truncate">{product.name}</h2>
+                <h2 className="text-sm sm:text-base font-serif text-stone-900 truncate">{product.name}</h2>
               </div>
             </div>
 
@@ -317,28 +317,28 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="p-1.5 sm:p-2 text-zinc-400 hover:text-white rounded-full bg-white/5 hover:bg-white/15 transition-colors shrink-0"
+              className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-800 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors shrink-0"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {loadingConfig ? (
-            <div className="p-10 text-center text-zinc-400 flex flex-col items-center gap-3">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+            <div className="p-10 text-center text-stone-500 flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
               <p className="text-xs uppercase tracking-widest font-mono">{t("common.loading", "Loading atelier rental terms...")}</p>
             </div>
           ) : rentalConfig && !rentalConfig.is_rental_enabled ? (
             <div className="p-8 text-center space-y-4">
-              <AlertCircle className="h-10 w-10 text-purple-400 mx-auto" />
-              <h3 className="text-base font-serif text-white">{t("rentals.unavailableTitle", "Rental Currently Unavailable")}</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              <AlertCircle className="h-10 w-10 text-purple-600 mx-auto" />
+              <h3 className="text-base font-serif text-stone-900">{t("rentals.unavailableTitle", "Rental Currently Unavailable")}</h3>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
                 {t("rentals.unavailableDesc", "This artisanal piece is currently not available for rental. You can still purchase this garment directly.")}
               </p>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 bg-white text-black font-semibold text-xs uppercase tracking-wider rounded-full hover:bg-zinc-200 transition-colors"
+                className="px-6 py-2.5 bg-stone-900 text-white font-semibold text-xs uppercase tracking-wider rounded-full hover:bg-stone-800 transition-colors"
               >
                 {t("common.close", "Close")}
               </button>
@@ -346,25 +346,25 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
           ) : (
             <form onSubmit={handleCheckout} className="flex-1 flex flex-col min-h-0">
               {/* Scrollable Form Body */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 text-zinc-100">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 text-stone-800 bg-white">
                 
                 {/* Product Summary Card */}
-                <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-white/[0.03] border border-white/10 shrink-0">
+                <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-stone-50 border border-stone-200 shrink-0">
                   <img
                     src={primaryImage}
                     alt={product.name}
-                    className="w-12 h-14 sm:w-14 sm:h-16 object-cover rounded-lg border border-white/10 shrink-0"
+                    className="w-12 h-14 sm:w-14 sm:h-16 object-cover rounded-lg border border-stone-200 shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-[9px] text-purple-400 uppercase tracking-widest font-semibold block truncate">
+                    <span className="text-[9px] text-purple-700 uppercase tracking-widest font-semibold block truncate">
                       {product.brand || 'Tilet3D Atelier'}
                     </span>
-                    <p className="text-xs sm:text-sm font-medium text-white truncate">{product.name}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-stone-900 truncate">{product.name}</p>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px]">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold">
+                      <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 font-bold">
                         {rentalConfig?.daily_rate} ETB / day
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-white/5">
+                      <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 border border-stone-200">
                         Deposit: {rentalConfig?.security_deposit} ETB
                       </span>
                     </div>
@@ -374,7 +374,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                 {/* Variant / Size Selection */}
                 {product.variants && product.variants.length > 1 && (
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-600 mb-1.5">
                       {t("detail.selectSize", "Select Size / Variant")}
                     </label>
                     <div className="flex flex-wrap gap-1.5">
@@ -386,7 +386,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                           className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                             selectedVariantId === v.id
                               ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                              : 'bg-zinc-900 border border-white/10 text-zinc-300 hover:border-purple-500/40'
+                              : 'bg-stone-50 border border-stone-200 text-stone-700 hover:border-purple-500/40'
                           }`}
                         >
                           {v.size || v.color || v.name}
@@ -398,17 +398,17 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
 
                 {/* Pricing Mode Toggle: Fixed Package vs Custom Dates */}
                 <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-600 mb-1.5">
                     {t("rentals.durationOptions", "Rental Duration Options")}
                   </label>
-                  <div className="grid grid-cols-2 gap-1.5 p-1 bg-zinc-900 rounded-xl border border-white/10">
+                  <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 rounded-xl border border-stone-200">
                     <button
                       type="button"
                       onClick={() => setPricingMode('package')}
                       className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
                         pricingMode === 'package'
                           ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-sm'
-                          : 'text-zinc-400 hover:text-white'
+                          : 'text-stone-500 hover:text-stone-900'
                       }`}
                     >
                       {t("rentals.fixedPackage", "Fixed Package")}
@@ -419,7 +419,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       className={`py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
                         pricingMode === 'flexible_daily'
                           ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-sm'
-                          : 'text-zinc-400 hover:text-white'
+                          : 'text-stone-500 hover:text-stone-900'
                       }`}
                     >
                       {t("rentals.customDates", "Custom Dates")}
@@ -439,17 +439,17 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                             onClick={() => setSelectedPackageId(pkg.id)}
                             className={`cursor-pointer p-2.5 rounded-xl border transition-all ${
                               isSelected
-                                ? 'bg-purple-500/15 border-purple-500 text-white shadow-sm'
-                                : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:border-white/20'
+                                ? 'bg-purple-50/80 border-purple-600 text-purple-950 shadow-sm'
+                                : 'bg-stone-50 border-stone-200 text-stone-600 hover:border-stone-300'
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-white">{pkg.name}</span>
-                              <span className="text-[11px] font-mono font-bold text-purple-400">
+                              <span className="text-xs font-bold text-stone-900">{pkg.name}</span>
+                              <span className="text-[11px] font-mono font-bold text-purple-700">
                                 {pkg.price} ETB
                               </span>
                             </div>
-                            <p className="text-[10px] text-zinc-400 mt-0.5">
+                            <p className="text-[10px] text-stone-500 mt-0.5">
                               {pkg.duration_days} {t("rentals.daysAccess", "Days Full Access")}
                             </p>
                           </div>
@@ -458,7 +458,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                     </div>
 
                     <div className="pt-1">
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("rentals.startDate", "Event / Pickup Start Date")}
                       </label>
                       <input
@@ -466,7 +466,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         min={defaultStartDate}
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
                   </div>
@@ -476,7 +476,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                 {pricingMode === 'flexible_daily' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("rentals.startDate", "Pickup / Event Date")}
                       </label>
                       <input
@@ -484,11 +484,11 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         min={defaultStartDate}
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("rentals.endDate", "Return Date")}
                       </label>
                       <input
@@ -496,7 +496,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         min={startDate || defaultStartDate}
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
                   </div>
@@ -507,8 +507,8 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                   <div
                     className={`flex items-center gap-2 p-2 rounded-xl text-xs font-medium ${
                       availability.is_available
-                        ? 'bg-emerald-950/40 border border-emerald-500/30 text-emerald-400'
-                        : 'bg-rose-950/40 border border-rose-500/30 text-rose-400'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : 'bg-rose-50 border border-rose-200 text-rose-800'
                     }`}
                   >
                     {availability.is_available ? (
@@ -526,7 +526,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
 
                 {/* Fulfillment Method Selection */}
                 <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-600 mb-1.5">
                     {t("rentals.fulfillment", "Fulfillment & Return Handover")}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -534,14 +534,14 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       onClick={() => setFulfillmentMethod('shop_pickup')}
                       className={`cursor-pointer p-2.5 rounded-xl border transition-all flex items-start gap-2.5 ${
                         fulfillmentMethod === 'shop_pickup'
-                          ? 'bg-purple-500/15 border-purple-500 text-white'
-                          : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:border-white/20'
+                          ? 'bg-purple-50/80 border-purple-600 text-purple-950'
+                          : 'bg-stone-50 border-stone-200 text-stone-600 hover:border-stone-300'
                       }`}
                     >
-                      <Building2 className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+                      <Building2 className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-bold text-white">{t("rentals.pickupTitle", "Atelier Pickup & Return")}</p>
-                        <p className="text-[10px] text-zinc-400">{t("rentals.pickupSubtitle", "Free · Bole Medhanialem")}</p>
+                        <p className="text-xs font-bold text-stone-900">{t("rentals.pickupTitle", "Atelier Pickup & Return")}</p>
+                        <p className="text-[10px] text-stone-500">{t("rentals.pickupSubtitle", "Free · Bole Medhanialem")}</p>
                       </div>
                     </div>
 
@@ -549,14 +549,14 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       onClick={() => setFulfillmentMethod('delivery')}
                       className={`cursor-pointer p-2.5 rounded-xl border transition-all flex items-start gap-2.5 ${
                         fulfillmentMethod === 'delivery'
-                          ? 'bg-purple-500/15 border-purple-500 text-white'
-                          : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:border-white/20'
+                          ? 'bg-purple-50/80 border-purple-600 text-purple-950'
+                          : 'bg-stone-50 border-stone-200 text-stone-600 hover:border-stone-300'
                       }`}
                     >
-                      <Truck className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+                      <Truck className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-bold text-white">{t("rentals.deliveryTitle", "Courier Delivery")}</p>
-                        <p className="text-[10px] text-zinc-400">
+                        <p className="text-xs font-bold text-stone-900">{t("rentals.deliveryTitle", "Courier Delivery")}</p>
+                        <p className="text-[10px] text-stone-500">
                           +{rentalConfig?.delivery_fee} ETB · Doorstep Drop & Return
                         </p>
                       </div>
@@ -568,7 +568,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                 <div className="space-y-2.5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("checkout.fullName", "Full Name")} *
                       </label>
                       <input
@@ -577,12 +577,12 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         placeholder="e.g. Abebe Bikila"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("checkout.phone", "Phone Number")} *
                       </label>
                       <input
@@ -591,14 +591,14 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         placeholder="+251 91 234 5678"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
                   </div>
 
                   {fulfillmentMethod === 'delivery' && (
                     <div>
-                      <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+                      <label className="block text-[11px] font-semibold text-stone-600 mb-1">
                         {t("checkout.address", "Delivery Address (Addis Ababa)")} *
                       </label>
                       <input
@@ -607,52 +607,52 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                         placeholder="e.g. Bole Sub-city, Woreda 03, House 412"
                         value={addressLine}
                         onChange={(e) => setAddressLine(e.target.value)}
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-purple-600 focus:bg-white transition-colors"
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Transparent Financial Quote Breakdown */}
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+                <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-400">
+                    <span className="text-stone-600">
                       {t("rentals.duration", "Rental Duration")} ({quote?.duration_days || 0} days)
                     </span>
-                    <span className="font-mono font-medium text-white">
+                    <span className="font-mono font-medium text-stone-900">
                       {quote?.rental_subtotal ?? '—'} ETB
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-zinc-400">
+                    <div className="flex items-center gap-1.5 text-stone-600">
                       <span>{t("rentals.securityDeposit", "Refundable Security Deposit")}</span>
-                      <Info className="h-3 w-3 text-purple-400" />
+                      <Info className="h-3 w-3 text-purple-600" />
                     </div>
-                    <span className="font-mono font-medium text-purple-400">
+                    <span className="font-mono font-bold text-purple-700">
                       +{quote?.deposit_amount ?? '—'} ETB
                     </span>
                   </div>
 
                   {fulfillmentMethod === 'delivery' && (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400">{t("rentals.deliveryFee", "Doorstep Delivery & Return")}</span>
-                      <span className="font-mono font-medium text-white">
+                      <span className="text-stone-600">{t("rentals.deliveryFee", "Doorstep Delivery & Return")}</span>
+                      <span className="font-mono font-medium text-stone-900">
                         +{quote?.delivery_fee ?? '—'} ETB
                       </span>
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                  <div className="pt-2 border-t border-stone-200 flex items-center justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      <p className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">
                         {t("rentals.totalDue", "Total Payable Today")}
                       </p>
-                      <p className="text-[10px] text-purple-400/80">
+                      <p className="text-[10px] text-purple-700 font-medium">
                         * Deposit refunded upon return inspection
                       </p>
                     </div>
-                    <span className="text-lg font-mono font-bold text-white">
+                    <span className="text-lg font-mono font-bold text-purple-900">
                       {quote?.total_amount ?? '—'} ETB
                     </span>
                   </div>
@@ -664,16 +664,16 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                     type="checkbox"
                     checked={termsAccepted}
                     onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="mt-0.5 rounded border-zinc-700 bg-zinc-900 text-purple-600 focus:ring-purple-500 h-4 w-4 shrink-0"
+                    className="mt-0.5 rounded border-stone-300 bg-stone-50 text-purple-600 focus:ring-purple-500 h-4 w-4 shrink-0"
                   />
-                  <span className="text-[10px] sm:text-[11px] leading-relaxed text-zinc-400">
+                  <span className="text-[10px] sm:text-[11px] leading-relaxed text-stone-500">
                     {t("rentals.agreement", "I agree to the Tilet3D Rental & Cultural Garment Care Policy. The security deposit will be automatically cleared upon standard atelier inspection.")}
                   </span>
                 </label>
 
                 {/* Error Alert */}
                 {errorMsg && (
-                  <div className="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{errorMsg}</span>
                   </div>
@@ -681,11 +681,11 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
               </div>
 
               {/* Sticky Submit Footer — Pinned at bottom */}
-              <div className="shrink-0 p-3 sm:p-4 bg-zinc-950/95 border-t border-white/10 backdrop-blur-md">
+              <div className="shrink-0 p-3 sm:p-4 bg-white/95 border-t border-stone-200 backdrop-blur-md">
                 <button
                   type="submit"
                   disabled={isSubmitting || isQuoting || !rentalConfig || !quote || Boolean(errorMsg) || Boolean(availability && !availability.is_available)}
-                  className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs font-bold uppercase tracking-[0.18em] rounded-full shadow-lg hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-purple-900/30 cursor-pointer"
+                  className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-fuchsia-500 text-white text-xs font-bold uppercase tracking-[0.18em] rounded-full shadow-lg hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-purple-900/20 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -700,7 +700,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                     </>
                   )}
                 </button>
-                <p className="text-center text-[10px] text-zinc-500 mt-1.5">
+                <p className="text-center text-[10px] text-stone-500 mt-1.5">
                   {t("checkout.chapaSecure", "🔒 Safe, 256-bit encrypted payment powered by Chapa. Ethiopian Birr (ETB).")}
                 </p>
               </div>

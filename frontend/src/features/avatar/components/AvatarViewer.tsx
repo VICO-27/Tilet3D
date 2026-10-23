@@ -213,7 +213,7 @@ function BottomControls() {
   if (isEditing) return null;
 
   return (
-    <div className="absolute bottom-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] md:bottom-10 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
+    <div className="absolute bottom-20 sm:bottom-14 md:bottom-10 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
       <AvatarControls />
     </div>
   );

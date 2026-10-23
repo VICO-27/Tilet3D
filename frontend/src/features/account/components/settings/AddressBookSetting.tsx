@@ -167,7 +167,7 @@ export const AddressBookSetting: React.FC = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       {/* Feedback Banner */}
       {feedback && (
         <div

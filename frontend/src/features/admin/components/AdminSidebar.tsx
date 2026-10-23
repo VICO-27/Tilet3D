@@ -17,6 +17,7 @@ import {
   BarChart3,
   ShieldAlert,
   Percent,
+  Calendar,
 } from "lucide-react";
 import { useAuthStore } from "@/app/store/useAuthStore";
 
@@ -62,6 +63,12 @@ const NAV_ITEMS: NavItem[] = [
     name: "Orders",
     path: "/admin/orders",
     icon: ShoppingBag,
+    isAvailable: true,
+  },
+  {
+    name: "Rentals",
+    path: "/admin/rentals",
+    icon: Calendar,
     isAvailable: true,
   },
   {

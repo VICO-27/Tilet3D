@@ -141,7 +141,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -157,19 +157,19 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-stone-100 z-10 overflow-hidden my-8"
+            className="relative w-full max-w-2xl rounded-2xl sm:rounded-3xl bg-white shadow-2xl border border-stone-100 z-10 overflow-hidden my-auto max-h-[92vh] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-stone-100 bg-stone-50/50">
+            <div className="flex items-center justify-between px-5 sm:px-8 py-4 sm:py-6 border-b border-stone-100 bg-stone-50/50 shrink-0">
               <div>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 mb-1">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 mb-0.5 sm:mb-1">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Secure Encryption
                 </div>
-                <h2 className="font-serif text-2xl font-normal text-stone-900 tracking-tight">Express Checkout</h2>
+                <h2 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight">Express Checkout</h2>
               </div>
               <button
                 onClick={onClose}
-                className="rounded-full p-2.5 text-stone-400 hover:bg-stone-200/60 hover:text-stone-900 transition-colors"
+                className="rounded-full p-2 text-stone-400 hover:bg-stone-200/60 hover:text-stone-900 transition-colors"
                 aria-label="Close checkout"
               >
                 <X className="h-5 w-5" />
@@ -177,13 +177,13 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
             </div>
 
             {error && (
-              <div className="mx-8 mt-6 rounded-2xl bg-rose-50 p-4 text-xs font-medium text-rose-600 border border-rose-100">
+              <div className="mx-5 sm:mx-8 mt-4 rounded-xl sm:rounded-2xl bg-rose-50 p-3 sm:p-4 text-xs font-medium text-rose-600 border border-rose-100 shrink-0">
                 {error}
               </div>
             )}
 
             {/* Form Content */}
-            <form onSubmit={handleSubmit} className="px-8 py-8 space-y-6 max-h-[70vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="px-5 sm:px-8 py-5 sm:py-8 space-y-5 sm:space-y-6 overflow-y-auto flex-1">
               
               {/* Section 1: Contact Information */}
               <div className="space-y-4">
@@ -258,7 +258,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] font-medium text-stone-600 mb-1.5">Sub City</label>
                     <input
@@ -308,8 +308,8 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
               </div>
 
               {/* Receipt Summary & Payment Action Footer */}
-              <div className="pt-6 border-t border-stone-100 bg-white sticky bottom-0 space-y-4 pb-2">
-                <div className="space-y-3 px-1">
+              <div className="pt-4 sm:pt-6 border-t border-stone-100 bg-white sticky bottom-0 space-y-3 sm:space-y-4 pb-2">
+                <div className="space-y-2 sm:space-y-3 px-1">
                   <div className="flex justify-between text-xs text-stone-500">
                     <span>Subtotal</span>
                     <span>ETB {subtotal.toLocaleString()}</span>
@@ -324,10 +324,10 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-dashed border-stone-200">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-dashed border-stone-200">
                   <div className="w-full sm:w-auto text-left flex flex-col justify-center">
-                    <p className="text-[11px] uppercase tracking-wider text-stone-400">Total Due</p>
-                    <p className="font-serif text-2xl font-bold text-stone-900">
+                    <p className="text-[10px] sm:text-[11px] uppercase tracking-wider text-stone-400">Total Due</p>
+                    <p className="font-serif text-xl sm:text-2xl font-bold text-stone-900">
                       ETB {grandTotal.toLocaleString()}
                     </p>
                   </div>
@@ -336,7 +336,7 @@ export const CheckoutModal = ({ isOpen, onClose, onSuccess }: CheckoutModalProps
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={loading}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full bg-stone-900 px-10 py-4 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-violet-600 transition-all shadow-xl shadow-stone-900/10 disabled:opacity-50"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full bg-stone-900 px-8 sm:px-10 py-3.5 sm:py-4 text-xs font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-white hover:bg-violet-600 transition-all shadow-xl shadow-stone-900/10 disabled:opacity-50"
                   >
                     {loading ? (
                       <>

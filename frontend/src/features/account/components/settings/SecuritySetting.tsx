@@ -122,7 +122,7 @@ export const SecuritySetting: React.FC<SecuritySettingProps> = ({
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-10">
+    <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-10">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-ink/[0.06] pb-6">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-plum-50 text-plum-600">

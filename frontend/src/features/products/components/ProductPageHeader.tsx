@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { CATEGORY_ORDER } from "../utils/productHelpers";
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollDirection } from "../../../shared/hooks/useScrollDirection";
 
@@ -8,13 +8,22 @@ interface Props {
   categories: string[];
   activeCategory?: string;
   onCategorySelect: (category: string) => void;
+  isNewActive?: boolean;
+  onSelectNew?: () => void;
 }
 
-const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All", onCategorySelect }) => {
+const ProductPageHeader: React.FC<Props> = ({
+  categories,
+  activeCategory = "All",
+  onCategorySelect,
+  isNewActive = false,
+  onSelectNew,
+}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { navbarHidden, categoryHidden } = useScrollDirection();
   const navScrollRef = useRef<HTMLDivElement>(null);
   const wasDraggedRef = useRef(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const navbarCategories = CATEGORY_ORDER.filter(
     (category) => category === "All" || categories.includes(category)
@@ -76,6 +85,12 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
     };
   }, []);
 
+  const handleOpenFilter = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('open_filters', 'true');
+    setSearchParams(newParams);
+  };
+
   return (
     <>
       {/* ================= CATEGORY NAV (FIXED AT TOP) ================= */}
@@ -85,7 +100,7 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           top-[48px]
           inset-x-0
           z-40
-          bg-white/85
+          bg-white/90
           backdrop-blur-2xl
           border-y
           border-black/5
@@ -98,69 +113,143 @@ const ProductPageHeader: React.FC<Props> = ({ categories, activeCategory = "All"
           }
         `}
       >
-        <div className="max-w-[1400px] mx-auto flex items-center justify-center px-4 md:px-8 h-11 w-full">
-          <div
-            ref={navScrollRef}
-            onClickCapture={(e) => {
-              if (wasDraggedRef.current) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-            className="
-              flex
-              justify-start
-              md:justify-center
-              items-center
-              gap-5
-              md:gap-8
-              overflow-x-auto
-              no-scrollbar
-              w-full
-              md:w-auto
-              cursor-grab
-              active:cursor-grabbing
-              select-none
-            "
-          >
-            {navbarCategories.map((category) => {
-              const isActive = activeCategory.toLowerCase() === category.toLowerCase();
-              return (
-                <button
-                  key={category}
-                  onClick={() => onCategorySelect(category)}
-                  style={{
-                    fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
-                  }}
-                  className={`
-                    shrink-0
-                    text-[12px]
-                    font-bold
-                    tracking-wide
-                    transition-colors
-                    duration-300
-                    ${isActive ? 'text-plum-600' : 'text-ink/55 hover:text-plum-500'}
-                  `}
-                >
-                  {category}
-                </button>
-              );
-            })}
-            
-            <div className="pl-2 md:pl-4 border-l border-black/10 shrink-0 flex items-center">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between md:justify-center px-3 sm:px-4 md:px-8 h-11 w-full">
+          
+          {/* ================= MOBILE VIEW (PHONE USERS) ================= */}
+          <div className={`flex md:hidden items-center ${isExpanded ? 'justify-between' : 'justify-start'} w-full gap-2.5 overflow-hidden`}>
+            {/* Category selection: 2 categories in contracted mode, all in expanded mode */}
+            <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto no-scrollbar py-1">
+              {(isExpanded ? navbarCategories : navbarCategories.slice(0, 2)).map((category) => {
+                const isActive = !isNewActive && activeCategory.toLowerCase() === category.toLowerCase();
+                return (
+                  <button
+                    key={category}
+                    onClick={() => onCategorySelect(category)}
+                    style={{
+                      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
+                    }}
+                    className={`
+                      shrink-0
+                      text-[12px]
+                      font-bold
+                      tracking-wide
+                      transition-colors
+                      duration-200
+                      ${isActive ? 'text-purple-600 font-black' : 'text-ink/65 hover:text-purple-600'}
+                    `}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+
+              {/* Expand / Contrast Toggle Button (>> and <<) */}
               <button
-                 onClick={() => {
-                   const newParams = new URLSearchParams(searchParams);
-                   newParams.set('open_filters', 'true');
-                   setSearchParams(newParams);
-                 }}
-                 className="flex items-center gap-1.5 text-[12px] font-bold text-ink/70 hover:text-plum-600 transition-colors"
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="px-2 py-0.5 text-[11px] font-black text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md transition-all active:scale-95 shrink-0 border border-purple-200/80"
+                title={isExpanded ? "Collapse categories" : "Show more categories"}
               >
-                <SlidersHorizontal size={14} />
-                <span className="inline">Filters</span>
+                {isExpanded ? "<<" : ">>"}
+              </button>
+            </div>
+
+            {/* Separated action buttons: Filter and New (NOT included in category list) */}
+            <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-black/10">
+              <button
+                onClick={handleOpenFilter}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-ink/75 hover:text-purple-600 rounded-full border border-black/10 bg-white/70 active:scale-95 transition-all"
+              >
+                <SlidersHorizontal size={12} />
+                <span>Filter</span>
+              </button>
+
+              <button
+                onClick={onSelectNew}
+                className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full transition-all active:scale-95 ${
+                  isNewActive
+                    ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-sm shadow-purple-900/30'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                }`}
+              >
+                <Sparkles className="h-3 w-3" />
+                <span>New</span>
               </button>
             </div>
           </div>
+
+          {/* ================= DESKTOP VIEW ================= */}
+          <div className="hidden md:flex items-center justify-center gap-6 lg:gap-8 w-auto">
+            <div
+              ref={navScrollRef}
+              onClickCapture={(e) => {
+                if (wasDraggedRef.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+              className="
+                flex
+                justify-center
+                items-center
+                gap-6
+                lg:gap-8
+                overflow-x-auto
+                no-scrollbar
+                w-auto
+                cursor-grab
+                active:cursor-grabbing
+                select-none
+              "
+            >
+              {navbarCategories.map((category) => {
+                const isActive = !isNewActive && activeCategory.toLowerCase() === category.toLowerCase();
+                return (
+                  <button
+                    key={category}
+                    onClick={() => onCategorySelect(category)}
+                    style={{
+                      fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif",
+                    }}
+                    className={`
+                      shrink-0
+                      text-[12px]
+                      font-bold
+                      tracking-wide
+                      transition-colors
+                      duration-300
+                      ${isActive ? 'text-purple-600 font-black' : 'text-ink/65 hover:text-purple-600'}
+                    `}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pl-4 border-l border-black/10 shrink-0 flex items-center gap-3">
+              <button
+                onClick={handleOpenFilter}
+                className="flex items-center gap-1.5 text-[12px] font-bold text-ink/75 hover:text-purple-600 transition-colors"
+              >
+                <SlidersHorizontal size={14} />
+                <span>Filters</span>
+              </button>
+
+              <button
+                onClick={onSelectNew}
+                className={`flex items-center gap-1 px-3 py-1 text-[12px] font-bold rounded-full transition-all ${
+                  isNewActive
+                    ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-sm shadow-purple-900/30'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>New</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </nav>
 

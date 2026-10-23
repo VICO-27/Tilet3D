@@ -23,7 +23,7 @@ const LiquidGlassScrollButton: React.FC<LiquidGlassScrollButtonProps> = ({ direc
       }}
       aria-label={label || (isRight ? "Scroll row right" : "Scroll row left")}
       title={isRight ? "Scroll forward" : "Scroll backward"}
-      className="group/glass relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-500 ease-out hover:scale-110 active:scale-95 select-none focus:outline-none"
+      className="hidden md:flex group/glass relative w-12 h-12 md:w-14 md:h-14 rounded-full items-center justify-center cursor-pointer transition-all duration-500 ease-out hover:scale-110 active:scale-95 select-none focus:outline-none"
       style={{
         background: 'radial-gradient(135% 135% at 25% 20%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(245, 240, 255, 0.2) 100%)',
         backdropFilter: 'blur(24px) saturate(200%)',
@@ -569,8 +569,8 @@ const CategoryBlock: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* Liquid Glass Scroll Button (>>) */}
-            <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 pointer-events-auto">
+            {/* Liquid Glass Scroll Button (>>) - Hidden on phone/mobile */}
+            <div className="hidden md:block absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 pointer-events-auto">
               <LiquidGlassScrollButton 
                 direction="right" 
                 onClick={handleScrollRow2} 
@@ -622,8 +622,8 @@ const CategoryBlock: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Liquid Glass Scroll Button (<<) */}
-            <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 pointer-events-auto">
+            {/* Liquid Glass Scroll Button (<<) - Hidden on phone/mobile */}
+            <div className="hidden md:block absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-50 pointer-events-auto">
               <LiquidGlassScrollButton 
                 direction="left" 
                 onClick={handleScrollRow3} 

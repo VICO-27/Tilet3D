@@ -9,7 +9,7 @@ import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
 import ProductCard, { Product } from '../components/ProductCard';
 import ProductsSkeleton from '../components/ProductsSkeleton';
-import { Search, X, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { Search, X, ArrowRight, SlidersHorizontal, Sparkles, Clock, Calendar } from 'lucide-react';
 import { FilterDrawer } from '../components/FilterDrawer';
 
 const STORY_VARIATIONS = [
@@ -50,6 +50,7 @@ const ProductsPage: React.FC = () => {
   }, [searchParams, setSearchParams]);
 
   const [viewContext, setViewContext] = useState<string>('normal');
+  const [newTimeFilter, setNewTimeFilter] = useState<'all' | 'day' | 'week' | 'month'>('all');
   const [visibleCount, setVisibleCount] = useState(3);
   const [showBrandLoader, setShowBrandLoader] = useState(true);
 
@@ -113,6 +114,61 @@ const ProductsPage: React.FC = () => {
     return list;
   }, [groupedProducts]);
 
+  // Group products into Day, Week, and Month arrivals
+  const { dayProducts, weekProducts, monthProducts, allNewProducts } = useMemo(() => {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const sevenDaysMs = 7 * oneDayMs;
+    const thirtyDaysMs = 30 * oneDayMs;
+
+    const day: Product[] = [];
+    const week: Product[] = [];
+    const month: Product[] = [];
+    const seen = new Set<string>();
+
+    const sorted = [...allProducts].sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    sorted.forEach((p) => {
+      if (seen.has(p.id)) return;
+      seen.add(p.id);
+
+      if (!p.created_at) {
+        month.push(p);
+        return;
+      }
+      const createdTime = new Date(p.created_at).getTime();
+      if (isNaN(createdTime)) {
+        month.push(p);
+        return;
+      }
+
+      const diff = now - createdTime;
+      if (diff <= oneDayMs) {
+        day.push(p);
+      } else if (diff <= sevenDaysMs) {
+        week.push(p);
+      } else if (diff <= thirtyDaysMs) {
+        month.push(p);
+      } else {
+        month.push(p);
+      }
+    });
+
+    const allNew = [...day, ...week, ...month];
+    return { dayProducts: day, weekProducts: week, monthProducts: month, allNewProducts: allNew };
+  }, [allProducts]);
+
+  const handleSelectNew = () => {
+    if (searchQuery) clearSearch();
+    setViewContext('new');
+    setNewTimeFilter('all');
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+  };
+
   const clearSearch = () => {
     // Clear all filters and search
     setSearchParams(new URLSearchParams());
@@ -149,17 +205,40 @@ const ProductsPage: React.FC = () => {
     if (kemisKey && updatedGroups[kemisKey] && updatedGroups[kemisKey].length > 0) {
       const allKemis = [...updatedGroups[kemisKey]];
 
-      // Ensure good-looking couture collection products are positioned in Row 1 and Row 2 (Cards 1-5),
-      // followed by the new bespoke Kemis products starting from Row 2 Card 6 onwards.
-      allKemis.sort((a, b) => {
-        const aIsCouture = a.slug.includes('collection') || a.name.toLowerCase().includes('couture');
-        const bIsCouture = b.slug.includes('collection') || b.name.toLowerCase().includes('couture');
-        if (aIsCouture && !bIsCouture) return -1;
-        if (!aIsCouture && bIsCouture) return 1;
-        return (a.display_order ?? 0) - (b.display_order ?? 0);
-      });
+      // 1. Separate the Couture Collection pieces (User favorites: Row 1 Cards 1-10 & Row 2 Cards 1-5)
+      const getCollectionNum = (slug: string) => {
+        const match = slug.match(/collection-(\d+)/);
+        return match ? parseInt(match[1], 10) : 999;
+      };
 
-      updatedGroups[kemisKey] = allKemis;
+      const coutureCollection = allKemis
+        .filter(p => p.slug.includes('collection'))
+        .sort((a, b) => getCollectionNum(a.slug) - getCollectionNum(b.slug));
+
+      // 2. Separate all the new bespoke products deployed recently
+      const bespokeKemis = allKemis
+        .filter(p => p.slug.includes('bespoke'))
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
+      // 3. Separate all other older products
+      const otherKemis = allKemis
+        .filter(p => !p.slug.includes('collection') && !p.slug.includes('bespoke'))
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
+      // Row 1 (Cards 1-10) + Row 2 (Cards 1-5) = 15 Couture Collection items
+      // Row 2 Card 6 = first bespoke piece (kept from Row 2 cards 1-6)
+      // Row 2 Cards 7-10 (4 cards) + Row 3 Cards 1-10 (10 cards) = filled with new bespoke pieces
+      const top16 = coutureCollection.length >= 15
+        ? [...coutureCollection.slice(0, 15), bespokeKemis[0]].filter(Boolean)
+        : coutureCollection;
+
+      const remainingBespoke = bespokeKemis.filter(p => !top16.some(t => t.id === p.id));
+
+      updatedGroups[kemisKey] = [
+        ...top16,
+        ...remainingBespoke,
+        ...otherKemis,
+      ];
     }
 
     return updatedGroups;
@@ -279,8 +358,10 @@ const ProductsPage: React.FC = () => {
     <PageLayout>
       <ProductPageHeader
         categories={categories}
-        activeCategory={activeScrollCategory}
+        activeCategory={viewContext === 'new' ? '' : activeScrollCategory}
         onCategorySelect={handleCategoryNavigation}
+        isNewActive={viewContext === 'new'}
+        onSelectNew={handleSelectNew}
       />
 
       <main className="min-h-screen pb-32">
@@ -355,6 +436,170 @@ const ProductsPage: React.FC = () => {
                 )}
               </>
             )}
+          </div>
+        ) : viewContext === 'new' ? (
+          /* ================= NEW PRODUCTS CATEGORIZED BY DAY, WEEK, MONTH ================= */
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-6 md:px-10 pt-4 sm:pt-8 animate-fade-in">
+            {/* Header banner */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 pb-6 border-b border-zinc-200">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-bold tracking-wider uppercase">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>✦ አዲስ ጥበብ · Curated Drops</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-zinc-900 tracking-tight">
+                  New In Collection
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-500 max-w-2xl">
+                  Handcrafted Habesha attire fresh from our master weavers. Categorized by arrival timeframe: Day, Week, and Month.
+                </p>
+              </div>
+
+              {/* Timeframe sub-tabs */}
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+                <button
+                  onClick={() => setNewTimeFilter('all')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                    newTimeFilter === 'all'
+                      ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-900/20'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>All New</span>
+                  <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'all' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
+                    {allNewProducts.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setNewTimeFilter('day')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                    newTimeFilter === 'day'
+                      ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-900/20'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Day / Today</span>
+                  <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'day' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
+                    {dayProducts.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setNewTimeFilter('week')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                    newTimeFilter === 'week'
+                      ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-900/20'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+                  }`}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>This Week</span>
+                  <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'week' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
+                    {weekProducts.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setNewTimeFilter('month')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                    newTimeFilter === 'month'
+                      ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-900/20'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700'
+                  }`}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>This Month</span>
+                  <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${newTimeFilter === 'month' ? 'bg-white/20 text-white' : 'bg-black/10 text-zinc-700'}`}>
+                    {monthProducts.length}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Categorized drops */}
+            <div className="space-y-16">
+              {/* 1. DAY DROPS */}
+              {(newTimeFilter === 'all' || newTimeFilter === 'day') && dayProducts.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ ዛሬ የተጨመሩ</span>
+                      <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
+                        Today's New Drops
+                        <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                          {dayProducts.length} pieces
+                        </span>
+                      </h2>
+                    </div>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 24 hours</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    {dayProducts.map((product, idx) => (
+                      <ProductCard key={`day-${product.id}-${idx}`} product={product} index={idx} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 2. WEEK DROPS */}
+              {(newTimeFilter === 'all' || newTimeFilter === 'week') && weekProducts.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ የዚህ ሳምንት ልብሶች</span>
+                      <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
+                        Released This Week
+                        <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                          {weekProducts.length} pieces
+                        </span>
+                      </h2>
+                    </div>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 7 days</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    {weekProducts.map((product, idx) => (
+                      <ProductCard key={`week-${product.id}-${idx}`} product={product} index={idx} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 3. MONTH DROPS */}
+              {(newTimeFilter === 'all' || newTimeFilter === 'month') && monthProducts.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-purple-100">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-purple-600">✦ የዚህ ወር ስብስብ</span>
+                      <h2 className="text-xl sm:text-2xl font-serif font-bold text-zinc-900 flex items-center gap-2">
+                        This Month's Drops
+                        <span className="text-xs font-sans font-bold text-purple-600 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                          {monthProducts.length} pieces
+                        </span>
+                      </h2>
+                    </div>
+                    <span className="text-xs text-zinc-400 hidden sm:inline">Past 30 days</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    {monthProducts.map((product, idx) => (
+                      <ProductCard key={`month-${product.id}-${idx}`} product={product} index={idx} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Back to All Collections button */}
+            <div className="w-full flex justify-center mt-20 mb-10">
+              <button
+                onClick={() => handleCategoryNavigation('all')}
+                className="px-8 py-3.5 border-2 border-black text-[12px] font-black tracking-[0.25em] uppercase hover:bg-black hover:text-white transition-all duration-300 rounded-full shadow-lg"
+              >
+                ← Back to All Collections
+              </button>
+            </div>
           </div>
         ) : (
           <div className="animate-fade-in">

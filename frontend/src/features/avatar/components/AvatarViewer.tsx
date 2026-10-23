@@ -71,8 +71,7 @@ import {
   Preload,
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { CheckCircle2, AlertCircle, Ruler, Activity, ShoppingBag, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, AlertCircle, Ruler, Activity } from 'lucide-react';
 
 
 import { AvatarModel } from './AvatarModel';
@@ -207,13 +206,8 @@ function RightHUD() {
 // Bottom controls bar
 // ─────────────────────────────────────────────────────────────────────────────
 function BottomControls() {
-  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
   return (
-    <div
-      className={`absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 transition-all duration-700 delay-500 ${
-        isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
-      }`}
-    >
+    <div className="absolute bottom-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] md:bottom-10 left-1/2 -translate-x-1/2 z-20 transition-all duration-500">
       <AvatarControls />
     </div>
   );
@@ -272,31 +266,6 @@ function StudioScene() {
         color="#000000"
       />
     </group>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Top controls (Collections)
-// ─────────────────────────────────────────────────────────────────────────────
-function TopHUD() {
-  const navigate = useNavigate();
-  const isConfirmed = useAvatarStore((s) => s.isConfirmed);
-
-  return (
-    <div
-      className={`absolute top-14 md:top-20 left-1/2 -translate-x-1/2 transition-all duration-1000 delay-500 z-10 ${
-        isConfirmed ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'
-      }`}
-    >
-      <button
-        onClick={() => navigate('/products')}
-        className="group flex items-center gap-2 px-6 py-2.5 md:px-8 md:py-3 bg-plum-600 hover:bg-plum-700 backdrop-blur-xl text-white rounded-full text-xs font-semibold tracking-wide shadow-lg shadow-plum-600/30 transition-all duration-300 hover:scale-105"
-      >
-        <ShoppingBag size={14} className="text-white/80 group-hover:text-white transition-colors" />
-        <span className="uppercase tracking-widest text-[10px] md:text-xs">Shop Collection</span>
-        <ArrowRight size={14} className="ml-1 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-      </button>
-    </div>
   );
 }
 
@@ -373,7 +342,6 @@ export function AvatarViewer() {
         <Preload all />
       </Canvas>
 
-      <TopHUD />
       <LeftHUD />
       <RightHUD />
       <BottomControls />

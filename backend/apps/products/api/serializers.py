@@ -140,6 +140,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "comment_count",
             "is_liked",
             "is_saved",
+            "created_at",
         )
 
 
@@ -187,6 +188,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "comment_count",
             "is_liked",
             "is_saved",
+            "created_at",
         )
 
     def get_like_count(self, obj):

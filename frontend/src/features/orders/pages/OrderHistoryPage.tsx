@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package, ArrowUpRight, ChevronRight, Clock, CheckCircle2,
   Truck, XCircle, Search, LogIn, ShoppingBag, CreditCard,
-  MapPin, User, ArrowLeft
+  MapPin, User, ArrowLeft, Sparkles
 } from "lucide-react";
 import Navbar from "../../../shared/components/layout/Navbar";
 import { useOrders } from "../hooks/useOrders";
 import { OrderStatus, OrderListType } from "../api/orderApi";
+import CustomerRentalList from "@/features/rentals/components/CustomerRentalList";
 
 const getStatusConfig = (status: OrderStatus) => {
   switch (status) {
@@ -162,9 +163,21 @@ function UnauthenticatedOrdersView() {
 
 const OrderHistoryPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialTab = queryParams.get("tab") === "rentals" ? "rentals" : "purchases";
+
+  const [activeTab, setActiveTab] = useState<"purchases" | "rentals">(initialTab);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
 
   const { orders, isLoading, error } = useOrders();
+
+  useEffect(() => {
+    const tabParam = new URLSearchParams(location.search).get("tab");
+    if (tabParam === "rentals") {
+      setActiveTab("rentals");
+    }
+  }, [location.search]);
 
   const filteredOrders = filter === "all"
     ? orders
@@ -190,10 +203,38 @@ const OrderHistoryPage = () => {
         <main className="mx-auto max-w-4xl px-6 py-12 md:px-8">
           <header className="mb-10">
             <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-violet-600 mb-3">Your Atelier</p>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Order History</h1>
+            
+            {/* Top Navigation Tabs: Purchases vs Rentals */}
+            <div className="flex items-center gap-2 mb-6 p-1 bg-slate-200/80 rounded-full w-fit">
+              <button
+                onClick={() => setActiveTab("purchases")}
+                className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                  activeTab === "purchases"
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Purchases
+              </button>
+              <button
+                onClick={() => setActiveTab("rentals")}
+                className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                  activeTab === "rentals"
+                    ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-md shadow-purple-900/30"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Rentals
+              </button>
+            </div>
 
-              {!isLoading && orders.length > 0 && (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">
+                {activeTab === "purchases" ? "Order History" : "Rental Reservations"}
+              </h1>
+
+              {activeTab === "purchases" && !isLoading && orders.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
                   {["all", "pending", "confirmed", "processing", "shipped", "delivered"].map((f) => (
                     <button
@@ -210,6 +251,11 @@ const OrderHistoryPage = () => {
               )}
             </div>
           </header>
+
+          {activeTab === "rentals" ? (
+            <CustomerRentalList />
+          ) : (
+            <>
 
           {isLoading ? (
             <div className="py-24 text-center flex flex-col items-center justify-center">
@@ -286,6 +332,8 @@ const OrderHistoryPage = () => {
                 );
               })}
             </div>
+          )}
+          </>
           )}
 
           <div className="mt-12 flex justify-start">

@@ -31,7 +31,8 @@ class Payment(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment", null=True, blank=True)
+    rental_booking = models.OneToOneField("rentals.RentalBooking", on_delete=models.CASCADE, related_name="payment", null=True, blank=True)
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default="ETB")
@@ -57,6 +58,23 @@ class Payment(BaseModel):
     # ==========================================================
     webhook_received = models.BooleanField(default=False)
     webhook_payload = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    (models.Q(order__isnull=False) & models.Q(rental_booking__isnull=True)) |
+                    (models.Q(order__isnull=True) & models.Q(rental_booking__isnull=False))
+                ),
+                name="payment_exactly_one_payable_entity"
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        if bool(self.order) == bool(self.rental_booking):
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Payment must be linked to exactly one payable entity (order XOR rental_booking).")
 
     def __str__(self):
         return f"Payment({self.id}) - {self.status}"

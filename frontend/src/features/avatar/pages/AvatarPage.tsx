@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sliders, Sparkles, X } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Sparkles, Sliders, X } from 'lucide-react';
 import Navbar from '../../../shared/components/layout/Navbar';
 import { AvatarViewer } from '../components/AvatarViewer';
 import { AvatarForm } from '../components/AvatarForm';
@@ -40,28 +40,28 @@ const AvatarPage = () => {
           <AvatarViewer />
         </div>
 
-        {/* Center "Coming Soon!" Announcement */}
+        {/* Center "Coming Soon!" Announcement Card */}
         {!isCardDismissed ? (
-          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center p-4 select-none">
-            <div className="pointer-events-auto relative backdrop-blur-2xl bg-white/85 dark:bg-stone-900/85 border border-white/60 dark:border-stone-700/50 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.18)] rounded-3xl p-6 sm:p-9 max-w-sm sm:max-w-md w-full text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
+          <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center p-4 sm:p-6 select-none">
+            <div className="pointer-events-auto relative backdrop-blur-2xl bg-white/90 dark:bg-stone-900/90 border border-white/80 dark:border-stone-700/70 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.18)] rounded-3xl p-6 sm:p-9 max-w-sm sm:max-w-md w-full text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
               
-              {/* Optional dismiss button to view 3D avatar unobstructed */}
+              {/* Dismiss button to view 3D avatar freely */}
               <button
                 type="button"
                 onClick={() => setIsCardDismissed(true)}
-                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                 title="Dismiss to view 3D model"
                 aria-label="Dismiss announcement"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-mono font-medium tracking-[0.25em] uppercase bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 mb-3 shadow-xs">
-                <Sparkles className="w-3 h-3 text-purple-600 animate-spin" style={{ animationDuration: '6s' }} />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-mono font-medium tracking-[0.25em] uppercase bg-plum-500/10 text-plum-700 dark:text-plum-300 border border-plum-500/20 mb-3.5 shadow-xs">
+                <Sparkles className="w-3 h-3 text-plum-600 animate-spin" style={{ animationDuration: '6s' }} />
                 <span>Virtual Fitting Atelier</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-stone-900 dark:text-white mb-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-light tracking-tight text-stone-900 dark:text-white mb-2.5">
                 Coming Soon!
               </h1>
 
@@ -69,38 +69,61 @@ const AvatarPage = () => {
                 Our personalized 3D avatar calibration and virtual fitting room experience is currently being crafted.
               </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 w-full">
+              {/* Action buttons — formatted cleanly without any overlap on phone screens */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full">
                 <Link
                   to="/products"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase bg-[#111111] hover:bg-black text-white shadow-md hover:shadow-lg transition-all duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase bg-plum-600 hover:bg-plum-700 text-white shadow-md hover:shadow-lg transition-all duration-200 shrink-0"
                 >
-                  <span>Explore Collection</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                  <span>Shop Collection</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
 
                 <button
                   type="button"
-                  onClick={() => setShowPanel(!showPanel)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase border border-stone-300/80 hover:border-stone-400 bg-white/70 hover:bg-white text-stone-800 transition-all duration-200"
+                  onClick={() => {
+                    setShowPanel(true);
+                    useAvatarStore.setState({ isConfirmed: false });
+                  }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase border border-stone-300 hover:border-stone-400 bg-white/80 hover:bg-white text-stone-800 transition-all duration-200 shrink-0"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-purple-600" />
-                  <span>{showPanel ? "Hide Studio Controls" : "Preview Studio"}</span>
+                  <Sliders className="w-3.5 h-3.5 text-plum-600" />
+                  <span>{showPanel ? "Controls Active" : "Studio Controls"}</span>
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* Minimized pill if the user dismissed the card */
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
-            <button
-              type="button"
-              onClick={() => setIsCardDismissed(false)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl bg-white/90 border border-stone-200/80 shadow-md text-xs font-medium text-stone-800 hover:bg-white transition-all hover:scale-105"
-            >
-              <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
-              <span className="font-serif">Coming Soon!</span>
-              <span className="text-[10px] text-stone-400 font-mono">(Tap to expand)</span>
-            </button>
+          /* Minimized top single-line pill when user dismisses the card to inspect the 3D model */
+          <div className="absolute top-3 sm:top-5 left-1/2 -translate-x-1/2 z-20 pointer-events-auto max-w-[calc(100vw-1.5rem)]">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full backdrop-blur-xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/90 dark:border-stone-700/80 shadow-[0_6px_24px_rgba(0,0,0,0.08)] whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => setIsCardDismissed(false)}
+                className="flex items-center gap-1.5 shrink-0 group hover:opacity-80 transition-opacity"
+                title="Expand announcement"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-plum-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-plum-600"></span>
+                </span>
+                <span className="font-serif text-xs sm:text-sm font-medium text-stone-900 dark:text-stone-100 tracking-wide">
+                  Coming Soon!
+                </span>
+              </button>
+
+              <div className="w-px h-3.5 sm:h-4 bg-stone-300 dark:bg-stone-700 shrink-0" />
+
+              <Link
+                to="/products"
+                className="group inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-plum-700 dark:text-plum-400 hover:text-stone-900 dark:hover:text-white transition-colors shrink-0"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-plum-600 dark:text-plum-400" />
+                <span>Shop Collection</span>
+                <ArrowRight className="w-3 h-3 text-stone-400 group-hover:text-stone-700 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            </div>
           </div>
         )}
 
@@ -108,18 +131,32 @@ const AvatarPage = () => {
         <div
           className={`
             absolute bottom-0 md:top-0 right-0
-            h-[62%] sm:h-[65%] md:h-full
+            h-[65%] sm:h-[68%] md:h-full
             w-full md:w-[35%] md:min-w-[420px]
             bg-white/95 md:bg-white/90
             backdrop-blur-3xl
             rounded-t-[2rem] md:rounded-none
             border-t md:border-t-0 md:border-l border-stone-200/80
             shadow-[0_-16px_48px_rgba(0,0,0,0.12)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.04)]
-            transition-transform duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)]
+            transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]
             z-30 overflow-y-auto overscroll-contain
-            ${isHidden ? 'translate-y-full md:translate-y-0 md:translate-x-full' : 'translate-y-0 md:translate-x-0'}
+            ${isHidden ? 'translate-y-full md:translate-y-0 md:translate-x-full pointer-events-none' : 'translate-y-0 md:translate-x-0 pointer-events-auto'}
           `}
         >
+          {/* Close button for calibration panel */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowPanel(false);
+              useAvatarStore.setState({ isConfirmed: true });
+            }}
+            className="absolute top-3.5 right-4 p-2 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition-colors z-10"
+            title="Close editor"
+            aria-label="Close editor"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
           <div className="p-3.5 sm:p-5 md:p-8 pb-32 max-w-lg mx-auto">
             {/* Mobile drag handle indicator */}
             <div className="w-10 h-1.5 bg-stone-300 rounded-full mx-auto mb-3 md:hidden" />

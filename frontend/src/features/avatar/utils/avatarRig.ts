@@ -72,6 +72,15 @@ const HEAD_NON_SKIN_PATTERN = /\b(hair|scalp|strand|strands|braid|braids|lash|la
 export function isNonSkinMaterial(meshName: string, matName: string): boolean {
   // Normalize node/material names by converting underscores, hyphens, and dots to spaces
   const combined = `${meshName} ${matName}`.toLowerCase().replace(/[_.-]/g, ' ');
+
+  // CRITICAL FIX: The female avatar's entire face, ears, and neck surface was exported
+  // under the node name "Full_Body_Mouth Cavity1_0" with material "Mouth_Cavity1".
+  // Because it contained "mouth" and "cavity", the generic regex excluded her entire
+  // head and neck from receiving skin tones! We explicitly treat this mesh as skin:
+  if (combined.includes('mouth cavity') || combined.includes('mouth_cavity')) {
+    return false;
+  }
+
   return (
     CLOTHING_PATTERN.test(combined) ||
     ACCESSORY_PATTERN.test(combined) ||

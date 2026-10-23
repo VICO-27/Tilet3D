@@ -15,6 +15,8 @@ import { AiRecommendations } from '../../ai/components/AiRecommendations'; // <-
 import PageLayout from '@/shared/components/layout/PageLayout';
 import BrandLoader from '@/shared/components/BrandLoader';
 import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
+import RentalBookingModal from '@/features/rentals/components/RentalBookingModal';
+import { Sparkles } from 'lucide-react';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,7 @@ const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [showRentalModal, setShowRentalModal] = useState<boolean>(false);
 
   const { addToCart, isAdded } = useCartStore();
   const showToast = useToastStore((s) => s.show);
@@ -163,15 +166,24 @@ const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Buy actions */}
+            {/* Buy / Rent actions */}
             <div className="mt-8 space-y-3">
               <button
                 onClick={handleAddToCart}
                 disabled={addedToCart}
                 className="w-full py-4 bg-zinc-900 text-white text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-60"
               >
-                {addedToCart ? 'Added to Cart' : 'Add to Cart'}
+                {addedToCart ? 'Added to Cart' : 'Add to Cart (Purchase)'}
               </button>
+
+              <button
+                onClick={() => setShowRentalModal(true)}
+                className="w-full py-4 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:brightness-110 transition-all shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2 border border-purple-400/40"
+              >
+                <Sparkles className="h-4 w-4 text-white" />
+                Rent This Garment
+              </button>
+
               <button
                 onClick={() => navigate('/avatar')}
                 className="w-full py-4 bg-white text-zinc-900 border border-zinc-900 text-[13px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-colors"
@@ -187,17 +199,23 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* AI-Powered Semantic Recommendations */}
-        {product?.id && <AiRecommendations productId={product.id} />}
-
         {/* Comments */}
         <CommentsSection ref={commentsRef} productId={product.id} />
+
+        {/* AI-Powered Semantic Recommendations */}
+        {product?.id && <AiRecommendations productId={product.id} />}
 
         {/* Related products */}
         <RelatedProducts
           products={products}
           currentProductId={product.id}
           categoryName={product.category_name}
+        />
+
+        <RentalBookingModal
+          isOpen={showRentalModal}
+          onClose={() => setShowRentalModal(false)}
+          product={product}
         />
       </div>
     </PageLayout>

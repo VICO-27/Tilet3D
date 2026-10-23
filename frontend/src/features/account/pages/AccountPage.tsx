@@ -107,31 +107,65 @@ const AccountPage: React.FC<AccountPageProps> = ({ initialMode = "login" }) => {
     <div className="min-h-screen bg-neutral-50/40">
       <Navbar />
 
-      <div className="mx-auto max-w-[1240px] px-4 pt-[100px] pb-24 md:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
+      <div className="mx-auto max-w-[1240px] px-3 sm:px-4 pt-[72px] sm:pt-[90px] pb-24 md:px-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-[280px_1fr]">
           <aside className="lg:sticky lg:top-[100px] lg:self-start">
-            <div className="rounded-[28px] border border-ink/[0.06] bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3 border-b border-ink/[0.06] pb-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ink text-sm font-black text-white">
-                  {user.avatar_image ? (
-                    <img
-                      src={user.avatar_image}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initials
-                  )}
+            <div className="rounded-2xl sm:rounded-[28px] border border-ink/[0.06] bg-white p-3.5 sm:p-5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-ink/[0.06] pb-3.5 sm:pb-5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ink text-sm font-black text-white shadow-xs">
+                    {user.avatar_image ? (
+                      <img
+                        src={user.avatar_image}
+                        alt={displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      initials
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {displayName}
+                    </p>
+                    <p className="truncate text-xs text-ink/45">{user.email}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink">
-                    {displayName}
-                  </p>
-                  <p className="truncate text-xs text-ink/45">{user.email}</p>
-                </div>
+
+                {/* Mobile Quick Sign Out */}
+                <button
+                  onClick={handleSignOut}
+                  title={t("account.signOut", "Sign Out")}
+                  aria-label="Sign Out"
+                  className="lg:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
               </div>
 
-              <nav className="mt-4 space-y-1">
+              {/* Mobile Horizontal Navigation Strip */}
+              <nav className="flex lg:hidden items-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-1 -mx-1 px-1">
+                {NAV_ITEMS.map((item) => {
+                  const active = activeTab === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => setActiveTab(item.key)}
+                      className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
+                        active
+                          ? "bg-ink text-white shadow-sm"
+                          : "bg-neutral-100/90 text-ink/65 hover:bg-neutral-200/70 hover:text-ink"
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Desktop Vertical Navigation Menu */}
+              <nav className="hidden lg:block mt-4 space-y-1">
                 {NAV_ITEMS.map((item) => {
                   const active = activeTab === item.key;
                   return (
@@ -160,7 +194,8 @@ const AccountPage: React.FC<AccountPageProps> = ({ initialMode = "login" }) => {
                 })}
               </nav>
 
-              <div className="mt-4 border-t border-ink/[0.06] pt-4">
+              {/* Desktop Sign Out */}
+              <div className="hidden lg:block mt-4 border-t border-ink/[0.06] pt-4">
                 <button
                   onClick={handleSignOut}
                   className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-semibold text-rose-600/80 transition-colors hover:bg-rose-50 hover:text-rose-600"

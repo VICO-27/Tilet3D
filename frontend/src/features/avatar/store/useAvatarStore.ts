@@ -379,7 +379,8 @@ export const useAvatarStore =
         } else {
 
           set({
-            isConfirmed: false,
+            isConfirmed: true,
+            currentAnimation: 'idle',
             isLoading: false,
           });
 
@@ -388,7 +389,7 @@ export const useAvatarStore =
       } catch {
 
         set({
-          isConfirmed: false,
+          isConfirmed: true,
           currentAnimation: 'idle',
           isLoading: false,
         });

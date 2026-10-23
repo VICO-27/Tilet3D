@@ -27,11 +27,10 @@ class ChapaGateway(BaseGateway):
             ),
             
             # Where Chapa redirects the user's browser after they pay
-            "return_url": getattr(
-                settings,
-                "CHAPA_RETURN_URL",
-                "http://localhost:3000/checkout/success" 
-            ) + f"?order_id={payment.order.id}",
+            "return_url": (
+                getattr(settings, "CHAPA_RETURN_URL", "http://localhost:3000/checkout/success")
+                + (f"?order_id={payment.order.id}" if payment.order else f"?rental_booking_id={payment.rental_booking.id}")
+            ),
         }
 
         headers = {

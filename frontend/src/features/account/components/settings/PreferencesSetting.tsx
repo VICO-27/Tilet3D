@@ -34,7 +34,7 @@ export const PreferencesSetting: React.FC = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between border-b border-ink/[0.06] pb-6">
         <div className="flex items-center gap-3">

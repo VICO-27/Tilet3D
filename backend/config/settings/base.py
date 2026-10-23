@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.payments",
     'apps.avatars',  
-    "apps.ai",# <-- Add this line
+    "apps.ai",
+    "apps.rentals",
 
 
     # Extensions
@@ -395,6 +396,10 @@ CELERY_BEAT_SCHEDULE = {
     'expire-pending-orders-every-30-minutes': {
         'task': 'apps.orders.tasks.task_expire_orders',
         'schedule': crontab(minute='*/30'), # Runs every 30 minutes
+    },
+    'expire-pending-rental-holds-every-15-minutes': {
+        'task': 'apps.rentals.tasks.task_expire_rental_holds',
+        'schedule': crontab(minute='*/15'), # Runs every 15 minutes
     },
 }
 # ==========================================================

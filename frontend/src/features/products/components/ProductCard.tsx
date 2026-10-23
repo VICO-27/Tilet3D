@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import EngagementBar from './EngagementBar';
 import { useEngagementStore } from '@/app/store/useEngagementStore';
 import { useCartStore } from '@/app/store/useCartStore';
-import { ShoppingBag, Check } from 'lucide-react';
+import { ShoppingBag, Check, Sparkles } from 'lucide-react';
 import PremiumPlanModal from './PremiumPlanModal';
+import RentalBookingModal from '@/features/rentals/components/RentalBookingModal';
 
 import { optimizeCloudinaryUrl, optimizeCloudinaryVideoUrl } from '../../../shared/utils/cloudinary';
 
@@ -24,6 +25,8 @@ interface ProductVariant {
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
+  category_name?: string;
   display_order?: number;
   media: ProductMedia[];
   variants?: ProductVariant[];
@@ -32,6 +35,8 @@ export interface Product {
   like_count: number;
   comment_count: number;
   is_liked: boolean;
+  is_saved?: boolean;
+  created_at?: string;
 }
 
 interface ProductCardProps {
@@ -48,6 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   const [showCommentInput, setShowCommentInput] = useState(false);
   
   const [showPremium, setShowPremium] = useState(false); 
+  const [showRentalModal, setShowRentalModal] = useState(false); 
   
   const [localCommentCount, setLocalCommentCount] = useState(product.comment_count);
   const navigate = useNavigate();
@@ -185,7 +191,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
         <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-opacity duration-500 ease-out z-10 ${showActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
 
         <div
-          className={`absolute right-4 bottom-32 transition-all duration-500 ease-out z-30 ${showActions ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0'}`}
+          className={`absolute right-2.5 sm:right-4 bottom-28 sm:bottom-32 transition-all duration-500 ease-out z-30 ${showActions ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0'}`}
           onClick={e => e.stopPropagation()}
         >
           <EngagementBar
@@ -194,7 +200,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           />
         </div>
 
-        <div className={`absolute bottom-6 left-6 right-6 transition-all duration-500 ease-out z-20 flex flex-col space-y-3 text-left ${showActions ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0'}`}>
+        <div className={`absolute bottom-3.5 sm:bottom-6 left-3 sm:left-5 right-14 sm:right-16 transition-all duration-500 ease-out z-20 flex flex-col space-y-2 sm:space-y-3 text-left ${showActions ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0'}`}>
 
           {/* Multi-angle view selector pills (Front, Back, Top) */}
           {images.length > 1 && (
@@ -217,7 +223,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
                       e.stopPropagation();
                       setActiveImageIndex(idx);
                     }}
-                    className={`px-2.5 py-0.5 text-[9px] uppercase tracking-widest font-mono rounded-full backdrop-blur-md transition-all duration-300 ${
+                    className={`px-2 py-0.5 text-[8px] sm:text-[9px] uppercase tracking-widest font-mono rounded-full backdrop-blur-md transition-all duration-300 ${
                       isCurrent 
                         ? 'bg-white text-black font-bold shadow-md scale-105' 
                         : 'bg-black/60 text-white/80 hover:bg-black/80 hover:text-white border border-white/20'
@@ -230,39 +236,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2 w-full">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full">
             <button
               onClick={handleTryOnAvatar}
-              className="py-3 bg-white text-black text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center"
+              className="py-2.5 sm:py-3 px-1 sm:px-3 bg-white text-black text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-full shadow-2xl hover:bg-purple-600 hover:text-white transition-colors duration-300 text-center truncate whitespace-nowrap"
             >
               {t("products.tryOn", "Try-on Avatar")}
             </button>
 
             <button
-              onClick={handleAddToCart}
-              className={`py-3 text-[10px] font-black uppercase tracking-[0.15em] rounded-full shadow-2xl transition-colors duration-300 flex items-center justify-center gap-1.5 ${
-                alreadyAdded 
-                  ? 'bg-emerald-600 text-white' 
-                  : 'bg-black/80 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black'
-              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRentalModal(true);
+              }}
+              className="py-2.5 sm:py-3 px-1 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center gap-1 sm:gap-1.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white border border-purple-400/40 shadow-lg shadow-purple-950/40 hover:shadow-purple-600/30 active:scale-95 truncate whitespace-nowrap"
             >
-              {alreadyAdded ? (
-                <>
-                  <Check className="h-3.5 w-3.5" /> {t("cart.added", "Added")}
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="h-3.5 w-3.5" /> {t("cart.addToBag", "Add to Bag")}
-                </>
-              )}
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-white shrink-0" />
+              <span>{t("products.rent", "Rent")}</span>
             </button>
           </div>
 
-          <div className="text-white pl-1">
-            <h3 className="text-lg font-serif leading-tight drop-shadow-md">
+          <div className="text-white pl-0.5">
+            <h3 className="text-sm sm:text-lg font-serif leading-tight drop-shadow-md line-clamp-1">
               {product.name}
             </h3>
-            <p className="text-xs font-bold tracking-widest uppercase text-white/70 mt-1 drop-shadow-sm">
+            <p className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-white/70 mt-0.5 sm:mt-1 drop-shadow-sm">
               {(product.price || product.variants?.[0]?.price) ? `${product.price || product.variants?.[0]?.price} ETB` : t("products.bespoke", "Bespoke Order")}
             </p>
           </div>
@@ -286,6 +284,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
         isOpen={showPremium} 
         onClose={() => setShowPremium(false)} 
         productName={product.name}
+      />
+
+      <RentalBookingModal
+        isOpen={showRentalModal}
+        onClose={() => setShowRentalModal(false)}
+        product={product}
       />
     </>
   );

@@ -172,11 +172,12 @@ class VerifyPaymentView(APIView):
 
     def post(self, request):
         order_id = request.data.get("order_id")
+        rental_booking_id = request.data.get("rental_booking_id")
         tx_ref = request.data.get("tx_ref")
 
-        if not order_id and not tx_ref:
+        if not order_id and not rental_booking_id and not tx_ref:
             return Response(
-                {"error": "Missing order_id or tx_ref parameter."},
+                {"error": "Missing order_id, rental_booking_id, or tx_ref parameter."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -184,18 +185,24 @@ class VerifyPaymentView(APIView):
             if order_id:
                 payment = (
                     Payment.objects
-                    .select_related("order")
+                    .select_related("order", "rental_booking")
                     .get(order_id=order_id, user=request.user)
+                )
+            elif rental_booking_id:
+                payment = (
+                    Payment.objects
+                    .select_related("order", "rental_booking")
+                    .get(rental_booking_id=rental_booking_id, user=request.user)
                 )
             else:
                 payment = (
                     Payment.objects
-                    .select_related("order")
+                    .select_related("order", "rental_booking")
                     .get(id=tx_ref, user=request.user)
                 )
         except Payment.DoesNotExist:
             return Response(
-                {"error": "Payment record not found for this order."},
+                {"error": "Payment record not found for this transaction."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -211,32 +218,41 @@ class VerifyPaymentView(APIView):
                 logger.error(f"Error during payment verification for {payment.id}: {str(e)}")
 
         payment.refresh_from_db()
-        order = payment.order
-        order.refresh_from_db()
 
-        from apps.orders.api.serializers import OrderDetailSerializer
+        response_data = {
+            "success": True,
+            "status": payment.status,
+            "is_paid": payment.status == PaymentStatus.SUCCESS,
+            "payment": {
+                "id": str(payment.id),
+                "provider": payment.provider,
+                "amount": str(payment.amount),
+                "currency": payment.currency,
+                "status": payment.status,
+                "transaction_id": payment.transaction_id,
+                "created_at": payment.created_at,
+            },
+        }
+
+        if payment.order:
+            order = payment.order
+            order.refresh_from_db()
+            from apps.orders.api.serializers import OrderDetailSerializer
+            response_data["order"] = OrderDetailSerializer(order).data
+        elif payment.rental_booking:
+            rental_booking = payment.rental_booking
+            rental_booking.refresh_from_db()
+            from apps.rentals.api.serializers import RentalBookingDetailSerializer
+            response_data["rental_booking"] = RentalBookingDetailSerializer(rental_booking).data
 
         return Response(
-            {
-                "success": True,
-                "status": payment.status,
-                "is_paid": payment.status == PaymentStatus.SUCCESS,
-                "payment": {
-                    "id": str(payment.id),
-                    "provider": payment.provider,
-                    "amount": str(payment.amount),
-                    "currency": payment.currency,
-                    "status": payment.status,
-                    "transaction_id": payment.transaction_id,
-                    "created_at": payment.created_at,
-                },
-                "order": OrderDetailSerializer(order).data,
-            },
+            response_data,
             status=status.HTTP_200_OK,
         )
 
     def get(self, request):
         order_id = request.query_params.get("order_id")
+        rental_booking_id = request.query_params.get("rental_booking_id")
         tx_ref = request.query_params.get("tx_ref")
-        request.data = {"order_id": order_id, "tx_ref": tx_ref}
+        request.data = {"order_id": order_id, "rental_booking_id": rental_booking_id, "tx_ref": tx_ref}
         return self.post(request)

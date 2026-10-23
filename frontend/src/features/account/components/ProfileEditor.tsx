@@ -71,11 +71,11 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ user, onCancel, on
   };
 
   return (
-    <div className="mx-auto max-w-[640px] px-6 pb-20 pt-[100px]">
+    <div className="mx-auto max-w-[640px] px-4 sm:px-6 py-6 sm:py-8">
       <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-plum-600">
         Account Settings
       </p>
-      <h2 className="display mt-2 mb-8 text-3xl font-semibold text-ink">Edit Profile</h2>
+      <h2 className="display mt-1.5 mb-6 text-2xl sm:text-3xl font-semibold text-ink">Edit Profile</h2>
 
       <form onSubmit={handleSave} className="space-y-8">
         {/* Avatar */}

@@ -29,3 +29,7 @@ playwright-report/
 
 # Backup 3D model originals
 *_original.glb
+
+# Build stats and cache
+stats.html
+*.tsbuildinfo

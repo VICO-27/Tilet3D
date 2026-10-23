@@ -54,20 +54,20 @@ function ResponsiveCamera() {
 
     if (aspect < 0.6) {
       // Ultra-narrow phone (e.g. 20:9 / 20.5:9 Tecno, Infinix, Xperia)
-      camera.position.set(0, 0.82, 5.0);
+      camera.position.set(0, 0.92, 4.9);
     } else if (isMobile) {
-      // Standard mobile portrait (e.g. iPhone, Galaxy)
-      camera.position.set(0, 0.84, 4.7);
+      // Standard mobile portrait (e.g. iPhone, Galaxy) - moved up slightly for mobile
+      camera.position.set(0, 0.94, 4.6);
     } else if (aspect < 1.15) {
       // Tablet / square viewports
-      camera.position.set(0, 0.95, 4.1);
+      camera.position.set(0, 0.98, 4.1);
     } else {
       // Desktop widescreen
       camera.position.set(0, 1.02, 3.4);
     }
     camera.updateProjectionMatrix();
     if (controls && 'target' in controls && (controls as any).target) {
-      (controls as any).target.set(0, isMobile ? 0.84 : 0.95, 0);
+      (controls as any).target.set(0, isMobile ? 0.94 : 0.95, 0);
     }
     if (controls && 'update' in controls && typeof (controls as { update?: () => void }).update === 'function') {
       (controls as { update: () => void }).update();
@@ -77,54 +77,46 @@ function ResponsiveCamera() {
   return null;
 }
 
-function AvatarSpinController({
-  rotateRef,
-  controlsRef,
+function TurntableGroup({
+  children,
   isUserInteracting,
-  reducedMotion,
-  onRotateActive,
-  onRotateIdle,
+  rotateRef,
+  isMobile,
+  reducedMotion = false,
 }: {
-  rotateRef?: React.MutableRefObject<number>;
-  controlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null>;
+  children: React.ReactNode;
   isUserInteracting: boolean;
-  reducedMotion: boolean;
-  onRotateActive?: () => void;
-  onRotateIdle?: () => void;
+  rotateRef?: React.MutableRefObject<number>;
+  isMobile: boolean;
+  reducedMotion?: boolean;
 }) {
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spinGroupRef = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
-    const ctrl = controlsRef.current as unknown as { 
-      getAzimuthalAngle?: () => number;
-      setAzimuthalAngle?: (angle: number) => void;
-      update?: () => void;
-    } | null;
-    if (!ctrl || typeof ctrl.setAzimuthalAngle !== "function" || typeof ctrl.getAzimuthalAngle !== "function") return;
+    if (!spinGroupRef.current) return;
+    const safeDelta = Math.min(delta, 0.05);
 
-    // 1. Mobile touch manual rotation
+    // 1. Mobile touch manual swipe rotation
     if (rotateRef && rotateRef.current !== 0) {
-      onRotateActive?.();
-      const currentTheta = ctrl.getAzimuthalAngle();
-      ctrl.setAzimuthalAngle(currentTheta - rotateRef.current);
+      spinGroupRef.current.rotation.y += rotateRef.current * 1.5;
       rotateRef.current = 0;
-
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = setTimeout(() => {
-        onRotateIdle?.();
-      }, 700);
       return;
     }
 
-    // 2. Continuous slow 360° circular spin when idle (hero showcase)
+    // 2. Continuous slow 360° circular spin when idle (desktop & mobile)
     if (!isUserInteracting && !reducedMotion) {
-      const safeDelta = Math.min(delta, 0.05);
-      const currentTheta = ctrl.getAzimuthalAngle();
-      ctrl.setAzimuthalAngle(currentTheta - 0.35 * safeDelta);
+      spinGroupRef.current.rotation.y += 0.40 * safeDelta;
     }
   });
 
-  return null;
+  return (
+    <group 
+      ref={spinGroupRef} 
+      position={[0, isMobile ? 0.12 : 0, 0]}
+    >
+      {children}
+    </group>
+  );
 }
 
 interface MaleBones {
@@ -669,16 +661,13 @@ const HeroModel = ({
       {/* Top Hair & Shoulder Accent */}
       <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
       <ResponsiveCamera />
-      <AvatarSpinController 
-        rotateRef={rotateRef} 
-        controlsRef={controlsRef}
-        isUserInteracting={isUserInteracting}
-        reducedMotion={reducedMotion}
-        onRotateActive={handleInteractionStart}
-        onRotateIdle={handleInteractionEnd}
-      />
 
-      <group position={[0, 0, 0]}>
+      <TurntableGroup
+        isUserInteracting={isUserInteracting}
+        rotateRef={rotateRef}
+        isMobile={isMobile}
+        reducedMotion={reducedMotion}
+      >
         <Suspense fallback={null}>
           {mountedGenders.female && (
             <AvatarModel
@@ -705,7 +694,7 @@ const HeroModel = ({
             />
           )}
         </Suspense>
-      </group>
+      </TurntableGroup>
 
       <Suspense fallback={null}>
         <ContactShadows

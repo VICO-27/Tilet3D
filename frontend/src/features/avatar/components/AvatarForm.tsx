@@ -106,14 +106,18 @@ export function AvatarForm() {
   const {
     nickname, age, gender, body_type: bodyType, skin_tone: skinTone, 
     height, weight, chest, waist, shoulder_width: shoulderWidth, hips, 
-    isLoading, notification, notificationType, setAvatarData, confirmAvatar
+    isLoading, notification, notificationType, setAvatarData, confirmAvatar, exitEditMode
   } = useAvatarStore();
 
   const selectedSkinTone = SKIN_TONES.find((tone) => tone.value === skinTone);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await confirmAvatar();
+    try {
+      await confirmAvatar();
+    } finally {
+      exitEditMode();
+    }
   };
 
   return (
@@ -244,6 +248,7 @@ export function AvatarForm() {
 
       <div className="mt-6 shrink-0 border-t border-stone-200/60 pt-4">
         <button
+          id="confirm-avatar-btn"
           type="submit"
           disabled={isLoading}
           className="h-12 sm:h-14 w-full rounded-xl sm:rounded-2xl bg-[#161616] px-6 text-sm sm:text-base font-bold tracking-wide text-white shadow-lg transition-all duration-200 hover:bg-plum-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"

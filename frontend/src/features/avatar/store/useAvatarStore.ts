@@ -427,6 +427,8 @@ export const useAvatarStore =
       if (!hasAuthToken()) {
         set({
           isConfirmed: true,
+          isEditing: false,
+          currentAnimation: 'idle',
           isLoading: false,
           notification:
             'Previewing your avatar! Sign in to save these measurements permanently.',

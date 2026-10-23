@@ -88,7 +88,7 @@ function NotificationToast() {
 
   return (
     <div
-      className={`absolute top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out pointer-events-none ${
+      className={`absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out pointer-events-none max-w-[calc(100vw-2rem)] ${
         notification ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'
       }`}
     >

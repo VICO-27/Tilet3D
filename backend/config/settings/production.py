@@ -25,6 +25,9 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
     "https://yourdomain.com",
 ])
 
+# Production return URL defaults to live Vercel app instead of localhost:3000
+CHAPA_RETURN_URL = env("CHAPA_RETURN_URL", default="https://tilet3d.vercel.app/checkout/success")
+
 # Email configuration: fallback to console backend if SMTP credentials are not provided in environment
 if not env("EMAIL_HOST_USER", default=""):
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

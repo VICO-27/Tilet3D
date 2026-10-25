@@ -6,7 +6,7 @@ from django.conf import settings
 from apps.products.models import Product
 from apps.products.services.search import search_products
 
-CHAT_MODEL = "gemini-2.5-flash"
+CHAT_MODEL = "gemini-3.5-flash"
 EMBEDDING_MODEL = "gemini-embedding-001"
 
 def get_client():
@@ -110,10 +110,9 @@ def embed_text(text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> list[float]:
         result = client.models.embed_content(
             model=EMBEDDING_MODEL,
             contents=text,
-            config=types.EmbedContentConfig(task_type=task_type),
         )
         return list(result.embeddings[0].values)
-    except APIError as e:
+    except Exception as e:
         raise AIOfflineError(f"Embedding failed: {str(e)}")
 
 def stream_chat_response(message: str, history: list[dict], language: str = "om"):
@@ -122,27 +121,36 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
         yield "AI Assistant is currently offline. Please set GEMINI_API_KEY."
         return
 
-    contents = [
-        types.Content(role=turn["role"], parts=[types.Part(text=turn["content"])])
-        for turn in history
-    ]
-    contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
+    try:
+        contents = [
+            types.Content(role=turn["role"], parts=[types.Part(text=turn["content"])])
+            for turn in history
+        ]
+        contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
 
-    # We will use chats to let the SDK handle the tool call loop automatically
-    chat = client.chats.create(
-        model=CHAT_MODEL,
-        config=types.GenerateContentConfig(
-            system_instruction=get_system_instruction(language=language),
-            tools=[search_store],
-            temperature=0.3
+        # We will use chats to let the SDK handle the tool call loop automatically
+        chat = client.chats.create(
+            model=CHAT_MODEL,
+            config=types.GenerateContentConfig(
+                system_instruction=get_system_instruction(language=language),
+                tools=[search_store],
+                temperature=0.3
+            )
         )
-    )
-    # Manually populate history (skip the last user message, we will send it)
-    chat._history = contents[:-1]
-    
-    # Send the user message and stream the final response
-    stream = chat.send_message_stream(message)
-    
-    for chunk in stream:
-        if chunk.text:
-            yield chunk.text
+        # Manually populate history (skip the last user message, we will send it)
+        chat._history = contents[:-1]
+        
+        # Send user message and execute tools automatically
+        response = chat.send_message(message)
+        text = response.text or ""
+        
+        # Yield in chunks for smooth SSE streaming to the client
+        chunk_size = 28
+        for i in range(0, len(text), chunk_size):
+            yield text[i:i + chunk_size]
+    except Exception as exc:
+        err_msg = str(exc)
+        if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
+            yield "The AI Concierge is currently handling high volume on the free tier. Please retry in a few moments.\n\nPRODUCT_IDS: none"
+        else:
+            raise

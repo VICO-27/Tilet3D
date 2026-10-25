@@ -49,7 +49,7 @@
     "search": "Rechercher",
     "searchPlaceholder": "Rechercher couture, marques, tissus…",
     "searching": "Recherche en cours...",
-    "noResults": "Aucun résultat trouvé — essayez une autre recherche.",
+    "noResults": "Aucun résultat trouvé. Essayez une autre recherche.",
     "esc": "Échap",
     "popular": "Populaire",
     "suggestions": {
@@ -75,7 +75,7 @@
     },
     "lovedBy": "Adoré par plus de 2 400 clients",
     "testimonials": {
-      "1": "J'ai essayé le kemis sur mon avatar — l'ajustement était parfait.",
+      "1": "J'ai essayé le kemis sur mon avatar, l'ajustement était parfait.",
       "2": "Enfin commandé des tenues Habesha sans deviner ma taille.",
       "3": "Le détail du Tilet est magnifique en 3D."
     }
@@ -83,7 +83,7 @@
   "products": {
     "title": "Couture patrimoniale, tissée pour aujourd'hui.",
     "badge": "✦ ጥ Tilet3D · LA COLLECTION",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
     "categories": {
       "Kemis": "Kemis",
       "Scarf": "Écharpe",

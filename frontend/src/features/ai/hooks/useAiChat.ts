@@ -61,7 +61,7 @@ export function useAiChat(initialGreeting: string) {
             const next = [...prev];
             next[next.length - 1] = {
               role: "model",
-              content: `Sorry — I hit a connection issue (${err}). Please try again.`,
+              content: `Sorry, I hit a connection issue (${err}). Please try again.`,
             };
             return next;
           });

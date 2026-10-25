@@ -143,7 +143,7 @@ export const useEngagementStore = create<EngagementState>()(
               : state.likedIdsList.filter((id) => id !== productId),
             error: err instanceof Error ? err.message : 'Like failed',
           }));
-          useToastStore.getState().show("Couldn't like this — try again", 'error');
+          useToastStore.getState().show("Couldn't like this, please try again", 'error');
           return null;
         }
       },
@@ -189,7 +189,7 @@ export const useEngagementStore = create<EngagementState>()(
               : state.savedIdsList.filter((id) => id !== productId),
             error: err instanceof Error ? err.message : 'Bookmark failed',
           }));
-          useToastStore.getState().show("Couldn't save this — try again", 'error');
+          useToastStore.getState().show("Couldn't save this, please try again", 'error');
           return null;
         }
       },
@@ -208,7 +208,7 @@ export const useEngagementStore = create<EngagementState>()(
           return data as ProductComment;
         } catch (err: unknown) {
           set({ error: err instanceof Error ? err.message : 'Comment failed' });
-          useToastStore.getState().show("Couldn't post comment — try again", 'error');
+          useToastStore.getState().show("Couldn't post comment, please try again", 'error');
           return null;
         } finally {
           set({ loading: false });

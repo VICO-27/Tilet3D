@@ -99,7 +99,7 @@ export const FloatingAssistant: React.FC = () => {
   const suggestions = getSuggestions(location.pathname);
 
   const { messages, isGenerating, send } = useAiChat(
-    t("ai.welcome", "Welcome to Tilet3D AI — your personal styling concierge.")
+    t("ai.welcome", "Welcome to Tilet3D AI, your personal styling concierge.")
   );
 
   // Auto-focus on typing

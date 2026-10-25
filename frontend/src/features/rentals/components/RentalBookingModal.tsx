@@ -620,7 +620,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       {t("rentals.duration", "Rental Duration")} ({quote?.duration_days || 0} days)
                     </span>
                     <span className="font-mono font-medium text-stone-900">
-                      {quote?.rental_subtotal ?? '—'} ETB
+                      {quote?.rental_subtotal ?? '0'} ETB
                     </span>
                   </div>
 
@@ -630,7 +630,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       <Info className="h-3 w-3 text-purple-600" />
                     </div>
                     <span className="font-mono font-bold text-purple-700">
-                      +{quote?.deposit_amount ?? '—'} ETB
+                      +{quote?.deposit_amount ?? '0'} ETB
                     </span>
                   </div>
 
@@ -638,7 +638,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-stone-600">{t("rentals.deliveryFee", "Doorstep Delivery & Return")}</span>
                       <span className="font-mono font-medium text-stone-900">
-                        +{quote?.delivery_fee ?? '—'} ETB
+                        +{quote?.delivery_fee ?? '0'} ETB
                       </span>
                     </div>
                   )}
@@ -653,7 +653,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
                       </p>
                     </div>
                     <span className="text-lg font-mono font-bold text-purple-900">
-                      {quote?.total_amount ?? '—'} ETB
+                      {quote?.total_amount ?? '0'} ETB
                     </span>
                   </div>
                 </div>

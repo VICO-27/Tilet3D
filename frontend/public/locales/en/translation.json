@@ -49,7 +49,7 @@
     "search": "Search",
     "searchPlaceholder": "Search couture, brands, fabrics…",
     "searching": "Finding matches...",
-    "noResults": "No matches found — try a different phrase.",
+    "noResults": "No matches found. Try a different phrase.",
     "esc": "Esc",
     "popular": "Popular",
     "suggestions": {
@@ -75,7 +75,7 @@
     },
     "lovedBy": "Loved by 2,400+ clients",
     "testimonials": {
-      "1": "Tried the kemis on my own avatar — the fit was flawless.",
+      "1": "Tried the kemis on my own avatar, the fit was flawless.",
       "2": "Finally ordered Habesha wear without guessing my size.",
       "3": "The Tilet detail is stunning in 3D."
     }
@@ -83,7 +83,7 @@
   "products": {
     "title": "Heritage couture, woven for now.",
     "badge": "✦ ጥ Tilet3D · THE COLLECTION",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
     "categories": {
       "Kemis": "Kemis",
       "Scarf": "Scarf",

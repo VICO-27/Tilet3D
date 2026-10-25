@@ -159,7 +159,7 @@ const StoreNav = () => {
                     </div>
                   ) : (
                     <div className="py-8 text-center text-xs text-slate-400">
-                      {t("nav.noResults", "No matches found — try a different phrase.")}
+                      {t("nav.noResults", "No matches found. Try a different phrase.")}
                     </div>
                   )}
                 </div>

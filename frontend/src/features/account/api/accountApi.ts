@@ -40,7 +40,7 @@ export const securityApi = {
       id: String(s.id),
       device: s.device || "Web Browser",
       location: s.location || "Active Session",
-      ip: s.ip || "—",
+      ip: s.ip || "N/A",
       lastActive: s.lastActive || s.created_at || "Recently",
       isCurrent: Boolean(s.isCurrent),
     }));

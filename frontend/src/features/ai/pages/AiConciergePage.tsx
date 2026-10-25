@@ -9,7 +9,7 @@ const AiConciergePage: React.FC = () => {
   const { t } = useTranslation();
   const [input, setInput] = useState("");
   const initialGreeting = useMemo(() => {
-    return t("ai.subtitle", "Welcome to the Tilet3D Atelier. I'm your personal styling concierge — ask me about our collections, sizing, custom orders, or how the 3D try-on works.");
+    return t("ai.subtitle", "Welcome to the Tilet3D Atelier. I'm your personal styling concierge. Ask me about our collections, sizing, custom orders, or how the 3D try-on works.");
   }, [t]);
 
   const { messages, isGenerating, send } = useAiChat(initialGreeting);

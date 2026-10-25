@@ -301,7 +301,7 @@ const ProductPageHeader: React.FC<Props> = ({
                 fontFeatureSettings: '"kern" 1',
               }}
             >
-              {t("products.amharicQuote", "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።")}
+              {t("products.amharicQuote", "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።")}
             </p>
           </div>
 

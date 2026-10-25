@@ -458,7 +458,7 @@ const Testimonials = () => {
   const [i, setI] = useState(0);
 
   const TESTIMONIALS = [
-    { name: "Selam T.", city: "Addis Ababa", color: "#7c3aed", quote: t("hero.testimonials.1", "Tried the kemis on my own avatar — the fit was flawless.") },
+    { name: "Selam T.", city: "Addis Ababa", color: "#7c3aed", quote: t("hero.testimonials.1", "Tried the kemis on my own avatar, the fit was flawless.") },
     { name: "Dawit K.", city: "Washington D.C.", color: "#0ea5e9", quote: t("hero.testimonials.2", "Finally ordered Habesha wear without guessing my size.") },
     { name: "Hanna G.", city: "Dubai", color: "#f59e0b", quote: t("hero.testimonials.3", "The Tilet detail is stunning in 3D.") },
   ];
@@ -491,7 +491,7 @@ const Testimonials = () => {
               {currentT.name.charAt(0)}
             </span>
             <p className="text-xs sm:text-sm text-zinc-600 italic">
-              "{currentT.quote}" <span className="not-italic font-semibold text-zinc-400 ml-1.5">— {currentT.name}</span>
+              "{currentT.quote}" <span className="not-italic font-semibold text-zinc-400 ml-1.5">· {currentT.name}</span>
             </p>
           </motion.div>
         </AnimatePresence>

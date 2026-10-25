@@ -85,7 +85,7 @@ const CommentsSection = React.forwardRef<HTMLDivElement, Props>(({ productId }, 
       {loading ? (
         <p className="text-sm text-zinc-400">Loading comments...</p>
       ) : comments.length === 0 ? (
-        <p className="text-sm text-zinc-400">No comments yet — be the first to share your thoughts.</p>
+        <p className="text-sm text-zinc-400">No comments yet. Be the first to share your thoughts.</p>
       ) : (
         <div className="space-y-6">
           {comments.map((c) => (

@@ -49,7 +49,7 @@
     "search": "Barbaadi",
     "searchPlaceholder": "Uffata, buraandiiwwan, huccuuwwan barbaadi...",
     "searching": "Barbaadaa jira...",
-    "noResults": "Wanti barbaaddan hin argamne — jecha biraa yaalaa.",
+    "noResults": "Wanti barbaaddan hin argamne, jecha biraa yaalaa.",
     "esc": "Ba'i",
     "popular": "Bebbeekamo",
     "suggestions": {
@@ -65,7 +65,7 @@
     "title1": "Uffadhu",
     "title2": "bituu kee",
     "title3": "dura.",
-    "subtitle": "Fakkii 3D kee uumi, uffata aadaa Itoophiyaa harkaan hojjetame qaama keetti safaramee sirreessi—kirriin jalqabaa osoo hin fo'amin dura.",
+    "subtitle": "Fakkii 3D kee uumi, uffata aadaa Itoophiyaa harkaan hojjetame qaama keetti safaramee sirreessi kirriin jalqabaa osoo hin fo'amin dura.",
     "createAvatar": "Fakkii kee uumi",
     "shopNow": "Amma Biti",
     "explore": "Walitti qabama daawwadhu",
@@ -75,7 +75,7 @@
     },
     "lovedBy": "Maamiltoota 2,400+ ta'aniin kan jaallatame",
     "testimonials": {
-      "1": "Qamiisicha fakkii koo irratti yaaleera — safarri isaa sirrii ture.",
+      "1": "Qamiisicha fakkii koo irratti yaaleera, safarri isaa sirrii ture.",
       "2": "Dhumarratti uffata Habeshaa tilmaama malee ajajeera.",
       "3": "Diizaayiniin Tilet 3D keessatti baay'ee namatti tola."
     }
@@ -83,7 +83,7 @@
   "products": {
     "title": "Aadaa couture, yeroo ammayyaaf kan dhihaate.",
     "badge": "✦ ጥ Tilet3D · WALITTI QABAMA AADAA",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
     "categories": {
       "Kemis": "Qamiisii",
       "Scarf": "Iskaarfi",

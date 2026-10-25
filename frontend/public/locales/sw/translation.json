@@ -49,7 +49,7 @@
     "search": "Tafuta",
     "searchPlaceholder": "Tafuta mavazi ya kitamaduni, vitambaa...",
     "searching": "Inatafuta...",
-    "noResults": "Hakuna matokeo yaliyopatikana — jaribu neno jingine.",
+    "noResults": "Hakuna matokeo yaliyopatikana. Jaribu neno jingine.",
     "esc": "Toka",
     "popular": "Maarufu",
     "suggestions": {
@@ -75,7 +75,7 @@
     },
     "lovedBy": "Inapendwa na wateja zaidi ya 2,400+",
     "testimonials": {
-      "1": "Nilijaribu kemis kwenye umbo langu la 3D — saizi ilikuwa kamili.",
+      "1": "Nilijaribu kemis kwenye umbo langu la 3D, saizi ilikuwa kamili.",
       "2": "Hatimaye niliagiza nguo za Habesha bila kukisia saizi.",
       "3": "Mchoro wa Tilet unapendeza sana katika 3D."
     }
@@ -83,7 +83,7 @@
   "products": {
     "title": "Mavazi ya kitamaduni, yaliyofumwa kwa ajili ya sasa.",
     "badge": "✦ ጥ Tilet3D · MKUSANYIKO",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት — ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
     "categories": {
       "Kemis": "Kemis",
       "Scarf": "Skafu",

@@ -17,8 +17,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
 
-# Load .env file
+# Load .env file (from backend/ or project root)
 environ.Env.read_env(BASE_DIR / ".env")
+if (BASE_DIR.parent / ".env").exists():
+    environ.Env.read_env(BASE_DIR.parent / ".env")
 
 
 # ==========================================================
@@ -138,8 +140,6 @@ CHAPA_RETURN_URL = env(
     default="http://localhost:3000/checkout/success"
 )
 
-# Add anywhere near the other THIRD PARTY KEYS
-GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 # ==========================================================
 # EMAIL CONFIGURATION (BREVO/GMAIL SMTP)
 # ==========================================================

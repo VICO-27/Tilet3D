@@ -246,6 +246,13 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "accept-language",
+)
+
 
 # ==========================================================
 # MIDDLEWARE

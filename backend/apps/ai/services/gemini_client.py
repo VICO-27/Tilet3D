@@ -123,11 +123,15 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
         return
 
     try:
-        contents = [
+        # Pass curated history directly into client.chats.create
+        history_contents = [
             types.Content(role=turn["role"], parts=[types.Part(text=turn["content"])])
             for turn in history
+            if turn.get("content") and turn.get("role") in ("user", "model")
         ]
-        contents.append(types.Content(role="user", parts=[types.Part(text=message)]))
+        # In Gemini multi-turn chat, the conversation must begin with a user turn
+        while history_contents and history_contents[0].role != "user":
+            history_contents.pop(0)
 
         # We will use chats to let the SDK handle the tool call loop automatically
         chat = client.chats.create(
@@ -136,10 +140,9 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
                 system_instruction=get_system_instruction(language=language),
                 tools=[search_store],
                 temperature=0.3
-            )
+            ),
+            history=history_contents
         )
-        # Manually populate history (skip the last user message, we will send it)
-        chat._history = contents[:-1]
         
         # Send user message and execute tools automatically
         response = chat.send_message(message)
@@ -152,6 +155,8 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
     except Exception as exc:
         err_msg = str(exc)
         if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
-            yield "The AI Concierge is currently handling high volume on the free tier. Please retry in a few moments.\n\nPRODUCT_IDS: none"
+            yield "The AI Concierge has reached the daily free tier request limit. Please try again later.\n\nPRODUCT_IDS: none"
+        elif "503" in err_msg or "UNAVAILABLE" in err_msg:
+            yield "The AI Concierge is currently experiencing temporary high demand from Google. Please try again in a moment.\n\nPRODUCT_IDS: none"
         else:
-            raise
+            yield f"The AI Concierge encountered an issue: {err_msg[:120]}. Please try again.\n\nPRODUCT_IDS: none"

@@ -33,7 +33,11 @@ export function useAiChat(initialGreeting: string) {
       const trimmed = userMessage.trim();
       if (!trimmed || isGenerating) return;
 
-      const historyForApi = messages.map((m) => ({ role: m.role, content: m.content }));
+      // Only send actual conversation turns (Gemini conversations must begin with a user turn)
+      const firstUserIdx = messages.findIndex((m) => m.role === "user");
+      const historyForApi = firstUserIdx !== -1
+        ? messages.slice(firstUserIdx).map((m) => ({ role: m.role, content: m.content }))
+        : [];
 
       setMessages((prev) => [
         ...prev,
@@ -62,6 +66,7 @@ export function useAiChat(initialGreeting: string) {
             next[next.length - 1] = {
               role: "model",
               content: `Sorry, I hit a connection issue (${err}). Please try again.`,
+              isStreaming: false,
             };
             return next;
           });
@@ -90,7 +95,7 @@ export function useAiChat(initialGreeting: string) {
             const next = [...prev];
             next[next.length - 1] = {
               role: "model",
-              content: displayText,
+              content: displayText || "I apologize, but I could not generate a response. Please try again.",
               products,
               isStreaming: false,
             };

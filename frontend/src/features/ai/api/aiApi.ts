@@ -11,20 +11,41 @@ export const aiApi = {
   ) => {
     try {
       const currentLang = localStorage.getItem("tilet3d_language") || "om";
+      const token = localStorage.getItem("tilet3d_access_token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${apiClient.defaults.baseURL || '/api'}/ai/chat/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept-Language": currentLang,
-        },
+        headers,
         body: JSON.stringify({ message, history, language: currentLang }),
       });
 
-      if (!response.body) throw new Error("No response body from stream");
+      if (!response.ok) {
+        let errMessage = `Request failed with status ${response.status}`;
+        try {
+          const errData = await response.json();
+          errMessage = errData.detail || errData.error || errData.message || JSON.stringify(errData);
+        } catch {
+          // Non-JSON response
+        }
+        onError(errMessage);
+        return;
+      }
+
+      if (!response.body) {
+        onError("No response body received from server");
+        return;
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let hasError = false;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -39,20 +60,24 @@ export const aiApi = {
           if (trimmed.startsWith("data: ")) {
             const dataStr = trimmed.replace("data: ", "");
             if (dataStr === "[DONE]") {
-              onComplete();
+              if (!hasError) onComplete();
               return;
             }
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.text) onChunk(parsed.text);
-              if (parsed.error) onError(parsed.error);
+              if (parsed.error) {
+                hasError = true;
+                onError(parsed.error);
+                return;
+              }
             } catch {
               // Ignore parsing fragments silently
             }
           }
         }
       }
-      onComplete();
+      if (!hasError) onComplete();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to connect to AI assistant.";
       onError(errorMessage);

@@ -6,7 +6,7 @@ from django.conf import settings
 from apps.products.models import Product
 from apps.products.services.search import search_products
 
-CHAT_MODEL = "gemini-3.5-flash"
+CHAT_MODEL = getattr(settings, "GEMINI_CHAT_MODEL", "gemini-3.8-flash")
 EMBEDDING_MODEL = "gemini-embedding-001"
 
 def get_client():

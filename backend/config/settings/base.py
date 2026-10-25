@@ -124,6 +124,10 @@ GEMINI_API_KEY = env(
     "GEMINI_API_KEY",
     default=""
 )
+GEMINI_CHAT_MODEL = env(
+    "GEMINI_CHAT_MODEL",
+    default="gemini-3.8-flash"
+)
 
 CHAPA_SECRET_KEY = env(
     "CHAPA_SECRET_KEY",

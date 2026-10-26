@@ -145,7 +145,36 @@
       "Gabi": "ጋቢ",
       "Kaba": "ካባ",
       "Yehabesha Libs": "የሀበሻ ልብስ",
-      "All": "ሁሉም"
+      "All": "ሁሉም",
+      "Accessories": "መለዋወጫዎች",
+      "accessories": "መለዋወጫዎች",
+      "Children": "የልጆች",
+      "children": "የልጆች",
+      "Oromo": "ኦሮሞ",
+      "oromo": "ኦሮሞ",
+      "Tigray": "ትግራይ",
+      "tigray": "ትግራይ",
+      "Amhara": "አማራ",
+      "amhara": "አማራ",
+      "Tilf": "ጥልፍ",
+      "tilf": "ጥልፍ",
+      "Mens": "የወንዶች",
+      "mens": "የወንዶች",
+      "Men Traditional Wear": "የወንዶች ባህላዊ ልብስ",
+      "Men Wear": "የወንዶች ልብስ",
+      "Habesha Kemis": "የሀበሻ ቀሚስ",
+      "kemis": "ቀሚስ",
+      "scarf": "ስካርፍ",
+      "netela": "ነጠላ",
+      "shash": "ሻሽ",
+      "family": "የቤተሰብ",
+      "couple": "የጥንዶች",
+      "wedding": "የሰርግ",
+      "shemiz": "ሸሚዝ",
+      "suri": "ሱሪ",
+      "gabi": "ጋቢ",
+      "kaba": "ካባ",
+      "all": "ሁሉም"
     },
     "filters": {
       "title": "ማጣሪያዎች",
@@ -206,7 +235,32 @@
     "midPrice": "መካከለኛ",
     "premiumPrice": "ፕሪሚየም",
     "inStockOnly": "ክምችት ላይ ያለ ብቻ",
-    "viewResults": "ውጤቶችን ይመልከቱ"
+    "viewResults": "ውጤቶችን ይመልከቱ",
+    "watermark": "ጥለት3D",
+    "theThread": "የጥበብ ፈትል",
+    "exploreCollection": "ሙሉውን የ{{category}} ስብስብ ያስሱ",
+    "stories": {
+      "patternStory": {
+        "title": "እያንዳንዱ ጥለት ታሪክ ይናገራል",
+        "subtitle": "ለዘመናት የኢትዮጵያ ሸማኔዎች መልክአ ምድርን፣ እምነትን እና ቤተሰብን በልብሱ ዙሪያ በሚያምረው ጥለት ውስጥ ጠልፈው አስቀምጠዋል።"
+      },
+      "pitLooms": {
+        "title": "በእጅ ሸማ የተሰራ ጥበብ",
+        "subtitle": "ከአርባ ምንጭ የጥጥ ማሳዎች እስከ ሽሮ ሜዳ ዕቃ ሸማዎች፣ እያንዳንዱ ልብስ ወደ እርስዎ ከመድረሱ በፊት በበርካታ ባለሙያዎች እጅ ያልፋል።"
+      },
+      "geometryHeritage": {
+        "title": "የባህል እና የጥበብ ጂኦሜትሪ",
+        "subtitle": "እያንዳንዱ የአልማዝ እና የመስመር ቅርጽ ጥልቅ ባህላዊ ወይም መንፈሳዊ ትርጉም ያለውን ምሥጢር ይገልጻል።"
+      },
+      "centuriesDialogue": {
+        "title": "የዘመናት የጥበብ ውይይት",
+        "subtitle": "ትክክለኛውን የሀበሻ የሽመና ጥበብ ከዘመናዊው የ3ዲ ቴክኖሎጂ ጋር በማዋሃድ ዘመን አይሽሬ ቅርሳችንን ወደ አዲሱ ዘመን እናሸጋግራለን።"
+      },
+      "masterWeavers": {
+        "title": "ለሸማኔዎች ባለሙያዎች ክብር መስጠት",
+        "subtitle": "እያንዳንዱ ልብስ በትዕግስት እና በጥበብ በኢትዮጵያ ምርጥ አውደ ጥናቶች ውስጥ በእጅ የተጠናቀቀ ነው።"
+      }
+    }
   },
   "detail": {
     "tailoring": "ልዩ የልብስ ስፌት",
@@ -522,7 +576,8 @@
     "continueConversation": "ውይይቱን ይቀጥሉ...",
     "voiceInput": "በድምፅ ማስገባት",
     "sendMessage": "መልእክት ላክ",
-    "closeAssistant": "የAI ረዳቱን ዝጋ"
+    "closeAssistant": "የAI ረዳቱን ዝጋ",
+    "stopGenerating": "ማመንጨቱን አቁም"
   },
   "admin": {
     "dashboard": "የአስተዳዳሪ ዳሽቦርድ",

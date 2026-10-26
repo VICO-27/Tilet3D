@@ -131,7 +131,7 @@
   "products": {
     "title": "Aadaa couture, yeroo ammayyaaf kan dhihaate.",
     "badge": "✦ ጥ Tilet3D · WALITTI QABAMA AADAA",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "Uffata aadaa Habashaa miidhagaa fi harkaan tolfame — uffata kamiyyuu battalumatti avaataara keessan 3D irratti yaalaa.",
     "categories": {
       "Kemis": "Qamiisii",
       "Scarf": "Iskaarfi",
@@ -145,7 +145,36 @@
       "Gabi": "Gaabii",
       "Kaba": "Kaabaa",
       "Yehabesha Libs": "Uffata Habeshaa",
-      "All": "Hunda"
+      "All": "Hunda",
+      "Accessories": "Faayaalee",
+      "accessories": "Faayaalee",
+      "Children": "Daa'imman",
+      "children": "Daa'imman",
+      "Oromo": "Aadaa Oromoo",
+      "oromo": "Aadaa Oromoo",
+      "Tigray": "Tigraay",
+      "tigray": "Tigraay",
+      "Amhara": "Amaara",
+      "amhara": "Amaara",
+      "Tilf": "Dha'ii Tilf",
+      "tilf": "Dha'ii Tilf",
+      "Mens": "Dhiiraa",
+      "mens": "Dhiiraa",
+      "Men Traditional Wear": "Uffata Aadaa Dhiiraa",
+      "Men Wear": "Uffata Dhiiraa",
+      "Habesha Kemis": "Qamiisii Habeshaa",
+      "kemis": "Qamiisii",
+      "scarf": "Iskaarfi",
+      "netela": "Naxalaa",
+      "shash": "Shaashii",
+      "family": "Maatii",
+      "couple": "Waliin",
+      "wedding": "Cidha",
+      "shemiz": "Shamiizii",
+      "suri": "Surrii",
+      "gabi": "Gaabii",
+      "kaba": "Kaabaa",
+      "all": "Hunda"
     },
     "filters": {
       "title": "Gingilchitoota",
@@ -206,7 +235,32 @@
     "midPrice": "Giddu-galeessa",
     "premiumPrice": "Olaanaa",
     "inStockOnly": "Mana Kuusaa Keessa Qofa",
-    "viewResults": "Bu'aa Ilaali"
+    "viewResults": "Bu'aa Ilaali",
+    "watermark": "TILET3D",
+    "theThread": "Fo'aa Aadaa",
+    "exploreCollection": "Kuusaa {{category}} guutuu daawwadhaa",
+    "stories": {
+      "patternStory": {
+        "title": "Bifti hundi seenaa dubbata",
+        "subtitle": "Jaarraa baay'eedhaaf dhangala'aan aadaa fi amantaan harka ogeeyyii itiyoophiyaatiin fo'aa xilaat irratti tolfamaa ture."
+      },
+      "pitLooms": {
+        "title": "Harkaan fi aadaan kan fo'ame",
+        "subtitle": "Ooyiruu jimmata Arbaa Mincirraa hanga Shiroo Meedaatti, uffanni kun harka ogeeyyii hedduu keessa darba."
+      },
+      "geometryHeritage": {
+        "title": "Ji'oomeetirii fi miidhagina aadaa",
+        "subtitle": "Dhaalli tokkoon tokkoon boca addaa fi mallattoo qulqullummaa kan calaqqisiisudha."
+      },
+      "centuriesDialogue": {
+        "title": "Haasawa jaarraa darbee",
+        "subtitle": "Aadaa fo'aa Habashaa durii fi teeknooloojii 3D ammayyaa walitti makuun egeree gaarii uumna."
+      },
+      "masterWeavers": {
+        "title": "Kabaja ogeeyyii fo'aa",
+        "subtitle": "Uffanni hundi harka ogeeyyii gahumsa qabaniin xumuramee qulqullinaan dhihaata."
+      }
+    }
   },
   "detail": {
     "tailoring": "Hodhaa Addaa",
@@ -522,7 +576,8 @@
     "continueConversation": "Hasaa itti fufaa...",
     "voiceInput": "Sagaleedhaan galchuu",
     "sendMessage": "Ergaa ergi",
-    "closeAssistant": "Gargaaraa AI cufi"
+    "closeAssistant": "Gargaaraa AI cufi",
+    "stopGenerating": "Uumuu dhaabi"
   },
   "admin": {
     "dashboard": "Gabaasa Daashboordii",

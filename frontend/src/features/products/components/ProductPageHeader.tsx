@@ -297,7 +297,7 @@ const ProductPageHeader: React.FC<Props> = ({
             <p
               className="text-[15px] sm:text-[16px] md:text-[17px] leading-[1.7] sm:leading-[1.8] text-ink/80 font-normal tracking-wide antialiased"
               style={{
-                fontFamily: "'Nyala', 'Kefa', 'Abyssinica SIL', 'Power Ge'ez', serif",
+                fontFamily: "inherit, 'Nyala', 'Kefa', 'Abyssinica SIL', serif",
                 fontFeatureSettings: '"kern" 1',
               }}
             >

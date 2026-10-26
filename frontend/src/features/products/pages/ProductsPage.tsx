@@ -14,11 +14,11 @@ import { useTranslation } from 'react-i18next';
 import { FilterDrawer } from '../components/FilterDrawer';
 
 const STORY_VARIATIONS = [
-  { title: "Every pattern tells a story", subtitle: "For centuries, Ethiopian weavers have encoded geography, faith, and family into the Tilet, the woven border that crowns every garment.", variant: "light" as const, align: "left" as const, watermark: "TILET" },
-  { title: "Woven on pit looms, by hand", subtitle: "From the cotton fields of Arba Minch to the looms of Shiro Meda, each piece passes through dozens of artisan hands before it ever reaches yours.", variant: "dark" as const, align: "left" as const, watermark: "HAND" },
-  { title: "The geometry of heritage", subtitle: "Each diamond and line represents a profound architectural or spiritual landmark, speaking a silent language known to the community.", variant: "plum" as const, align: "right" as const, watermark: "HERITAGE" },
-  { title: "A dialogue across centuries", subtitle: "By blending authentic Habesha weaving techniques with structural 3D design, we anchor timeless heritage firmly into the modern day.", variant: "light" as const, align: "right" as const, watermark: "3D" },
-  { title: "Honoring the master weavers", subtitle: "Every single piece is hand-finished in Ethiopia's finest ateliers, honoring the patience, skill, and souls of the artisans behind the craft.", variant: "dark" as const, align: "left" as const, watermark: "LOOM" }
+  { key: "patternStory", title: "Every pattern tells a story", subtitle: "For centuries, Ethiopian weavers have encoded geography, faith, and family into the Tilet, the woven border that crowns every garment.", variant: "light" as const, align: "left" as const, watermark: "TILET" },
+  { key: "pitLooms", title: "Woven on pit looms, by hand", subtitle: "From the cotton fields of Arba Minch to the looms of Shiro Meda, each piece passes through dozens of artisan hands before it ever reaches yours.", variant: "dark" as const, align: "left" as const, watermark: "HAND" },
+  { key: "geometryHeritage", title: "The geometry of heritage", subtitle: "Each diamond and line represents a profound architectural or spiritual landmark, speaking a silent language known to the community.", variant: "plum" as const, align: "right" as const, watermark: "HERITAGE" },
+  { key: "centuriesDialogue", title: "A dialogue across centuries", subtitle: "By blending authentic Habesha weaving techniques with structural 3D design, we anchor timeless heritage firmly into the modern day.", variant: "light" as const, align: "right" as const, watermark: "3D" },
+  { key: "masterWeavers", title: "Honoring the master weavers", subtitle: "Every single piece is hand-finished in Ethiopia's finest ateliers, honoring the patience, skill, and souls of the artisans behind the craft.", variant: "dark" as const, align: "left" as const, watermark: "LOOM" }
 ];
 
 const CUTOFF_CATEGORY = "netela";
@@ -617,7 +617,11 @@ const ProductsPage: React.FC = () => {
                       onClick={() => navigate(`/products/category/${cat.toLowerCase()}`)}
                       className="group flex items-center gap-4 bg-white/60 backdrop-blur-md border border-zinc-200 px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-600 hover:text-black hover:border-zinc-300 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-500"
                     >
-                      <span>Explore full {cat} collection</span>
+                      <span>
+                        {t("products.exploreCollection", "Explore full {{category}} collection", {
+                          category: t(`products.categories.${cat}`, cat),
+                        })}
+                      </span>
                       <div className="bg-zinc-100 text-zinc-400 rounded-full p-1.5 group-hover:bg-black group-hover:text-white transition-colors duration-500">
                         <ArrowRight size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
                       </div>
@@ -626,8 +630,8 @@ const ProductsPage: React.FC = () => {
 
                   {index < activeRenderList.length - 1 && (
                     <BlockDivider
-                      title={storyData.title}
-                      subtitle={storyData.subtitle}
+                      title={t(`products.stories.${storyData.key}.title`, storyData.title)}
+                      subtitle={t(`products.stories.${storyData.key}.subtitle`, storyData.subtitle)}
                       variant={storyData.variant}
                       align={storyData.align}
                       watermark={storyData.watermark}

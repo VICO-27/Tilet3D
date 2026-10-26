@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import RevealOnScroll from '@/shared/components/RevealOnScroll';
 
 interface BlockDividerProps {
@@ -16,6 +17,7 @@ const BlockDivider: React.FC<BlockDividerProps> = ({
   variant = 'light',
   align = 'left'
 }) => {
+  const { t } = useTranslation();
   
   // Smart Color Theme Matrix for alternating background variations
   const themes = {
@@ -68,7 +70,7 @@ const BlockDivider: React.FC<BlockDividerProps> = ({
 
           <RevealOnScroll delayMs={0}>
             <span className={`${currentTheme.eyebrow} block text-[10px] uppercase tracking-[0.35em] font-bold`}>
-              ✨ The Thread
+              ✨ {t("products.theThread", "The Thread")}
             </span>
           </RevealOnScroll>
 

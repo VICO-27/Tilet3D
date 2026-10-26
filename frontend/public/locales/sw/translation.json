@@ -131,7 +131,7 @@
   "products": {
     "title": "Mavazi ya kitamaduni, yaliyofumwa kwa ajili ya sasa.",
     "badge": "✦ ጥ Tilet3D · MKUSANYIKO",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "Mavazi maridadi ya Habesha yaliyotengenezwa kwa mikono katika vituo bora vya ufundi nchini Ethiopia — jaribu vazi lolote moja kwa moja kwenye avatar yako ya 3D.",
     "categories": {
       "Kemis": "Kemis",
       "Scarf": "Skafu",
@@ -145,7 +145,36 @@
       "Gabi": "Gabi",
       "Kaba": "Kaba",
       "Yehabesha Libs": "Nguo ya Habesha",
-      "All": "Yote"
+      "All": "Yote",
+      "Accessories": "Vifaa",
+      "accessories": "Vifaa",
+      "Children": "Watoto",
+      "children": "Watoto",
+      "Oromo": "Oromo",
+      "oromo": "Oromo",
+      "Tigray": "Tigray",
+      "tigray": "Tigray",
+      "Amhara": "Amhara",
+      "amhara": "Amhara",
+      "Tilf": "Mapambo ya Tilf",
+      "tilf": "Mapambo ya Tilf",
+      "Mens": "Wanaume",
+      "mens": "Wanaume",
+      "Men Traditional Wear": "Mavazi ya Jadi ya Wanaume",
+      "Men Wear": "Mavazi ya Wanaume",
+      "Habesha Kemis": "Nguo ya Habesha",
+      "kemis": "Kemis",
+      "scarf": "Skafu",
+      "netela": "Netela",
+      "shash": "Shashi",
+      "family": "Familia",
+      "couple": "Wenzi",
+      "wedding": "Harusi",
+      "shemiz": "Shati",
+      "suri": "Suri",
+      "gabi": "Gabi",
+      "kaba": "Kaba",
+      "all": "Yote"
     },
     "filters": {
       "title": "Vichujio",
@@ -206,7 +235,32 @@
     "midPrice": "Wastani",
     "premiumPrice": "Kifahari",
     "inStockOnly": "Zilizopo Ghalani Pekee",
-    "viewResults": "Tazama Matokeo"
+    "viewResults": "Tazama Matokeo",
+    "watermark": "TILET3D",
+    "theThread": "Uzi wa Jadi",
+    "exploreCollection": "Gundua mkusanyiko mzima wa {{category}}",
+    "stories": {
+      "patternStory": {
+        "title": "Kila nakshi ina hadithi",
+        "subtitle": "Kwa karne nyingi, wafumaji wa Ethiopia wameweka jiografia, imani, na familia katika Tilet, pindo lililofumwa linalopamba kila vazi."
+      },
+      "pitLooms": {
+        "title": "Yaliyofumwa kwa mikono",
+        "subtitle": "Kutoka mashamba ya pamba ya Arba Minch hadi Shiro Meda, kila vazi hupita kwenye mikono mingi ya mafundi stadi."
+      },
+      "geometryHeritage": {
+        "title": "Jiometri ya urithi wa kitamaduni",
+        "subtitle": "Kila pembe na mstari unawakilisha historia au ustaarabu wenye maana kubwa kwa jamii."
+      },
+      "centuriesDialogue": {
+        "title": "Mazungumzo kupitia karne",
+        "subtitle": "Kwa kuchanganya mbinu za jadi za ufumaji wa Habesha na muundo wa 3D, tunaweka urithi imara katika zama za sasa."
+      },
+      "masterWeavers": {
+        "title": "Heshima kwa wafumaji stadi",
+        "subtitle": "Kila vazi linakamilishwa kwa mkono katika warsha bora zaidi nchini Ethiopia."
+      }
+    }
   },
   "detail": {
     "tailoring": "Ushonaji Maalum",
@@ -522,7 +576,8 @@
     "continueConversation": "Endelea na mazungumzo...",
     "voiceInput": "Uingizaji wa sauti",
     "sendMessage": "Tuma ujumbe",
-    "closeAssistant": "Funga msaidizi wa AI"
+    "closeAssistant": "Funga msaidizi wa AI",
+    "stopGenerating": "Acha kuzalisha"
   },
   "admin": {
     "dashboard": "Dashibodi ya Msimamizi",

@@ -131,7 +131,7 @@
   "products": {
     "title": "ባህላዊ ፋሽን፣ ንዘመና ዝተሰርሐ።",
     "badge": "✦ ጥ Tilet3D · ምሉእ ምርጫታት",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "ብሉጻት ናይ ኢትዮጵያ ኢደ-ጥበብ ማእከላት ብኢድ ዝተሰርሑ ጽቡቓት ናይ ሓበሻ ክዳውንቲ፥ ዝዀነ ክዳን ቀጥታ ኣብ 3D ኣቫታርኩም ፈትኑ።",
     "categories": {
       "Kemis": "ቐሚሽ",
       "Scarf": "ስካርፍ",
@@ -145,7 +145,36 @@
       "Gabi": "ጋቢ",
       "Kaba": "ካባ",
       "Yehabesha Libs": "ናይ ሓበሻ ክዳን",
-      "All": "ኩሉ"
+      "All": "ኩሉ",
+      "Accessories": "መለዋወጢታት",
+      "accessories": "መለዋወጢታት",
+      "Children": "ናይ ቆልዑ",
+      "children": "ናይ ቆልዑ",
+      "Oromo": "ኦሮሞ",
+      "oromo": "ኦሮሞ",
+      "Tigray": "ትግራይ",
+      "tigray": "ትግራይ",
+      "Amhara": "ኣምሓራ",
+      "amhara": "ኣምሓራ",
+      "Tilf": "ጥልፊ",
+      "tilf": "ጥልፊ",
+      "Mens": "ናይ ደቂ ተባዕትዮ",
+      "mens": "ናይ ደቂ ተባዕትዮ",
+      "Men Traditional Wear": "ባህላዊ ክዳን ደቂ ተባዕትዮ",
+      "Men Wear": "ክዳውንቲ ደቂ ተባዕትዮ",
+      "Habesha Kemis": "ናይ ሓበሻ ቐሚሽ",
+      "kemis": "ቐሚሽ",
+      "scarf": "ስካርፍ",
+      "netela": "ነጸላ",
+      "shash": "ሻሽ",
+      "family": "ናይ ስድራ",
+      "couple": "ናይ መጻምድቲ",
+      "wedding": "ናይ መርዓ",
+      "shemiz": "ሸሚዝ",
+      "suri": "ስረ",
+      "gabi": "ጋቢ",
+      "kaba": "ካባ",
+      "all": "ኩሉ"
     },
     "filters": {
       "title": "መጽረዪታት",
@@ -206,7 +235,32 @@
     "midPrice": "ማእከላይ",
     "premiumPrice": "ሉክሱሪ",
     "inStockOnly": "ኣብ መኽዘን ዘሎ ጥራይ",
-    "viewResults": "ውጽኢት ርአ"
+    "viewResults": "ውጽኢት ርአ",
+    "watermark": "ጥለት3D",
+    "theThread": "ፈትሊ ጥበብ",
+    "exploreCollection": "ምሉእ ናይ {{category}} ስብስብ ርአዩ",
+    "stories": {
+      "patternStory": {
+        "title": "ነፍሲ ወከፍ ጥለት ታሪኽ ኣለዎ",
+        "subtitle": "ንዘመናት ኣልመምቲ ኢትዮጵያ ጂኦግራፊ፣ እምነትን ስድራቤትን ኣብቲ ንክዳን ዘጌጽ ጥለት ጠሊፎም ኣቐሚጦምዎ እዮም።"
+      },
+      "pitLooms": {
+        "title": "ብኢድ ዝተሸመ ጥበብ",
+        "subtitle": "ካብ ጀነቲ ጥጥቂ ኣርባ ምንጭ ክሳብ መሸመሚ ሽሮ ሜዳ፣ ነፍሲ ወከፍ ክዳን ናባኹም ቅድሚ ምብጻሑ ብብዙሓት ኢድ ይሓልፍ።"
+      },
+      "geometryHeritage": {
+        "title": "ጂኦሜትሪ ናይ ባህሊ ቅርስና",
+        "subtitle": "ነፍሲ ወከፍ ቅርጺ ኣልማዝን መስመርን ዓሚቝ መንፈሳውን ባህላውን ትርጉም ዝሓዘ እዩ።"
+      },
+      "centuriesDialogue": {
+        "title": "ዘተ ዘመናት",
+        "subtitle": "ናይ ሓበሻ ናይ ምሸማም ጥበብ ምስ ዘመናዊ 3D ብምውህሃድ ዘይሓልፍ ቅርስና ናብ ሓድሽ ዘመን ነሰጋግሮ።"
+      },
+      "masterWeavers": {
+        "title": "ንሓያላት ሸማኖ ክብሪ ምሃብ",
+        "subtitle": "ነፍሲ ወከፍ ክዳን ብትዕግስትን ጥበብን ኣብ ብሉጻት ናይ ኢትዮጵያ ማእከላት ብኢድ ዝተዛዘመ እዩ።"
+      }
+    }
   },
   "detail": {
     "tailoring": "ፍሉይ ስፌት",
@@ -522,7 +576,8 @@
     "continueConversation": "ዕላል ቀጽሉ...",
     "voiceInput": "ብድምጺ ምእታው",
     "sendMessage": "መልእኽቲ ስደድ",
-    "closeAssistant": "ናይ AI ሓጋዚ ዕጸዎ"
+    "closeAssistant": "ናይ AI ሓጋዚ ዕጸዎ",
+    "stopGenerating": "ምፍጣር ደው ኣብል"
   },
   "admin": {
     "dashboard": "ናይ ኣመሓዳሪ ዳሽቦርድ",

@@ -30,7 +30,7 @@ const Navbar = () => {
   const LINKS = [
     { to: "/products", label: t("nav.collection", "Collection") },
     { to: "/avatar", label: t("nav.fittingRoom", "Fitting Room") },
-    { to: "/ai-concierge", label: "Chat" },
+    { to: "/ai-concierge", label: t("nav.chat", "Chat") },
   ];
 
   const SUGGESTIONS = [

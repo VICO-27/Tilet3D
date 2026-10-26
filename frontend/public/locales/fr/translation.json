@@ -131,7 +131,7 @@
   "products": {
     "title": "Couture patrimoniale, tissée pour aujourd'hui.",
     "badge": "✦ ጥ Tilet3D · LA COLLECTION",
-    "amharicQuote": "በኢትዮጵያ ምርጥ የዕደ-ጥበብ ማዕከላት በእጅ የተሰሩ ውብ የሀበሻ አልባሳት፣ ማንኛውንም ልብስ በ3ዲ አቫታርዎ ላይ በቀጥታ ይሞክሩ።",
+    "amharicQuote": "De somptueux vêtements Habesha confectionnés à la main dans les meilleurs ateliers d'Éthiopie — essayez chaque tenue directement sur votre avatar 3D.",
     "categories": {
       "Kemis": "Kemis",
       "Scarf": "Écharpe",
@@ -145,7 +145,36 @@
       "Gabi": "Gabi",
       "Kaba": "Kaba",
       "Yehabesha Libs": "Robe Habesha",
-      "All": "Tous"
+      "All": "Tous",
+      "Accessories": "Accessoires",
+      "accessories": "Accessoires",
+      "Children": "Enfants",
+      "children": "Enfants",
+      "Oromo": "Oromo",
+      "oromo": "Oromo",
+      "Tigray": "Tigré",
+      "tigray": "Tigré",
+      "Amhara": "Amhara",
+      "amhara": "Amhara",
+      "Tilf": "Broderie Tilf",
+      "tilf": "Broderie Tilf",
+      "Mens": "Hommes",
+      "mens": "Hommes",
+      "Men Traditional Wear": "Tenues Traditionnelles Homme",
+      "Men Wear": "Mode Masculine",
+      "Habesha Kemis": "Robe Habesha",
+      "kemis": "Kemis",
+      "scarf": "Écharpe",
+      "netela": "Netela",
+      "shash": "Shash",
+      "family": "Famille",
+      "couple": "Couple",
+      "wedding": "Mariage",
+      "shemiz": "Chemise",
+      "suri": "Suri",
+      "gabi": "Gabi",
+      "kaba": "Kaba",
+      "all": "Tous"
     },
     "filters": {
       "title": "Filtres",
@@ -206,7 +235,32 @@
     "midPrice": "Moyenne gamme",
     "premiumPrice": "Prestige",
     "inStockOnly": "En stock uniquement",
-    "viewResults": "Voir les Résultats"
+    "viewResults": "Voir les Résultats",
+    "watermark": "TILET3D",
+    "theThread": "Le Fil Sacré",
+    "exploreCollection": "Explorer toute la collection {{category}}",
+    "stories": {
+      "patternStory": {
+        "title": "Chaque motif raconte une histoire",
+        "subtitle": "Depuis des siècles, les tisserands éthiopiens encodent la géographie, la foi et la famille dans le Tilet qui couronne chaque vêtement."
+      },
+      "pitLooms": {
+        "title": "Tissé sur des métiers traditionnels, à la main",
+        "subtitle": "Des champs de coton d'Arba Minch aux ateliers de Shiro Meda, chaque création traverse des dizaines de mains expertes."
+      },
+      "geometryHeritage": {
+        "title": "La géométrie du patrimoine",
+        "subtitle": "Chaque losange et ligne évoque un repère architectural ou spirituel, murmurant un langage sacré."
+      },
+      "centuriesDialogue": {
+        "title": "Un dialogue à travers les siècles",
+        "subtitle": "En associant les méthodes ancestrales du tissage Habesha à la modélisation 3D, nous pérennisons l'héritage couture."
+      },
+      "masterWeavers": {
+        "title": "Hommage aux maîtres tisserands",
+        "subtitle": "Chaque pièce est méticuleusement finie à la main dans les plus prestigieux ateliers d'Éthiopie."
+      }
+    }
   },
   "detail": {
     "tailoring": "Confection sur mesure",
@@ -522,7 +576,8 @@
     "continueConversation": "Poursuivre la conversation...",
     "voiceInput": "Entrée vocale",
     "sendMessage": "Envoyer le message",
-    "closeAssistant": "Fermer l'assistant IA"
+    "closeAssistant": "Fermer l'assistant IA",
+    "stopGenerating": "Arrêter la génération"
   },
   "admin": {
     "dashboard": "Tableau de bord administrateur",

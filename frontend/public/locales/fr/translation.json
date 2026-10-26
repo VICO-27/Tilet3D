@@ -58,7 +58,8 @@
       "netela": "Netela",
       "suri": "Ensemble Suri",
       "gabi": "Gabi"
-    }
+    },
+    "selectLanguage": "Choisir la langue"
   },
   "hero": {
     "badge": "La mode réinventée en 3D",
@@ -78,7 +79,54 @@
       "1": "J'ai essayé le kemis sur mon avatar, l'ajustement était parfait.",
       "2": "Enfin commandé des tenues Habesha sans deviner ma taille.",
       "3": "Le détail du Tilet est magnifique en 3D."
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "Blanc & Rouge",
+        "subtitle": "Tunique Cérémoniale Brodée pour Homme"
+      },
+      "female-white-dress": {
+        "name": "Blanc & Or",
+        "subtitle": "Robe Royale Champagne"
+      },
+      "male-raya": {
+        "name": "Culturel Raya",
+        "subtitle": "Châle Héritage & Sandales Traditionnelles"
+      },
+      "female-oromo-red": {
+        "name": "Rouge Oromo",
+        "subtitle": "Perles Artisanales & Cape"
+      },
+      "female-green-dress": {
+        "name": "Robe Émeraude",
+        "subtitle": "Corsage Formel Tilet Doré"
+      },
+      "female-blue-dress": {
+        "name": "Bleu Royal",
+        "subtitle": "Couture Brodée de Croix"
+      },
+      "female-oromo-white": {
+        "name": "Blanc Oromo",
+        "subtitle": "Tenue de Mariage Cérémoniale"
+      },
+      "femaleAvatar": {
+        "name": "Kemis Classique",
+        "subtitle": "Tissage Traditionnel Habesha"
+      },
+      "maleAvatar": {
+        "name": "Habesha pour Hommes",
+        "subtitle": "Tenue Traditionnelle Masculine"
+      }
+    },
+    "brand": {
+      "tagline": "Atelier Virtuel • Couture",
+      "weaving": "Tissage de l'Avatar {{gender}}",
+      "handcrafted": "Patrimoine Fait Main",
+      "dimension": "Dimension 3D"
+    },
+    "keyboardHint": "Utilisez < et > pour changer de modèle",
+    "prevModel": "Avatar précédent (<)",
+    "nextModel": "Avatar suivant (>)"
   },
   "products": {
     "title": "Couture patrimoniale, tissée pour aujourd'hui.",

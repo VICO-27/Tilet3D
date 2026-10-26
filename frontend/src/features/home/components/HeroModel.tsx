@@ -1,26 +1,93 @@
-import { Suspense, useMemo, useRef, useEffect, useState } from "react";
+import { Suspense, useMemo, useRef, useEffect, useState, createContext, useContext } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { prepareAvatar, applyNaturalSkinWarmth } from "../../avatar/utils/avatarRig";
 import type { Gender } from "../../avatar/types/avatar.types";
 
-const MALE = "/models/maleAvatar.glb";
-const FEMALE = "/models/femaleAvatar.glb";
 const DRACO_URL = "/draco/";
+
+export interface HeroModelItem {
+  id: string;
+  name: string;
+  subtitle: string;
+  gender: "female" | "male";
+  path: string;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const HERO_MODELS: HeroModelItem[] = [
+  {
+    id: "female-white-dress",
+    name: "White & Gold",
+    subtitle: "Royal Champagne Kemis",
+    gender: "female",
+    path: "/models/female-white-dress.glb",
+  },
+  {
+    id: "female-oromo-red",
+    name: "Oromo Red",
+    subtitle: "Handcrafted Beadwork & Cape",
+    gender: "female",
+    path: "/models/female-oromo-red.glb",
+  },
+  {
+    id: "female-green-dress",
+    name: "Emerald Gown",
+    subtitle: "Gold Tilet Formal Bodice",
+    gender: "female",
+    path: "/models/female-green-dress.glb",
+  },
+  {
+    id: "female-blue-dress",
+    name: "Royal Blue",
+    subtitle: "Cross Embroidery Couture",
+    gender: "female",
+    path: "/models/female-blue-dress.glb",
+  },
+  {
+    id: "female-oromo-white",
+    name: "Oromo White",
+    subtitle: "Ceremonial Wedding Attire",
+    gender: "female",
+    path: "/models/female-oromo-white.glb",
+  },
+  /* Temporarily disabled: non-cultural generic avatars
+  {
+    id: "femaleAvatar",
+    name: "Classic Kemis",
+    subtitle: "Heritage Habesha Weave",
+    gender: "female",
+    path: "/models/femaleAvatar.glb",
+  },
+  {
+    id: "maleAvatar",
+    name: "Men's Habesha",
+    subtitle: "Traditional Male Attire",
+    gender: "male",
+    path: "/models/maleAvatar.glb",
+  },
+  */
+];
 
 // Enable Three.js file-level caching across loaders
 THREE.Cache.enabled = true;
 
-// Preload both hero 3D models and Draco decoder immediately on script evaluation
+// Preload initial hero 3D model immediately on script evaluation
 if (typeof window !== "undefined") {
-  useGLTF.preload(FEMALE, DRACO_URL);
-  useGLTF.preload(MALE, DRACO_URL);
+  useGLTF.preload(HERO_MODELS[0].path, DRACO_URL);
 }
 
 // Reusable math singletons to guarantee 0 GC allocation in 60fps render loop
 const _euler = new THREE.Euler(0, 0, 0, "YXZ");
 const _offsetQuat = new THREE.Quaternion();
+const _headWorldVec = new THREE.Vector3();
+const _dirVec = new THREE.Vector3();
+const _midVec = new THREE.Vector3();
+const _unitDown = new THREE.Vector3(0, -1, 0);
+const _beamQuat = new THREE.Quaternion();
+const _circleVec = new THREE.Vector3();
+const _unitY = new THREE.Vector3(0, 1, 0);
 
 export interface PointerTracker {
   x: number;
@@ -29,19 +96,198 @@ export interface PointerTracker {
 }
 
 export interface HeroModelProps {
-  gender: Gender;
+  gender?: Gender;
+  activeModelId?: string;
   direction?: -1 | 1;
   isInView?: boolean;
   reducedMotion?: boolean;
   pointerRef?: { current: PointerTracker };
   rotateRef?: React.MutableRefObject<number>;
+  is3DReady?: boolean;
+  onCycleNext?: () => void;
   onReady?: () => void;
   onInteractionChange?: (isInteracting: boolean) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function preloadHeroModel(pathOrId: string) {
+  const item = HERO_MODELS.find((m) => m.id === pathOrId || m.path === pathOrId);
+  useGLTF.preload(item ? item.path : pathOrId, DRACO_URL);
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function preloadGender(gender: Gender) {
-  useGLTF.preload(gender === "male" ? MALE : FEMALE, DRACO_URL);
+  const match = HERO_MODELS.find((m) => m.gender === gender) || HERO_MODELS[0];
+  if (match) useGLTF.preload(match.path, DRACO_URL);
+}
+
+const _faceKickerPos = new THREE.Vector3();
+const _spotToTargetDir = new THREE.Vector3();
+
+/**
+ * Cinematic Theatrical Followspot:
+ * - Positioned off-screen upper-left, angling down toward the avatar's face.
+ * - Dynamically tracks head position in world coordinates (turntable rotation, breathing, pointer tilt).
+ * - Soft circular pool of illumination with gentle feathered penumbra.
+ * - Restrained complementary face kicker for luminous skin definition.
+ * - Ultra-lightweight gossamer beam cone with additive blending and 0 runtime GC overhead.
+ */
+function CinematicFollowspot({
+  activeAvatarGroupRef,
+  isMobile,
+}: {
+  activeAvatarGroupRef: React.MutableRefObject<THREE.Group | null>;
+  isMobile: boolean;
+}) {
+  const spotLightRef = useRef<THREE.SpotLight>(null);
+  const haloLightRef = useRef<THREE.SpotLight>(null);
+  const faceKickerRef = useRef<THREE.PointLight>(null);
+  const targetObj = useMemo(() => new THREE.Object3D(), []);
+  const smoothedTarget = useRef(new THREE.Vector3(0, isMobile ? 1.96 : 1.86, 0.08));
+  const beamMeshRef = useRef<THREE.Mesh>(null);
+
+  // Spotlight position: off-screen upper-left
+  const spotPosition = useMemo<[number, number, number]>(
+    () => [-2.5, isMobile ? 4.3 : 3.9, 2.3],
+    [isMobile]
+  );
+  const spotVec = useMemo(() => new THREE.Vector3(...spotPosition), [spotPosition]);
+
+  // Gossamer atmospheric beam material: smooth feathering at source, body, and target
+  const beamMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color("#d8b4fe") },
+        uOpacity: { value: isMobile ? 0.22 : 0.28 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          vUv = uv;
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uOpacity;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+          // vUv.y: 0 is top (near lamp), 1 is bottom (near target)
+          // Softly fade in from mid-shaft so it never reaches the upper canvas boundary with non-zero alpha, eliminating rectangular clipping
+          float fadeIn = smoothstep(0.42, 0.72, vUv.y);
+          float fadeOut = 1.0 - smoothstep(0.70, 1.0, vUv.y);
+          float longitudinal = fadeIn * fadeOut;
+
+          vec3 normal = normalize(vNormal);
+          vec3 viewDir = normalize(vViewPosition);
+          float rim = abs(dot(viewDir, normal));
+          float edgeFeather = pow(rim, 1.25);
+
+          float alpha = longitudinal * edgeFeather * uOpacity;
+          gl_FragColor = vec4(uColor, alpha);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+  }, [isMobile]);
+
+  useFrame((_, delta) => {
+    const safeDelta = Math.min(delta, 0.05);
+
+    // 1. Calculate active avatar's head world coordinate
+    if (activeAvatarGroupRef.current) {
+      activeAvatarGroupRef.current.localToWorld(_headWorldVec.set(0, 1.48, 0.08));
+    } else {
+      _headWorldVec.set(0, isMobile ? 1.86 : 1.76, 0.08);
+    }
+
+    // 2. Smoothly track with interpolation (lerp)
+    smoothedTarget.current.lerp(_headWorldVec, 1 - Math.exp(-7.5 * safeDelta));
+
+    // 3. Update target Object3D
+    targetObj.position.copy(smoothedTarget.current);
+    targetObj.updateMatrixWorld();
+
+    // 4. Update complementary face kicker light position along beam vector
+    _spotToTargetDir.subVectors(smoothedTarget.current, spotVec).normalize();
+    _faceKickerPos.copy(smoothedTarget.current).addScaledVector(_spotToTargetDir, -1.4);
+    if (faceKickerRef.current) {
+      faceKickerRef.current.position.copy(_faceKickerPos);
+    }
+
+    // 5. Update atmospheric beam cone orientation & scale
+    if (beamMeshRef.current) {
+      _dirVec.subVectors(smoothedTarget.current, spotVec);
+      const dist = _dirVec.length();
+      _dirVec.normalize();
+
+      _midVec.addVectors(spotVec, smoothedTarget.current).multiplyScalar(0.5);
+      beamMeshRef.current.position.copy(_midVec);
+      _beamQuat.setFromUnitVectors(_unitDown, _dirVec);
+      beamMeshRef.current.quaternion.copy(_beamQuat);
+      beamMeshRef.current.scale.set(1, dist, 1);
+    }
+  });
+
+  return (
+    <>
+      <primitive object={targetObj} />
+
+      {/* Primary Theatrical Followspot: focused illumination pool on face & upper shoulders */}
+      <spotLight
+        ref={spotLightRef}
+        target={targetObj}
+        position={spotPosition}
+        intensity={isMobile ? 5.8 : 6.8}
+        angle={0.28}
+        penumbra={0.88}
+        distance={9.5}
+        decay={0.8}
+        color="#f3e8ff"
+      />
+
+      {/* Restrained Complementary Shoulder & Collar Halo */}
+      <spotLight
+        ref={haloLightRef}
+        target={targetObj}
+        position={spotPosition}
+        intensity={isMobile ? 1.6 : 2.0}
+        angle={0.46}
+        penumbra={0.96}
+        distance={9.5}
+        decay={1.2}
+        color="#c084fc"
+      />
+
+      {/* Restrained Complementary Face Accent Light: ensures soft, circular luminous pool on facial features */}
+      <pointLight
+        ref={faceKickerRef}
+        position={spotPosition}
+        intensity={isMobile ? 0.65 : 0.85}
+        distance={2.4}
+        decay={1.0}
+        color="#ede9fe"
+      />
+
+      {/* Gossamer Theatrical Light Beam Cone */}
+      <mesh ref={beamMeshRef} material={beamMaterial} renderOrder={2}>
+        <cylinderGeometry args={[0.04, 0.76, 1, 28, 1, true]} />
+      </mesh>
+    </>
+  );
 }
 
 function ResponsiveCamera() {
@@ -54,20 +300,21 @@ function ResponsiveCamera() {
 
     if (aspect < 0.6) {
       // Ultra-narrow phone (e.g. 20:9 / 20.5:9 Tecno, Infinix, Xperia)
-      camera.position.set(0, 0.92, 4.9);
+      camera.position.set(0, 1.15, 4.9);
     } else if (isMobile) {
       // Standard mobile portrait (e.g. iPhone, Galaxy) - moved up slightly for mobile
-      camera.position.set(0, 0.94, 4.6);
+      camera.position.set(0, 1.18, 4.6);
     } else if (aspect < 1.15) {
       // Tablet / square viewports
-      camera.position.set(0, 0.98, 4.1);
+      camera.position.set(0, 1.20, 4.1);
     } else {
       // Desktop widescreen
-      camera.position.set(0, 1.02, 3.4);
+      camera.position.set(0, 1.24, 3.4);
     }
     camera.updateProjectionMatrix();
-    if (controls && 'target' in controls && (controls as any).target) {
-      (controls as any).target.set(0, isMobile ? 0.94 : 0.95, 0);
+    const orbitTarget = controls && 'target' in controls ? (controls as { target?: { set: (x: number, y: number, z: number) => void } }).target : null;
+    if (orbitTarget) {
+      orbitTarget.set(0, isMobile ? 1.14 : 1.16, 0);
     }
     if (controls && 'update' in controls && typeof (controls as { update?: () => void }).update === 'function') {
       (controls as { update: () => void }).update();
@@ -77,45 +324,126 @@ function ResponsiveCamera() {
   return null;
 }
 
+interface TurntableContextValue {
+  spinAngleRef: React.MutableRefObject<number>;
+  transitionAngleRef: React.MutableRefObject<number>;
+}
+
+const TurntableContext = createContext<TurntableContextValue | null>(null);
+
 function TurntableGroup({
   children,
+  activeModelId,
+  is3DReady = true,
+  onCycleNext,
   isUserInteracting,
   rotateRef,
   isMobile,
   reducedMotion = false,
 }: {
   children: React.ReactNode;
+  activeModelId?: string;
+  is3DReady?: boolean;
+  onCycleNext?: () => void;
   isUserInteracting: boolean;
   rotateRef?: React.MutableRefObject<number>;
   isMobile: boolean;
   reducedMotion?: boolean;
 }) {
-  const spinGroupRef = useRef<THREE.Group>(null);
+  const spinAngleRef = useRef<number>(0);
+  const transitionAngleRef = useRef<number>(0);
+  const spinStartClockRef = useRef<number | null>(null);
+  const pausedElapsedRef = useRef<number>(0);
+  const wasInteractingRef = useRef<boolean>(false);
+  const prevModelIdRef = useRef(activeModelId);
+  const onCycleNextRef = useRef(onCycleNext);
 
-  useFrame((_, delta) => {
-    if (!spinGroupRef.current) return;
-    const safeDelta = Math.min(delta, 0.05);
+  const SPIN_DURATION = 8.5; // exactly 8.5 seconds for 1 full 360° spin
+  const ENTRANCE_PAUSE = 0.42; // let incoming model settle facing front before starting turntable spin
 
+  useEffect(() => {
+    onCycleNextRef.current = onCycleNext;
+  }, [onCycleNext]);
+
+  // When active model switches, snapshot the exact transition angle for both exit and entrance trajectories
+  useEffect(() => {
+    if (prevModelIdRef.current !== activeModelId) {
+      prevModelIdRef.current = activeModelId;
+      transitionAngleRef.current = spinAngleRef.current;
+      spinStartClockRef.current = null;
+      pausedElapsedRef.current = 0;
+      wasInteractingRef.current = false;
+    }
+  }, [activeModelId]);
+
+  useFrame((state) => {
     // 1. Mobile touch manual swipe rotation
     if (rotateRef && rotateRef.current !== 0) {
-      spinGroupRef.current.rotation.y += rotateRef.current * 1.5;
+      spinAngleRef.current += rotateRef.current * 1.5;
       rotateRef.current = 0;
       return;
     }
 
-    // 2. Continuous slow 360° circular spin when idle (desktop & mobile)
-    if (!isUserInteracting && !reducedMotion) {
-      spinGroupRef.current.rotation.y += 0.40 * safeDelta;
+    // Freeze rotation and keep at 0 while 3D is preparing or hidden under brand animation
+    if (!is3DReady) {
+      spinStartClockRef.current = null;
+      pausedElapsedRef.current = 0;
+      spinAngleRef.current = 0;
+      return;
+    }
+
+    if (reducedMotion) {
+      return;
+    }
+
+    // Handle user interaction pause & resume
+    if (isUserInteracting) {
+      wasInteractingRef.current = true;
+      return;
+    }
+
+    // If user just finished interacting, adjust start clock so spin resumes smoothly
+    if (wasInteractingRef.current) {
+      wasInteractingRef.current = false;
+      spinStartClockRef.current = state.clock.elapsedTime - pausedElapsedRef.current;
+    }
+
+    // Initialize start timestamp when entering active auto-spin
+    if (spinStartClockRef.current === null) {
+      spinStartClockRef.current = state.clock.elapsedTime;
+      pausedElapsedRef.current = 0;
+    }
+
+    const elapsed = Math.max(0, state.clock.elapsedTime - spinStartClockRef.current);
+    pausedElapsedRef.current = elapsed;
+
+    if (elapsed < ENTRANCE_PAUSE) {
+      // During entrance, maintain the transition angle so the model glides seamlessly into that orientation
+      spinAngleRef.current = transitionAngleRef.current;
+    } else {
+      const spinElapsed = elapsed - ENTRANCE_PAUSE;
+      // When exactly 1 complete 360° (2 * PI) spin is finished:
+      if (spinElapsed >= SPIN_DURATION) {
+        spinStartClockRef.current = null;
+        pausedElapsedRef.current = 0;
+        spinAngleRef.current = 0;
+        transitionAngleRef.current = 0;
+        onCycleNextRef.current?.();
+      } else {
+        const progress = spinElapsed / SPIN_DURATION; // 0.0 to 1.0
+        spinAngleRef.current = transitionAngleRef.current + progress * (Math.PI * 2);
+      }
     }
   });
 
+  const contextValue = useMemo(() => ({ spinAngleRef, transitionAngleRef }), []);
+
   return (
-    <group 
-      ref={spinGroupRef} 
-      position={[0, isMobile ? 0.12 : 0, 0]}
-    >
-      {children}
-    </group>
+    <TurntableContext.Provider value={contextValue}>
+      <group position={[0, isMobile ? 0.48 : 0.38, 0]}>
+        {children}
+      </group>
+    </TurntableContext.Provider>
   );
 }
 
@@ -131,45 +459,58 @@ interface MaleBones {
 // Use a WeakSet to track posed scenes safely without violating React immutability linter rules
 const posedScenes = new WeakSet<THREE.Group>();
 
+// 3D Circular Carousel Arc Parameters for avatar switching
+const CAROUSEL_RADIUS = 2.4;
+const CAROUSEL_MAX_THETA = 1.35; // ~77 degrees circular travel path
+
 function AvatarModel({ 
-  gender, 
+  modelItem, 
   active, 
   direction = 1,
   reducedMotion = false,
   pointerRef,
   isUserInteracting = false,
+  activeAvatarGroupRef,
+  isInitial = false,
   onRendered 
 }: { 
-  gender: Gender; 
+  modelItem: HeroModelItem; 
   active: boolean; 
   direction?: -1 | 1;
   reducedMotion?: boolean;
   pointerRef?: { current: PointerTracker };
   isUserInteracting?: boolean;
+  activeAvatarGroupRef?: React.MutableRefObject<THREE.Group | null>;
+  isInitial?: boolean;
   onRendered?: () => void 
 }) {
-  const { scene } = useGLTF(gender === "male" ? MALE : FEMALE, DRACO_URL);
+  const { scene } = useGLTF(modelItem.path, DRACO_URL);
   const { gl, camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
+  const innerGroupRef = useRef<THREE.Group>(null);
   const reportedRef = useRef(false);
   const materialsRef = useRef<THREE.Material[]>([]);
 
   // Damped pointer coordinates ref to avoid any React re-renders or allocations
   const smoothedPointerRef = useRef({ x: 0, y: 0 });
 
+  // Turntable showcase angle tracking & click snapshot
+  const turntable = useContext(TurntableContext);
+  const currentSpinAngleRef = useRef(0);
+  const exitAngleRef = useRef(0);
+  const entryAngleRef = useRef(0);
 
-
-  // Continuous progress tracking: 1 when active, 0 when inactive
-  const progressRef = useRef(active ? 1 : 0);
+  // Continuous progress tracking: 1 when initial active model on page load, otherwise 0 to glide in along arc
+  const progressRef = useRef(active && isInitial ? 1 : 0);
 
   // Direction captured at transition initiation to keep trajectory invariant throughout motion
   const activeDirectionRef = useRef<-1 | 1>(direction);
-  const prevActiveRef = useRef(active);
+  const prevActiveRef = useRef(active && isInitial);
 
 
   // Locate Mixamo upper-body articulation bones (male avatar)
   const bones = useMemo<MaleBones | null>(() => {
-    if (gender !== "male") return null;
+    if (modelItem.gender !== "male") return null;
     let spine1: THREE.Bone | null = null;
     let spine2: THREE.Bone | null = null;
     let neck: THREE.Bone | null = null;
@@ -203,7 +544,7 @@ function AvatarModel({
     });
 
     return { spine1, spine2, neck, head, leftShoulder, rightShoulder };
-  }, [scene, gender]);
+  }, [scene, modelItem.gender]);
 
   // Capture baseline rest quaternions once to prevent cumulative transform drift
   const restQuatsRef = useRef<Map<THREE.Bone, THREE.Quaternion>>(new Map());
@@ -241,10 +582,12 @@ function AvatarModel({
       }
     }
 
-    // Collect all cloned materials for this avatar
+    // Collect all cloned materials and enable shadows for this avatar
     const mats = new Set<THREE.Material>();
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
         if (Array.isArray(child.material)) {
           child.material.forEach((m) => mats.add(m));
         } else if (child.material) {
@@ -271,31 +614,59 @@ function AvatarModel({
     };
   }, [scene]);
 
-  // Set initial visibility on mount
+  // Set initial visibility on mount and register active inner group ref for followspot
   useEffect(() => {
     if (groupRef.current) {
       groupRef.current.visible = active;
+      if (active && activeAvatarGroupRef && innerGroupRef.current) {
+        activeAvatarGroupRef.current = innerGroupRef.current;
+      }
     }
-  }, [active]);
+  }, [active, activeAvatarGroupRef]);
 
   useEffect(() => {
     if (active !== prevActiveRef.current) {
+      const wasActive = prevActiveRef.current;
       prevActiveRef.current = active;
       activeDirectionRef.current = direction;
-      // Pre-position incoming avatar at offstage starting point immediately
+
+      if (!active && wasActive) {
+        // Model was just clicked away from (exit initiated)!
+        // Snapshot the EXACT orientation it had at this instant:
+        exitAngleRef.current = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+      }
+
+      if (active) {
+        // Incoming model: capture the exact transition angle so it enters along the same rotated carousel circle:
+        entryAngleRef.current = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+      }
+
+      // Pre-position incoming avatar along the circular carousel arc immediately
       if (active && groupRef.current && !reducedMotion) {
-        const startX = transform.position[0] + direction * 1.8;
-        const startZ = transform.position[2] - 0.4;
-        groupRef.current.position.set(startX, transform.position[1], startZ);
-        groupRef.current.rotation.set(0, direction * 0.25, 0);
+        if (activeAvatarGroupRef && innerGroupRef.current) {
+          activeAvatarGroupRef.current = innerGroupRef.current;
+        }
+        const startAngle = -direction * CAROUSEL_MAX_THETA;
+        const startX = CAROUSEL_RADIUS * Math.sin(startAngle);
+        const startZ = -CAROUSEL_RADIUS * (1 - Math.cos(startAngle));
+        const startScale = 1 - 0.22;
+        const entryAngle = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+        _circleVec.set(startX, 0, startZ).applyAxisAngle(_unitY, entryAngle);
+        groupRef.current.position.set(_circleVec.x, 0, _circleVec.z);
+        groupRef.current.rotation.set(0, entryAngle + startAngle, 0);
+        groupRef.current.scale.set(startScale, startScale, startScale);
         groupRef.current.visible = true;
       }
     }
-  }, [active, direction, reducedMotion, transform]);
+  }, [active, direction, reducedMotion, activeAvatarGroupRef, turntable]);
 
   // Combined render loop: cinematic transition cross-dissolve + grounded natural breathing
   useFrame((state, delta) => {
     if (!groupRef.current) return;
+
+    if (active && activeAvatarGroupRef && innerGroupRef.current && activeAvatarGroupRef.current !== innerGroupRef.current) {
+      activeAvatarGroupRef.current = innerGroupRef.current;
+    }
 
     // Guard against large delta spikes on tab re-activation or GC hitches (capped to 50ms)
     const safeDelta = Math.min(delta, 0.05);
@@ -316,12 +687,12 @@ function AvatarModel({
     const p = progressRef.current;
 
     // Visibility culling: completely hide fully exited models to save draw calls
-    if (p <= 0.0001) {
+    if (!active && p <= 0.0001) {
       if (groupRef.current && groupRef.current.visible) {
         groupRef.current.visible = false;
 
         // Cleanly restore bones to baseline rest pose when hidden
-        if (gender === "male" && bones) {
+        if (modelItem.gender === "male" && bones) {
           const restMap = restQuatsRef.current;
           const list = [
             bones.spine1,
@@ -338,9 +709,9 @@ function AvatarModel({
             }
           }
         }
-        groupRef.current.position.set(transform.position[0], transform.position[1], transform.position[2]);
+        groupRef.current.position.set(0, 0, 0);
         groupRef.current.rotation.set(0, 0, 0);
-        groupRef.current.scale.set(transform.scale, transform.scale, transform.scale);
+        groupRef.current.scale.set(1, 1, 1);
       }
       return;
     } else {
@@ -354,13 +725,47 @@ function AvatarModel({
     // Cubic ease-in-out curve for runway motion
     const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 
-    // ─── 3D Directional Runway Slide Dynamics ──────────────────────────
-    // Models stay 100% solid and opaque (no material transparency sorting glitches)
-    const slideProgress = 1 - eased;
-    const dirSign = active ? 1 : -1;
-    const slideX = reducedMotion ? 0 : dirSign * activeDirectionRef.current * slideProgress * 1.8;
-    const slideZ = reducedMotion ? 0 : -slideProgress * 0.4;
-    const turnY = reducedMotion ? 0 : dirSign * activeDirectionRef.current * slideProgress * 0.25;
+    // ─── 3D Circular Carousel Revolving Dynamics ───────────────────────
+    let worldCircleX: number;
+    let worldCircleZ: number;
+    let baseModelYaw: number;
+    let circleScale: number;
+
+    if (active) {
+      // Incoming / Active model: revolves along the circular arc towards center stage
+      const arcProgress = 1 - eased;
+      const signedAngle = -activeDirectionRef.current * arcProgress * CAROUSEL_MAX_THETA;
+      const circleX = reducedMotion ? 0 : CAROUSEL_RADIUS * Math.sin(signedAngle);
+      const circleZ = reducedMotion ? 0 : -CAROUSEL_RADIUS * (1 - Math.cos(signedAngle));
+      const circleRotY = reducedMotion ? 0 : signedAngle;
+      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(Math.abs(signedAngle) / CAROUSEL_MAX_THETA, 1.2));
+
+      // Rotate local entry carousel arc offset by the exact transition angle:
+      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, entryAngleRef.current);
+      worldCircleX = _circleVec.x;
+      worldCircleZ = _circleVec.z;
+
+      // Active model applies the turntable showcase spin + entry arc rotation
+      const spinAngle = turntable?.spinAngleRef.current ?? entryAngleRef.current;
+      currentSpinAngleRef.current = spinAngle;
+      baseModelYaw = spinAngle + circleRotY;
+    } else {
+      // Exiting model: revolves in the direction of its hand at the moment of click!
+      const arcProgress = 1 - eased;
+      const signedAngle = activeDirectionRef.current * arcProgress * CAROUSEL_MAX_THETA;
+      const circleX = reducedMotion ? 0 : CAROUSEL_RADIUS * Math.sin(signedAngle);
+      const circleZ = reducedMotion ? 0 : -CAROUSEL_RADIUS * (1 - Math.cos(signedAngle));
+      const circleRotY = reducedMotion ? 0 : signedAngle;
+      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(Math.abs(signedAngle) / CAROUSEL_MAX_THETA, 1.2));
+
+      // Rotate local carousel arc offset by the model's exact orientation when clicked:
+      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, exitAngleRef.current);
+      worldCircleX = _circleVec.x;
+      worldCircleZ = _circleVec.z;
+
+      // Maintain orientation without snapping, smoothly curving along the exit trajectory:
+      baseModelYaw = exitAngleRef.current + circleRotY;
+    }
 
     // ─── Damped Pointer Tracking ────────────────────────────────────
     const isTrackingDisabled = reducedMotion || isUserInteracting || !pointerRef?.current?.active;
@@ -389,7 +794,7 @@ function AvatarModel({
     const swayZ = Math.sin(posturePhase) * motionFactor;
     const twistY = Math.cos(postureSecondary) * motionFactor;
 
-    if (gender === "male" && bones) {
+    if (modelItem.gender === "male" && bones) {
       const restMap = restQuatsRef.current;
       const { spine1, spine2, leftShoulder, rightShoulder, neck, head } = bones;
 
@@ -469,14 +874,10 @@ function AvatarModel({
         }
       }
 
-      // Root position combines baseline centering with runway slide offsets
-      groupRef.current.position.set(
-        transform.position[0] + slideX,
-        transform.position[1],
-        transform.position[2] + slideZ
-      );
-      groupRef.current.rotation.set(0, turnY, 0);
-      groupRef.current.scale.set(transform.scale, transform.scale, transform.scale);
+      // Root position and rotation
+      groupRef.current.position.set(worldCircleX, 0, worldCircleZ);
+      groupRef.current.rotation.set(0, baseModelYaw, 0);
+      groupRef.current.scale.set(circleScale, circleScale, circleScale);
     } else {
       // ─── Female Avatar Grounded Motion ─────────────────────────────
       // Anchor sole level strictly at y = 0.
@@ -484,18 +885,15 @@ function AvatarModel({
       // Compose with restrained whole-group pointer attention.
       const femalePitch = -0.004 * breath - 0.012 * currentPointerY;
       const femaleRoll = 0.0035 * swayZ - 0.008 * currentPointerX;
-      const femaleYaw = 0.0025 * twistY + 0.055 * currentPointerX + turnY;
+      const femaleYaw = 0.0025 * twistY + 0.055 * currentPointerX + baseModelYaw;
 
       // Subtle thoracic stretch anchored at feet (scale.y stretches upward from sole level y = 0)
-      const thoracicScaleY = transform.scale * (1 + 0.003 * breath);
+      const currentScale = circleScale;
+      const thoracicScaleY = currentScale * (1 + 0.003 * breath);
 
-      groupRef.current.position.set(
-        transform.position[0] + slideX,
-        transform.position[1],
-        transform.position[2] + slideZ
-      );
+      groupRef.current.position.set(worldCircleX, 0, worldCircleZ);
       groupRef.current.rotation.set(femalePitch, femaleYaw, femaleRoll);
-      groupRef.current.scale.set(transform.scale, thoracicScaleY, transform.scale);
+      groupRef.current.scale.set(currentScale, thoracicScaleY, currentScale);
     }
 
     // Confirm first usable rendered frame immediately
@@ -508,25 +906,90 @@ function AvatarModel({
   return (
     <group 
       ref={groupRef} 
-      position={transform.position} 
-      scale={transform.scale} 
       renderOrder={active ? 1 : 0}
     >
-      <primitive object={scene} />
+      <group ref={innerGroupRef} position={transform.position} scale={transform.scale}>
+        <primitive object={scene} />
+      </group>
+    </group>
+  );
+}
+
+function AvatarFloorShadow({ isMobile }: { isMobile: boolean }) {
+  const shadowTexture = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // Multi-tier grounded shadow: dark contact core beneath feet + soft ambient falloff
+    const gradient = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
+    gradient.addColorStop(0, "rgba(20, 10, 36, 0.72)");
+    gradient.addColorStop(0.28, "rgba(35, 12, 60, 0.50)");
+    gradient.addColorStop(0.60, "rgba(59, 15, 95, 0.22)");
+    gradient.addColorStop(0.85, "rgba(76, 29, 149, 0.06)");
+    gradient.addColorStop(1, "rgba(76, 29, 149, 0)");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(128, 128, 128, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+
+  if (!shadowTexture) return null;
+
+  // Ground plane sits directly at the feet/dress bottom level (y = 0.48 on mobile, 0.38 on desktop)
+  const groundY = isMobile ? 0.478 : 0.378;
+
+  return (
+    <group position={[0, groundY, 0]}>
+      {/* Broad soft ambient shadow puddle */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
+        <planeGeometry args={[2.2, 1.8]} />
+        <meshBasicMaterial
+          map={shadowTexture}
+          transparent
+          opacity={0.85}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Concentrated core directly under the dress base/soles */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[1.1, 0.75, 1]} renderOrder={-1}>
+        <planeGeometry args={[1.5, 1.5]} />
+        <meshBasicMaterial
+          map={shadowTexture}
+          transparent
+          opacity={0.7}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
     </group>
   );
 }
 
 const HeroModel = ({ 
   gender, 
+  activeModelId,
   direction = 1,
   isInView = true,
   reducedMotion = false,
   pointerRef,
   rotateRef,
+  is3DReady = true,
+  onCycleNext,
   onReady, 
   onInteractionChange,
 }: HeroModelProps) => {
+  const currentId = activeModelId || HERO_MODELS.find(m => m.gender === gender)?.id || HERO_MODELS[0].id;
+
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.innerWidth < 768 || ('ontouchstart' in window && window.innerWidth < 1024);
@@ -540,37 +1003,46 @@ const HeroModel = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initially mount active gender; warm up alternate gender in background after frame 1
-  const [mountedGenders, setMountedGenders] = useState<Record<Gender, boolean>>({
-    male: gender === "male",
-    female: gender === "female",
-  });
+  // Initially mount ONLY the active model so initial page load is blazing fast
+  const [mountedModels, setMountedModels] = useState<Record<string, boolean>>(() => ({
+    [currentId]: true,
+  }));
+  const [firstModelReady, setFirstModelReady] = useState(false);
 
-  // Ensure requested gender is mounted during render without useEffect cascading setStates
-  if (!mountedGenders[gender]) {
-    setMountedGenders((prev) => ({ ...prev, [gender]: true }));
+  // If the user clicks on a model directly before its background loading timer fires, mount it immediately
+  if (!mountedModels[currentId]) {
+    setMountedModels((prev) => ({ ...prev, [currentId]: true }));
   }
 
-  // ContactShadows baking lifecycle state:
-  // Dynamically bakes during initial mount/warm-up (900ms) and gender cross-dissolve (950ms),
-  // then cleanly freezes to frames={1} to eliminate ongoing GPU shadow render costs during idle.
-  const [isShadowBaking, setIsShadowBaking] = useState(true);
-
-  // Initial mount shadow bake: keep active for 900ms until avatar renders and settles, then freeze
+  // Progressive background loading:
+  // Do NOT load all models at once! First display the first model immediately with full bandwidth.
+  // Once the first model is visible to the user, load the remaining models one-by-one in the background.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsShadowBaking(false);
-    }, 900);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!firstModelReady) return;
 
-  // Background warm-up of alternate gender shortly after initial mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMountedGenders({ male: true, female: true });
-    }, 120);
-    return () => clearTimeout(timer);
-  }, []);
+    const remaining = HERO_MODELS.filter((m) => m.id !== currentId);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    remaining.forEach((m, idx) => {
+      // Stagger each model gently (1.5s, 3.0s, 4.5s...) so there is zero frame drop or network contention
+      const timer = setTimeout(() => {
+        preloadHeroModel(m.path);
+        setMountedModels((prev) => (prev[m.id] ? prev : { ...prev, [m.id]: true }));
+      }, 1500 + idx * 1500);
+      timers.push(timer);
+    });
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [firstModelReady, currentId]);
+
+  const handleActiveModelRendered = () => {
+    if (!firstModelReady) {
+      setFirstModelReady(true);
+    }
+    onReady?.();
+  };
 
   const [isTabVisible, setIsTabVisible] = useState(() => (typeof document !== "undefined" ? !document.hidden : true));
   const controlsRef = useRef<React.ComponentRef<typeof OrbitControls>>(null);
@@ -618,23 +1090,11 @@ const HeroModel = ({
     };
   }, []);
 
-  const prevGenderRef = useRef(gender);
-  useEffect(() => {
-    if (prevGenderRef.current !== gender) {
-      prevGenderRef.current = gender;
-      setIsShadowBaking(true);
-      const endTimer = setTimeout(() => {
-        setIsShadowBaking(false);
-      }, 950);
-
-      return () => {
-        clearTimeout(endTimer);
-      };
-    }
-  }, [gender]);
+  const activeAvatarGroupRef = useRef<THREE.Group | null>(null);
 
   return (
     <Canvas
+      shadows
       id="hero-canvas"
       frameloop={isInView && isTabVisible ? "always" : "never"}
       camera={{ position: [0, 1.05, 3.4], fov: 32 }}
@@ -648,63 +1108,74 @@ const HeroModel = ({
       dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
-      {/* Balanced Studio Lighting — illuminates both left and right evenly with natural skin warmth */}
-      <ambientLight intensity={1.15} color="#ffffff" />
-      {/* Key Light (Front-Right): warm primary studio illumination */}
-      <directionalLight position={[3.5, 5.5, 4.5]} intensity={1.65} color="#fffaf2" />
-      {/* Fill Light (Front-Left): directly eliminates shadows on the left arm, hand, and leg */}
-      <directionalLight position={[-3.5, 5.0, 4.2]} intensity={1.5} color="#fff7ed" />
+      {/* Balanced Studio Lighting — softened ambient and fill to create dramatic theatrical contrast */}
+      <ambientLight intensity={0.48} color="#f8f6ff" />
+      {/* Key Light (Front-Right Fill): warm studio illumination preserving Habesha weave detail */}
+      <directionalLight 
+        castShadow
+        position={[3.5, 6.0, 4.5]} 
+        intensity={0.95} 
+        color="#fffaf2" 
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={0.5}
+        shadow-camera-far={12}
+        shadow-camera-left={-2.5}
+        shadow-camera-right={2.5}
+        shadow-camera-top={3.5}
+        shadow-camera-bottom={-1.5}
+        shadow-bias={-0.0005}
+      />
+      {/* Fill Light (Front-Left): gentle low fill allowing the upper-left followspot to be the dominant key */}
+      <directionalLight position={[-3.5, 5.0, 4.2]} intensity={0.35} color="#ede9fe" />
       {/* Front-Center Low Fill: lifts shadows on lower body and legs */}
-      <directionalLight position={[0, 1.6, 4.0]} intensity={0.85} color="#ffffff" />
-      {/* Soft Upper Rim: clean backlight halo without purple discoloration */}
-      <directionalLight position={[0, 6.0, -3.5]} intensity={0.8} color="#faf5ff" />
-      {/* Top Hair & Shoulder Accent */}
-      <spotLight position={[0, 8, 2.5]} angle={0.5} penumbra={1} intensity={0.8} color="#ffffff" />
+      <directionalLight position={[0, 1.6, 4.0]} intensity={0.45} color="#ffffff" />
+      {/* Soft Upper Rim: crisp fashion rim light separating silhouette against backdrop */}
+      <directionalLight position={[0, 6.0, -3.5]} intensity={1.05} color="#faf5ff" />
+
+      {/* Cinematic Followspot: visually originates upper-left, angling down and dynamically tracking the avatar's face */}
+      <CinematicFollowspot activeAvatarGroupRef={activeAvatarGroupRef} isMobile={isMobile} />
       <ResponsiveCamera />
 
+      {/* Ground contact shadow ellipse anchored directly under the model's feet/skirt hem */}
+      <AvatarFloorShadow isMobile={isMobile} />
+
       <TurntableGroup
+        activeModelId={currentId}
+        is3DReady={is3DReady}
+        onCycleNext={onCycleNext}
         isUserInteracting={isUserInteracting}
         rotateRef={rotateRef}
         isMobile={isMobile}
         reducedMotion={reducedMotion}
       >
-        <Suspense fallback={null}>
-          {mountedGenders.female && (
-            <AvatarModel
-              gender="female"
-              active={gender === "female"}
-              direction={direction}
-              reducedMotion={reducedMotion}
-              pointerRef={pointerRef}
-              isUserInteracting={isUserInteracting}
-              onRendered={onReady}
-            />
-          )}
-        </Suspense>
-        <Suspense fallback={null}>
-          {mountedGenders.male && (
-            <AvatarModel
-              gender="male"
-              active={gender === "male"}
-              direction={direction}
-              reducedMotion={reducedMotion}
-              pointerRef={pointerRef}
-              isUserInteracting={isUserInteracting}
-              onRendered={onReady}
-            />
-          )}
-        </Suspense>
+        {HERO_MODELS.map((item) => {
+          if (!mountedModels[item.id]) return null;
+          return (
+            <Suspense key={item.id} fallback={null}>
+              <AvatarModel
+                modelItem={item}
+                active={currentId === item.id}
+                direction={direction}
+                reducedMotion={reducedMotion}
+                pointerRef={pointerRef}
+                isUserInteracting={isUserInteracting}
+                activeAvatarGroupRef={activeAvatarGroupRef}
+                isInitial={!firstModelReady && currentId === item.id}
+                onRendered={currentId === item.id ? handleActiveModelRendered : undefined}
+              />
+            </Suspense>
+          );
+        })}
       </TurntableGroup>
 
       <Suspense fallback={null}>
         <ContactShadows
-          position={[0, 0, 0]}
-          opacity={0.3}
-          scale={5.5}
-          blur={2.0}
-          far={3.5}
-          frames={isShadowBaking ? Infinity : 1}
-          color="#3b0764"
+          position={[0, isMobile ? 0.475 : 0.375, 0]}
+          opacity={0.65}
+          scale={2.6}
+          blur={1.5}
+          far={3.0}
+          color="#180b2c"
         />
       </Suspense>
 
@@ -712,7 +1183,7 @@ const HeroModel = ({
         ref={controlsRef}
         makeDefault
         enabled={!isMobile}
-        target={isMobile ? [0, 0.84, 0] : [0, 0.95, 0]}
+        target={isMobile ? [0, 1.24, 0] : [0, 1.26, 0]}
         enableZoom={false}
         enablePan={false}
         rotateSpeed={0.8}

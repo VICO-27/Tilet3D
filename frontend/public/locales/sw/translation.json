@@ -58,7 +58,8 @@
       "netela": "Netela",
       "suri": "Seti ya Suri",
       "gabi": "Gabi"
-    }
+    },
+    "selectLanguage": "Chagua Lugha"
   },
   "hero": {
     "badge": "Mitindo katika muundo wa 3D",
@@ -78,7 +79,54 @@
       "1": "Nilijaribu kemis kwenye umbo langu la 3D, saizi ilikuwa kamili.",
       "2": "Hatimaye niliagiza nguo za Habesha bila kukisia saizi.",
       "3": "Mchoro wa Tilet unapendeza sana katika 3D."
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "Nyeupe na Nyekundu",
+        "subtitle": "Kanzu ya Sherehe Iliyotariziwa ya Wanaume"
+      },
+      "female-white-dress": {
+        "name": "Nyeupe na Dhahabu",
+        "subtitle": "Kemis ya Kifalme ya Shampeni"
+      },
+      "male-raya": {
+        "name": "Mavazi ya Raya",
+        "subtitle": "Shali ya Urithi na Sandali za Kitamaduni"
+      },
+      "female-oromo-red": {
+        "name": "Nyekundu ya Oromo",
+        "subtitle": "Ushanga na Koti la Mikono"
+      },
+      "female-green-dress": {
+        "name": "Gauni la Zumaridi",
+        "subtitle": "Gauni Rasmi la Tilet ya Dhahabu"
+      },
+      "female-blue-dress": {
+        "name": "Bluu ya Kifalme",
+        "subtitle": "Kudarizi ya Msalaba ya Kifahari"
+      },
+      "female-oromo-white": {
+        "name": "Nyeupe ya Oromo",
+        "subtitle": "Mavazi ya Sherehe ya Harusi"
+      },
+      "femaleAvatar": {
+        "name": "Kemis ya Asili",
+        "subtitle": "Ufumaji wa Asili wa Habesha"
+      },
+      "maleAvatar": {
+        "name": "Vazi la Wanaume",
+        "subtitle": "Mavazi ya Asili ya Wanaume wa Habesha"
+      }
+    },
+    "brand": {
+      "tagline": "Karakana ya Kidijitali • Mitindo ya Kifahari",
+      "weaving": "Kufuma Avatar ya {{gender}}",
+      "handcrafted": "Urithi wa Kutengenezwa kwa Mkono",
+      "dimension": "Mwelekeo wa 3D"
+    },
+    "keyboardHint": "Tumia < na > kubadilisha mtindo",
+    "prevModel": "Avatar Iliyopita (<)",
+    "nextModel": "Avatar Inayofuata (>)"
   },
   "products": {
     "title": "Mavazi ya kitamaduni, yaliyofumwa kwa ajili ya sasa.",

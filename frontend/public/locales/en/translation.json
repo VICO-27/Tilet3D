@@ -58,7 +58,8 @@
       "netela": "Netela",
       "suri": "Suri Set",
       "gabi": "Gabi"
-    }
+    },
+    "selectLanguage": "Select Language"
   },
   "hero": {
     "badge": "Fashion, reimagined in 3D",
@@ -78,7 +79,54 @@
       "1": "Tried the kemis on my own avatar, the fit was flawless.",
       "2": "Finally ordered Habesha wear without guessing my size.",
       "3": "The Tilet detail is stunning in 3D."
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "White & Red",
+        "subtitle": "Ceremonial Embroidered Tunic"
+      },
+      "female-white-dress": {
+        "name": "White & Gold",
+        "subtitle": "Royal Champagne Kemis"
+      },
+      "male-raya": {
+        "name": "Raya Cultural",
+        "subtitle": "Heritage Shawl & Sandal Couture"
+      },
+      "female-oromo-red": {
+        "name": "Oromo Red",
+        "subtitle": "Handcrafted Beadwork & Cape"
+      },
+      "female-green-dress": {
+        "name": "Emerald Gown",
+        "subtitle": "Gold Tilet Formal Bodice"
+      },
+      "female-blue-dress": {
+        "name": "Royal Blue",
+        "subtitle": "Cross Embroidery Couture"
+      },
+      "female-oromo-white": {
+        "name": "Oromo White",
+        "subtitle": "Ceremonial Wedding Attire"
+      },
+      "femaleAvatar": {
+        "name": "Classic Kemis",
+        "subtitle": "Heritage Habesha Weave"
+      },
+      "maleAvatar": {
+        "name": "Men's Habesha",
+        "subtitle": "Traditional Male Attire"
+      }
+    },
+    "brand": {
+      "tagline": "Virtual Atelier • Couture",
+      "weaving": "Weaving {{gender}} Avatar",
+      "handcrafted": "Handcrafted Heritage",
+      "dimension": "3D Dimension"
+    },
+    "keyboardHint": "Use < and > to switch models",
+    "prevModel": "Previous avatar (<)",
+    "nextModel": "Next avatar (>)"
   },
   "products": {
     "title": "Heritage couture, woven for now.",

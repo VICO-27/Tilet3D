@@ -51,12 +51,12 @@ export function prepareAvatar(scene: THREE.Group | THREE.Object3D): void {
  * Clothing items — things worn ON the body that should never be recolored
  * when changing skin tone.
  */
-const CLOTHING_PATTERN = /\b(shirt|cloth|clothing|outfit|top|bottom|tshirt|tee|tank|pant|pants|trouser|trousers|jean|jeans|denim|dress|dresses|skirt|skirts|jacket|jackets|hoodie|hoodies|sweater|sweaters|sweatshirt|coat|coats|suit|suits|vest|vests|uniform|uniforms|fabric|garment|garments|wear|costume|collar|sleeve|sleeves|cuff|cuffs|lapel|pocket|pockets|zipper|button|buttons|seam)\b/i;
+const CLOTHING_PATTERN = /\b(shirt|cloth|clothing|outfit|top|bottom|tshirt|tee|tank|pant|pants|trouser|trousers|jean|jeans|denim|dress|dresses|skirt|skirts|jacket|jackets|hoodie|hoodies|sweater|sweaters|sweatshirt|coat|coats|suit|suits|vest|vests|uniform|uniforms|fabric|garment|garments|wear|costume|collar|sleeve|sleeves|cuff|cuffs|lapel|pocket|pockets|zipper|button|buttons|seam|kemis|gown|bodice|tilet|shawl|cape|netela|corset|sash|linen|thread)\b/i;
 
 /**
  * Footwear & accessories — never recolored.
  */
-const ACCESSORY_PATTERN = /\b(shoe|shoes|boot|boots|sock|socks|sandal|sandals|belt|belts|bracelet|bracelets|necklace|necklaces|ring|rings|watch|watches|glasses|spectacles|hat|hats|cap|caps|scarf|scarves|bag|bags|handbag|handbags|purse|purses|accessory|accessories|jewelry|jewel|jewels|glove|gloves)\b/i;
+const ACCESSORY_PATTERN = /\b(shoe|shoes|boot|boots|sock|socks|sandal|sandals|belt|belts|bracelet|bracelets|necklace|necklaces|ring|rings|watch|watches|glasses|spectacles|hat|hats|cap|caps|scarf|scarves|bag|bags|handbag|handbags|purse|purses|accessory|accessories|jewelry|jewel|jewels|glove|gloves|bead|beads|beadwork|basket|gourd|staff|cowrie|leather|wood|gold|gem|cord|tassel|tassels|armband)\b/i;
 
 /**
  * Head details — hair, eyes, teeth, eyebrows etc. These have their own color

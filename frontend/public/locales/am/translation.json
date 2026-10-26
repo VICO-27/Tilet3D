@@ -58,7 +58,8 @@
       "netela": "ነጠላ",
       "suri": "ሱሪ እና ሙሉ ልብስ",
       "gabi": "ጋቢ"
-    }
+    },
+    "selectLanguage": "ቋንቋ ይምረጡ"
   },
   "hero": {
     "badge": "ፋሽን፣ በ3-ል እንደገና ታስቧል",
@@ -78,7 +79,54 @@
       "1": "ቀሚሱን በራሴ አምሳያ ላይ ሞከርኩት፣ ልኩ ፍጹም ነበር።",
       "2": "በመጨረሻም የሀበሻ ልብስን ልኬን ሳልገምት አዘዝኩ።",
       "3": "የጥለት ዲዛይኑ በ3-ል በጣም አስደናቂ ነው።"
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "ነጭና ቀይ",
+        "subtitle": "የበዓል ጥልፍ የወንዶች ቱኒክ"
+      },
+      "female-white-dress": {
+        "name": "ነጭና ወርቅ",
+        "subtitle": "የሻምፓኝ ንጉሣዊ ቀሚስ"
+      },
+      "male-raya": {
+        "name": "የራያ ባህላዊ",
+        "subtitle": "ባህላዊ የራያ ጋቢና የቆዳ ጫማ"
+      },
+      "female-oromo-red": {
+        "name": "የኦሮሞ ቀይ",
+        "subtitle": "በእጅ የተሰራ ዶቃና ካባ"
+      },
+      "female-green-dress": {
+        "name": "ኤመራልድ ጋውን",
+        "subtitle": "የወርቅ ጥለት ፎርማል ቀሚስ"
+      },
+      "female-blue-dress": {
+        "name": "ሮያል ሰማያዊ",
+        "subtitle": "የመስቀል ጥልፍ ዲዛይን"
+      },
+      "female-oromo-white": {
+        "name": "የኦሮሞ ነጭ",
+        "subtitle": "የሰርግ ሥነ-ሥርዓት ልብስ"
+      },
+      "femaleAvatar": {
+        "name": "ክላሲክ ቀሚስ",
+        "subtitle": "የሀበሻ ባህላዊ ሽመና"
+      },
+      "maleAvatar": {
+        "name": "የወንዶች ሀበሻ",
+        "subtitle": "ባህላዊ የወንዶች ልብስ"
+      }
+    },
+    "brand": {
+      "tagline": "ምናባዊ አውደ ጥናት • ኩቱር",
+      "weaving": "የ{{gender}} አቫታር በመሸመን ላይ",
+      "handcrafted": "በእጅ የተሰራ ቅርስ",
+      "dimension": "3-ል ዳይሜንሽን"
+    },
+    "keyboardHint": "ሞዴሎችን ለመቀየር < እና > ቁልፎችን ይጠቀሙ",
+    "prevModel": "ቀዳሚ አቫታር (<)",
+    "nextModel": "ቀጣይ አቫታር (>)"
   },
   "products": {
     "title": "የባህል አልባሳት፣ ለዘመኑ ተስማሚ ሆነው የተሰፉ።",

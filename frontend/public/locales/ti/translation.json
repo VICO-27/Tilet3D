@@ -58,7 +58,8 @@
       "netela": "ነጸላ",
       "suri": "ስረን ምሉእ ክዳንን",
       "gabi": "ጋቢ"
-    }
+    },
+    "selectLanguage": "ቋንቋ ምረጹ"
   },
   "hero": {
     "badge": "ፋሽን፣ ብ3D ዳግም ተፈጢሩ",
@@ -78,7 +79,54 @@
       "1": "ቐሚሽ ኣብ ናተይ ኣምሳል ፈቲነዮ፣ ዓቐኑ ፍጹም ኔሩ።",
       "2": "ብዘይ ጥርጣረ ናይ ሓበሻ ክዳን ኣዚዘ።",
       "3": "ናይ ጥለት ቅርጺ ብ3D ኣዝዩ ማራኺ እዩ።"
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "ጻዕዳን ቀይሕን",
+        "subtitle": "ናይ በዓል ስፌት ናይ ደቂ-ተባዕትዮ ክዳን"
+      },
+      "female-white-dress": {
+        "name": "ጻዕዳን ወርቅን",
+        "subtitle": "ሻምፓኝ ንጉሳዊ ቀሚስ"
+      },
+      "male-raya": {
+        "name": "ራያ ባህላዊ",
+        "subtitle": "ባህላዊ ሻሽ ራያን ናይ ቆርበት ሳእኒን"
+      },
+      "female-oromo-red": {
+        "name": "ኦሮሞ ቀይሕ",
+        "subtitle": "ብኢድ ዝተሰርሐ ዶቃን ካባን"
+      },
+      "female-green-dress": {
+        "name": "ኤመራልድ ጋውን",
+        "subtitle": "ናይ ወርቂ ጥለት ፎርማል ቀሚስ"
+      },
+      "female-blue-dress": {
+        "name": "ሮያል ሰማያዊ",
+        "subtitle": "ናይ መስቀል ስፌት ዲዛይን"
+      },
+      "female-oromo-white": {
+        "name": "ኦሮሞ ጻዕዳ",
+        "subtitle": "ናይ መርዓ ክብረ-በዓል ክዳን"
+      },
+      "femaleAvatar": {
+        "name": "ክላሲክ ቀሚስ",
+        "subtitle": "ናይ ሓበሻ ባህላዊ ሸመና"
+      },
+      "maleAvatar": {
+        "name": "ናይ ደቂ ተባዕትዮ ሓበሻ",
+        "subtitle": "ባህላዊ ናይ ሰብኡት ክዳን"
+      }
+    },
+    "brand": {
+      "tagline": "ቨርቹዋል ዓውደ-ስራሕ • ኩቱር",
+      "weaving": "ናይ {{gender}} ኣቫታር ኣብ ምዕጻፍ",
+      "handcrafted": "ብኢድ ዝተሰርሐ ቅርሲ",
+      "dimension": "3-ል ዳይሜንሽን"
+    },
+    "keyboardHint": "ሞዴላት ንምቕያር < ከምኡ'ውን > ጠውቑ",
+    "prevModel": "ዝሓለፈ ኣቫታር (<)",
+    "nextModel": "ዝቕጽል ኣቫታር (>)"
   },
   "products": {
     "title": "ባህላዊ ፋሽን፣ ንዘመና ዝተሰርሐ።",

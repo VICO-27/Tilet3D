@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { Gender } from '../../avatar/types/avatar.types';
 
 interface HeroBrandAnimationProps {
@@ -7,6 +8,7 @@ interface HeroBrandAnimationProps {
 }
 
 export const HeroBrandAnimation: React.FC<HeroBrandAnimationProps> = ({ gender = 'female' }) => {
+  const { t } = useTranslation();
   return (
     <div className="relative w-full h-full max-w-[540px] max-h-[580px] flex flex-col items-center justify-center p-6 select-none overflow-hidden">
       <style>{`
@@ -174,14 +176,16 @@ export const HeroBrandAnimation: React.FC<HeroBrandAnimationProps> = ({ gender =
 
           {/* Editorial Atelier Tagline */}
           <p className="mt-2.5 text-[8.5px] sm:text-[10px] font-mono uppercase tracking-[0.35em] text-stone-500 font-medium">
-            Virtual Atelier • Couture
+            {t("hero.brand.tagline", "Virtual Atelier • Couture")}
           </p>
 
           {/* Active Model Indicator */}
           <div className="mt-4 flex items-center gap-2 px-3 py-1 rounded-full bg-plum-50/80 border border-plum-100 text-[10px] font-medium text-plum-900">
             <span className="w-1.5 h-1.5 rounded-full bg-plum-600 animate-pulse" />
             <span className="capitalize">
-              Weaving {gender} Avatar
+              {t("hero.brand.weaving", "Weaving {{gender}} Avatar", {
+                gender: t(`hero.gender.${gender}`, gender === "female" ? "Female" : "Male"),
+              })}
             </span>
           </div>
 
@@ -203,9 +207,9 @@ export const HeroBrandAnimation: React.FC<HeroBrandAnimationProps> = ({ gender =
 
       {/* Floating Micro-Badges at Bottom */}
       <div className="mt-6 flex items-center gap-3 text-[10px] font-mono text-stone-400 uppercase tracking-widest">
-        <span>Handcrafted Heritage</span>
+        <span>{t("hero.brand.handcrafted", "Handcrafted Heritage")}</span>
         <span className="w-1 h-1 rounded-full bg-stone-300" />
-        <span>3D Dimension</span>
+        <span>{t("hero.brand.dimension", "3D Dimension")}</span>
       </div>
     </div>
   );

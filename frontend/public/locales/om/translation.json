@@ -58,7 +58,8 @@
       "netela": "Naxalaa",
       "suri": "Surrii fi Guutuu",
       "gabi": "Gaabii"
-    }
+    },
+    "selectLanguage": "Afaan Filadhaa"
   },
   "hero": {
     "badge": "Faashinii, 3D'n bifa haaraan",
@@ -78,7 +79,54 @@
       "1": "Qamiisicha fakkii koo irratti yaaleera, safarri isaa sirrii ture.",
       "2": "Dhumarratti uffata Habeshaa tilmaama malee ajajeera.",
       "3": "Diizaayiniin Tilet 3D keessatti baay'ee namatti tola."
-    }
+    },
+    "models": {
+      "male-white-red": {
+        "name": "Adii fi Diimaa",
+        "subtitle": "Uffata Ayyaanaa Dhiiraa Kan Tilet"
+      },
+      "female-white-dress": {
+        "name": "Adii fi Warqee",
+        "subtitle": "Qamisii Mootii Shampanyi"
+      },
+      "male-raya": {
+        "name": "Aadaa Raayyaa",
+        "subtitle": "Footaa Dhaalaa fi Kophee Raayyaa"
+      },
+      "female-oromo-red": {
+        "name": "Diimaa Oromoo",
+        "subtitle": "Callee fi Kaappii Harkaatiin Hojjetame"
+      },
+      "female-green-dress": {
+        "name": "Gawonii Magariisa",
+        "subtitle": "Xilata Warqee Formalii"
+      },
+      "female-blue-dress": {
+        "name": "Samii Mootii",
+        "subtitle": "Faaya Fannoo Couture"
+      },
+      "female-oromo-white": {
+        "name": "Adii Oromoo",
+        "subtitle": "Uffata Cidha Aadaa"
+      },
+      "femaleAvatar": {
+        "name": "Qamisii Aadaa",
+        "subtitle": "Uffata Dhaala Habashaa"
+      },
+      "maleAvatar": {
+        "name": "Uffata Dhiiraa",
+        "subtitle": "Uffata Aadaa Dhiira Habashaa"
+      }
+    },
+    "brand": {
+      "tagline": "Mana Faayaa Viirchuwaalii • Couture",
+      "weaving": "Awaataara {{gender}} Dhaahuu",
+      "handcrafted": "Dhaala Harkaatiin Hojjetame",
+      "dimension": "Gartokkee 3D"
+    },
+    "keyboardHint": "Moodeloota jijjiiruuf qabduu < fi > fayyadamaa",
+    "prevModel": "Awaataara Duraa (<)",
+    "nextModel": "Awaataara Itti Aanu (>)"
   },
   "products": {
     "title": "Aadaa couture, yeroo ammayyaaf kan dhihaate.",

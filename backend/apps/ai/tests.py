@@ -48,3 +48,34 @@ class AIChatEndpointTests(TestCase):
         self.assertIn('data: {"text": "Hello"}', content)
         self.assertIn('data: {"text": " customer!"}', content)
         self.assertIn("data: [DONE]", content)
+
+    @patch("apps.ai.api.views.stream_chat_response")
+    def test_chat_streams_status_events_and_text(self, mock_stream):
+        """POST /api/ai/chat/ handles dictionary status events and text chunks."""
+        mock_stream.return_value = [
+            {"status": "retrieving", "detail": "Finding the right pieces..."},
+            "Here are ",
+            "our Kemis pieces.",
+        ]
+
+        response = self.client.post(
+            self.chat_url,
+            data=json.dumps({"message": "Find Kemis", "history": [], "language": "en"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        content = b"".join(response.streaming_content).decode("utf-8")
+        self.assertIn('data: {"status": "retrieving", "detail": "Finding the right pieces..."}', content)
+        self.assertIn('data: {"text": "Here are "}', content)
+        self.assertIn('data: {"text": "our Kemis pieces."}', content)
+        self.assertIn("data: [DONE]", content)
+
+    def test_is_simple_greeting(self):
+        """Verify fast-path greeting triggers only for initial greetings without prior user turns."""
+        from apps.ai.services.gemini_client import is_simple_greeting
+        self.assertTrue(is_simple_greeting("hello", []))
+        self.assertTrue(is_simple_greeting("Selam!", []))
+        self.assertTrue(is_simple_greeting("Akkam", [{"role": "model", "content": "Welcome"}]))
+        self.assertFalse(is_simple_greeting("Find me a white dress", []))
+        self.assertFalse(is_simple_greeting("hello", [{"role": "user", "content": "Hi"}]))
+

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, FormEvent, useMemo } from "react";
-import { Sparkles, Send } from "lucide-react";
+import { Sparkles, Send, Square, AlertCircle, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import PageLayout from "@/shared/components/layout/PageLayout";
 import { useAiChat } from "../hooks/useAiChat";
@@ -12,7 +12,7 @@ const AiConciergePage: React.FC = () => {
     return t("ai.subtitle", "Welcome to the Tilet3D Atelier. I'm your personal styling concierge. Ask me about our collections, sizing, custom orders, or how the 3D try-on works.");
   }, [t]);
 
-  const { messages, isGenerating, send } = useAiChat(initialGreeting);
+  const { messages, isGenerating, activeStatus, statusDetail, send, stop, retry } = useAiChat(initialGreeting);
   const endRef = useRef<HTMLDivElement>(null);
 
   const suggestions = useMemo(() => [
@@ -29,7 +29,7 @@ const AiConciergePage: React.FC = () => {
   const handleSubmit = (e?: FormEvent) => {
     if (e) e.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || isGenerating) return;
     setInput("");
     send(text);
   };
@@ -54,17 +54,45 @@ const AiConciergePage: React.FC = () => {
 
             <div className="space-y-8">
               {messages.map((msg, idx) => (
-                <div key={idx} className={msg.role === "user" ? "flex justify-end" : ""}>
+                <div key={msg.id || idx} className={msg.role === "user" ? "flex justify-end" : ""}>
                   <div className={msg.role === "user" ? "max-w-[75%]" : "w-full"}>
-                    <div
-                      className={
-                        msg.role === "user"
-                          ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-2xl rounded-br-sm px-5 py-3 text-sm"
-                          : "text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-100 whitespace-pre-wrap"
-                      }
-                    >
-                      {msg.content || (msg.isStreaming ? "···" : "")}
-                    </div>
+                    {/* Error State with Retry */}
+                    {msg.role === "model" && msg.status === "error" ? (
+                      <div className="p-4 rounded-2xl bg-red-950/20 border border-red-500/30 text-red-700 dark:text-red-300 text-sm flex flex-col gap-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                          <span>{msg.content}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => retry()}
+                          className="self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-colors"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Retry</span>
+                        </button>
+                      </div>
+                    ) : (msg.content || msg.isStreaming) ? (
+                      <div
+                        className={
+                          msg.role === "user"
+                            ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 rounded-2xl rounded-br-sm px-5 py-3 text-sm"
+                            : "text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-100 whitespace-pre-wrap"
+                        }
+                      >
+                        {msg.content}
+                        {msg.isStreaming && (
+                          <span className="inline-block w-1.5 h-4 ml-1 bg-amber-500 animate-pulse align-middle" />
+                        )}
+                      </div>
+                    ) : (
+                      idx === messages.length - 1 && isGenerating && (
+                        <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 py-1">
+                          <Sparkles size={14} className="text-amber-500 animate-spin" />
+                          <span>{statusDetail || msg.statusDetail || (activeStatus === "retrieving" ? "Finding the right pieces…" : "Consulting Tilet3D atelier…")}</span>
+                        </div>
+                      )
+                    )}
 
                     {msg.products && msg.products.length > 0 && (
                       <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -103,16 +131,33 @@ const AiConciergePage: React.FC = () => {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 placeholder={t("ai.placeholder", "Ask about styles, sizing, custom orders...")}
                 className="flex-1 bg-transparent border-none text-sm text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none py-2"
               />
-              <button
-                type="submit"
-                disabled={isGenerating || !input.trim()}
-                className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40 flex-shrink-0"
-              >
-                <Send size={16} />
-              </button>
+              {isGenerating ? (
+                <button
+                  type="button"
+                  onClick={stop}
+                  className="bg-neutral-800 text-white hover:bg-red-800 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
+                  title="Stop generating"
+                >
+                  <Square size={13} className="fill-current text-white" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40 flex-shrink-0 transition-colors"
+                >
+                  <Send size={16} />
+                </button>
+              )}
             </form>
           </div>
         </div>

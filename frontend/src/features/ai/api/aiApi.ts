@@ -1,14 +1,32 @@
 import apiClient from "../../../shared/api/apiClient";
 
+export interface StreamChatOptions {
+  signal?: AbortSignal;
+  onChunk: (text: string) => void;
+  onStatus?: (status: string, detail?: string) => void;
+  onError: (err: string, isAbort?: boolean) => void;
+  onComplete: () => void;
+}
+
 export const aiApi = {
   // Streams a chat response from Gemini via SSE reader
   streamChat: async (
     message: string,
     history: Array<{ role: "user" | "model"; content: string }>,
-    onChunk: (text: string) => void,
-    onError: (err: string) => void,
-    onComplete: () => void
+    optionsOrOnChunk: StreamChatOptions | ((text: string) => void),
+    legacyOnError?: (err: string) => void,
+    legacyOnComplete?: () => void
   ) => {
+    const options: StreamChatOptions = typeof optionsOrOnChunk === "function"
+      ? {
+          onChunk: optionsOrOnChunk,
+          onError: legacyOnError || (() => {}),
+          onComplete: legacyOnComplete || (() => {}),
+        }
+      : optionsOrOnChunk;
+
+    const { signal, onChunk, onStatus, onError, onComplete } = options;
+
     try {
       const currentLang = localStorage.getItem("tilet3d_language") || "om";
       const token = localStorage.getItem("tilet3d_access_token");
@@ -23,22 +41,30 @@ export const aiApi = {
         method: "POST",
         headers,
         body: JSON.stringify({ message, history, language: currentLang }),
+        signal,
       });
 
       if (!response.ok) {
         let errMessage = `Request failed with status ${response.status}`;
+        if (response.status === 429) {
+          errMessage = "Too many requests. Please wait a moment before sending another message.";
+        } else if (response.status === 503) {
+          errMessage = "The AI service is experiencing high demand. Please try again in a moment.";
+        } else if (response.status === 401 || response.status === 403) {
+          errMessage = "Authentication error. Please sign in again.";
+        }
         try {
           const errData = await response.json();
-          errMessage = errData.detail || errData.error || errData.message || JSON.stringify(errData);
+          errMessage = errData.detail || errData.error || errData.message || errMessage;
         } catch {
           // Non-JSON response
         }
-        onError(errMessage);
+        onError(errMessage, false);
         return;
       }
 
       if (!response.body) {
-        onError("No response body received from server");
+        onError("No response body received from server", false);
         return;
       }
 
@@ -65,10 +91,15 @@ export const aiApi = {
             }
             try {
               const parsed = JSON.parse(dataStr);
-              if (parsed.text) onChunk(parsed.text);
+              if (parsed.status && onStatus) {
+                onStatus(parsed.status, parsed.detail);
+              }
+              if (parsed.text) {
+                onChunk(parsed.text);
+              }
               if (parsed.error) {
                 hasError = true;
-                onError(parsed.error);
+                onError(parsed.error, false);
                 return;
               }
             } catch {
@@ -79,8 +110,12 @@ export const aiApi = {
       }
       if (!hasError) onComplete();
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        onError("Generation stopped.", true);
+        return;
+      }
       const errorMessage = err instanceof Error ? err.message : "Failed to connect to AI assistant.";
-      onError(errorMessage);
+      onError(errorMessage, false);
     }
   },
 

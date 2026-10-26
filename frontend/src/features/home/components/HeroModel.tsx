@@ -352,31 +352,29 @@ function TurntableGroup({
 }) {
   const spinAngleRef = useRef<number>(0);
   const transitionAngleRef = useRef<number>(0);
-  const spinStartClockRef = useRef<number | null>(null);
-  const pausedElapsedRef = useRef<number>(0);
-  const wasInteractingRef = useRef<boolean>(false);
+  const showcaseTimerRef = useRef<number>(0);
   const prevModelIdRef = useRef(activeModelId);
   const onCycleNextRef = useRef(onCycleNext);
 
-  const SPIN_DURATION = 8.5; // exactly 8.5 seconds for 1 full 360° spin
-  const ENTRANCE_PAUSE = 0.42; // let incoming model settle facing front before starting turntable spin
+  // Exactly 8.5 seconds for 1 full 360° showcase cycle
+  const SPIN_DURATION = 8.5;
+  const ANGULAR_SPEED = (Math.PI * 2) / SPIN_DURATION; // ~0.7392 rad/s
 
   useEffect(() => {
     onCycleNextRef.current = onCycleNext;
   }, [onCycleNext]);
 
-  // When active model switches, snapshot the exact transition angle for both exit and entrance trajectories
+  // When active model switches (via auto-cycle or manual click), snapshot the transition angle
+  // and reset the showcase timer so each avatar enjoys a full rotation
   useEffect(() => {
     if (prevModelIdRef.current !== activeModelId) {
       prevModelIdRef.current = activeModelId;
       transitionAngleRef.current = spinAngleRef.current;
-      spinStartClockRef.current = null;
-      pausedElapsedRef.current = 0;
-      wasInteractingRef.current = false;
+      showcaseTimerRef.current = 0;
     }
   }, [activeModelId]);
 
-  useFrame((state) => {
+  useFrame((_, delta) => {
     // 1. Mobile touch manual swipe rotation
     if (rotateRef && rotateRef.current !== 0) {
       spinAngleRef.current += rotateRef.current * 1.5;
@@ -386,8 +384,7 @@ function TurntableGroup({
 
     // Freeze rotation and keep at 0 while 3D is preparing or hidden under brand animation
     if (!is3DReady) {
-      spinStartClockRef.current = null;
-      pausedElapsedRef.current = 0;
+      showcaseTimerRef.current = 0;
       spinAngleRef.current = 0;
       return;
     }
@@ -396,43 +393,23 @@ function TurntableGroup({
       return;
     }
 
-    // Handle user interaction pause & resume
+    // While user is interacting (dragging OrbitControls), pause auto-rotation
     if (isUserInteracting) {
-      wasInteractingRef.current = true;
       return;
     }
 
-    // If user just finished interacting, adjust start clock so spin resumes smoothly
-    if (wasInteractingRef.current) {
-      wasInteractingRef.current = false;
-      spinStartClockRef.current = state.clock.elapsedTime - pausedElapsedRef.current;
-    }
+    // Guard against delta spikes on tab re-activation or hitch (capped to 50ms)
+    const safeDelta = Math.min(delta, 0.05);
 
-    // Initialize start timestamp when entering active auto-spin
-    if (spinStartClockRef.current === null) {
-      spinStartClockRef.current = state.clock.elapsedTime;
-      pausedElapsedRef.current = 0;
-    }
+    // Continuous, silky smooth uninterrupted turntable rotation — ZERO freezing, ZERO snapping
+    spinAngleRef.current += ANGULAR_SPEED * safeDelta;
 
-    const elapsed = Math.max(0, state.clock.elapsedTime - spinStartClockRef.current);
-    pausedElapsedRef.current = elapsed;
-
-    if (elapsed < ENTRANCE_PAUSE) {
-      // During entrance, maintain the transition angle so the model glides seamlessly into that orientation
-      spinAngleRef.current = transitionAngleRef.current;
-    } else {
-      const spinElapsed = elapsed - ENTRANCE_PAUSE;
-      // When exactly 1 complete 360° (2 * PI) spin is finished:
-      if (spinElapsed >= SPIN_DURATION) {
-        spinStartClockRef.current = null;
-        pausedElapsedRef.current = 0;
-        spinAngleRef.current = 0;
-        transitionAngleRef.current = 0;
-        onCycleNextRef.current?.();
-      } else {
-        const progress = spinElapsed / SPIN_DURATION; // 0.0 to 1.0
-        spinAngleRef.current = transitionAngleRef.current + progress * (Math.PI * 2);
-      }
+    // Track showcase duration for this model
+    showcaseTimerRef.current += safeDelta;
+    if (showcaseTimerRef.current >= SPIN_DURATION) {
+      showcaseTimerRef.current = 0;
+      transitionAngleRef.current = spinAngleRef.current;
+      onCycleNextRef.current?.();
     }
   });
 
@@ -633,12 +610,12 @@ function AvatarModel({
       if (!active && wasActive) {
         // Model was just clicked away from (exit initiated)!
         // Snapshot the EXACT orientation it had at this instant:
-        exitAngleRef.current = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+        exitAngleRef.current = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
       }
 
       if (active) {
         // Incoming model: capture the exact transition angle so it enters along the same rotated carousel circle:
-        entryAngleRef.current = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+        entryAngleRef.current = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
       }
 
       // Pre-position incoming avatar along the circular carousel arc immediately
@@ -650,7 +627,7 @@ function AvatarModel({
         const startX = CAROUSEL_RADIUS * Math.sin(startAngle);
         const startZ = -CAROUSEL_RADIUS * (1 - Math.cos(startAngle));
         const startScale = 1 - 0.22;
-        const entryAngle = turntable?.transitionAngleRef.current ?? currentSpinAngleRef.current;
+        const entryAngle = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
         _circleVec.set(startX, 0, startZ).applyAxisAngle(_unitY, entryAngle);
         groupRef.current.position.set(_circleVec.x, 0, _circleVec.z);
         groupRef.current.rotation.set(0, entryAngle + startAngle, 0);
@@ -675,8 +652,8 @@ function AvatarModel({
     const current = progressRef.current;
 
     if (current !== target) {
-      // 400ms duration for high-fashion runway motion (safeDelta * 2.5 => ~0.4s)
-      const step = safeDelta * 2.5;
+      // ~450ms duration for high-fashion runway motion (safeDelta * 2.2 => ~0.45s)
+      const step = safeDelta * 2.2;
       if (active) {
         progressRef.current = Math.min(1, current + step);
       } else {
@@ -722,8 +699,8 @@ function AvatarModel({
 
     groupRef.current.renderOrder = active ? 1 : 0;
 
-    // Cubic ease-in-out curve for runway motion
-    const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    // Cosine ease-in-out curve for runway motion (smooth velocity at 0 and 1, no jerky breaks)
+    const eased = 0.5 - 0.5 * Math.cos(Math.PI * p);
 
     // ─── 3D Circular Carousel Revolving Dynamics ───────────────────────
     let worldCircleX: number;
@@ -740,14 +717,15 @@ function AvatarModel({
       const circleRotY = reducedMotion ? 0 : signedAngle;
       circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(Math.abs(signedAngle) / CAROUSEL_MAX_THETA, 1.2));
 
-      // Rotate local entry carousel arc offset by the exact transition angle:
-      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, entryAngleRef.current);
+      // Active model applies the continuous turntable showcase spin
+      const spinAngle = turntable?.spinAngleRef.current ?? entryAngleRef.current;
+      currentSpinAngleRef.current = spinAngle;
+
+      // Rotate local entry carousel arc offset in lockstep with the spinning turntable:
+      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, spinAngle);
       worldCircleX = _circleVec.x;
       worldCircleZ = _circleVec.z;
 
-      // Active model applies the turntable showcase spin + entry arc rotation
-      const spinAngle = turntable?.spinAngleRef.current ?? entryAngleRef.current;
-      currentSpinAngleRef.current = spinAngle;
       baseModelYaw = spinAngle + circleRotY;
     } else {
       // Exiting model: revolves in the direction of its hand at the moment of click!

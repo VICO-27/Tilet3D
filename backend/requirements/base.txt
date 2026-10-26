@@ -83,5 +83,6 @@ vine==5.1.0
 wcwidth==0.8.1
 whitenoise==6.8.0
 google-genai
+groq>=0.11.0
 cloudinary==1.46.3
 django-cloudinary-storage==0.3.0

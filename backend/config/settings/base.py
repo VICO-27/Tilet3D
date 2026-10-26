@@ -129,6 +129,19 @@ GEMINI_CHAT_MODEL = env(
     default="gemini-3.8-flash"
 )
 
+GROQ_API_KEY = env(
+    "GROQ_API_KEY",
+    default=""
+)
+GROQ_CHAT_MODEL = env(
+    "GROQ_CHAT_MODEL",
+    default="llama-3.3-70b-versatile"
+)
+GROQ_TIMEOUT = env.int(
+    "GROQ_TIMEOUT",
+    default=15
+)
+
 CHAPA_SECRET_KEY = env(
     "CHAPA_SECRET_KEY",
     default=""

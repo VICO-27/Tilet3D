@@ -9,7 +9,7 @@ from django.conf import settings
 from apps.products.models import Product
 from apps.products.services.search import search_products
 
-logger = logging.getLogger("apps.ai")
+logger = logging.getLogger("apps.ai.gemini")
 
 CHAT_MODEL = getattr(settings, "GEMINI_CHAT_MODEL", "gemini-3.8-flash")
 EMBEDDING_MODEL = "gemini-embedding-001"
@@ -164,101 +164,80 @@ def embed_text(text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> list[float]:
         raise AIOfflineError(f"Embedding failed: {str(e)}")
 
 
-def stream_chat_response(message: str, history: list[dict], language: str = "om"):
+def execute_gemini_chat(
+    message: str,
+    history: list[dict],
+    language: str = "om",
+    request_id: str = None
+) -> str:
+    """
+    Generate complete chat response from Gemini using catalog tool grounding.
+    Raises exception on failure to allow orchestrator fallback.
+    """
     client = get_client()
     if not client:
-        yield "AI Assistant is currently offline. Please set GEMINI_API_KEY.\n\nPRODUCT_IDS: none"
-        return
+        raise AIOfflineError("Gemini client is offline (missing GEMINI_API_KEY).")
 
-    request_id = str(uuid.uuid4())[:8]
+    req_label = request_id or "unknown"
     t_start = time.time()
-    logger.info(f"[ai_chat:{request_id}] Request start: lang={language} history_len={len(history)}")
 
-    # Deterministic fast-path for simple greetings (<50ms perceived latency)
-    if is_simple_greeting(message, history):
-        greeting = GREETINGS_BY_LANG.get(language, GREETINGS_BY_LANG["en"])
-        logger.info(f"[ai_chat:{request_id}] Served fast greeting in {time.time() - t_start:.3f}s")
-        words = greeting.split(" ")
-        for i in range(0, len(words), 3):
-            chunk = " ".join(words[i:i + 3])
-            if i + 3 < len(words):
-                chunk += " "
-            yield chunk
-        return
+    # Bound conversation history to last 8 turns to control latency and token usage
+    bounded_history = history[-8:] if len(history) > 8 else list(history)
+    history_contents = [
+        types.Content(role=turn["role"], parts=[types.Part(text=turn["content"])])
+        for turn in bounded_history
+        if turn.get("content") and turn.get("role") in ("user", "model")
+    ]
+    # In Gemini multi-turn chat, the conversation must begin with a user turn
+    while history_contents and history_contents[0].role != "user":
+        history_contents.pop(0)
 
-    # Check for product intent keywords to provide immediate, truthful retrieval feedback
-    product_intent_keywords = (
-        "kemis", "dress", "outfit", "netela", "gabi", "find", "search",
-        "show", "look", "price", "under", "birr", "etb", "color", "wear",
-        "suit", "shemiz", "men", "women", "wedding", "buy", "shop", "tilf", "kaba"
-    )
-    has_product_intent = any(kw in message.lower() for kw in product_intent_keywords)
-    if has_product_intent:
-        yield {"status": "retrieving", "detail": "Finding the right pieces..."}
-    else:
-        yield {"status": "thinking", "detail": "Consulting Tilet3D atelier..."}
+    # Primary model and resilient fallback candidates that have capacity and support function calling
+    primary_model = getattr(settings, "GEMINI_CHAT_MODEL", "gemini-3.8-flash")
+    fallback_candidates = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash"]
+    models_to_try = [primary_model] + [m for m in fallback_candidates if m != primary_model]
 
-    try:
-        # Bound conversation history to last 8 turns to control latency and token usage
-        bounded_history = history[-8:] if len(history) > 8 else list(history)
-        history_contents = [
-            types.Content(role=turn["role"], parts=[types.Part(text=turn["content"])])
-            for turn in bounded_history
-            if turn.get("content") and turn.get("role") in ("user", "model")
-        ]
-        # In Gemini multi-turn chat, the conversation must begin with a user turn
-        while history_contents and history_contents[0].role != "user":
-            history_contents.pop(0)
+    response_text = None
+    last_error = None
 
-        # Primary model and resilient fallback candidates that have capacity and support function calling
-        primary_model = getattr(settings, "GEMINI_CHAT_MODEL", "gemini-3.8-flash")
-        fallback_candidates = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash"]
-        models_to_try = [primary_model] + [m for m in fallback_candidates if m != primary_model]
+    for model_name in models_to_try:
+        try:
+            chat = client.chats.create(
+                model=model_name,
+                config=types.GenerateContentConfig(
+                    system_instruction=get_system_instruction(language=language),
+                    tools=[search_store],
+                    temperature=0.3
+                ),
+                history=history_contents
+            )
 
-        response_text = None
-        last_error = None
+            response = chat.send_message(message)
+            response_text = response.text or ""
+            break
+        except Exception as exc:
+            last_error = exc
+            err_str = str(exc)
+            logger.warning(f"[ai_chat:{req_label}] Model {model_name} failed: {err_str[:120]}")
+            continue
 
-        for model_name in models_to_try:
-            try:
-                chat = client.chats.create(
-                    model=model_name,
-                    config=types.GenerateContentConfig(
-                        system_instruction=get_system_instruction(language=language),
-                        tools=[search_store],
-                        temperature=0.3
-                    ),
-                    history=history_contents
-                )
+    if response_text is None:
+        if last_error:
+            raise last_error
+        response_text = "I apologize, but I could not find a suitable recommendation right now. Please try again.\n\nPRODUCT_IDS: none"
 
-                response = chat.send_message(message)
-                response_text = response.text or ""
-                break
-            except Exception as exc:
-                last_error = exc
-                err_str = str(exc)
-                logger.warning(f"[ai_chat:{request_id}] Model {model_name} failed: {err_str[:120]}")
-                # Continue through fallback models on provider error, 429 quota exhaustion, or timeout
-                continue
+    clean_text = response_text.strip()
+    if "PRODUCT_IDS:" not in clean_text:
+        clean_text += "\n\nPRODUCT_IDS: none"
 
-        if response_text is None:
-            if last_error:
-                raise last_error
-            response_text = "I apologize, but I could not find a suitable recommendation right now. Please try again.\n\nPRODUCT_IDS: none"
+    duration = time.time() - t_start
+    logger.info(f"[ai_chat:{req_label}] Gemini completed generation in {duration:.3f}s (len={len(clean_text)})")
+    return clean_text
 
-        total_time = time.time() - t_start
-        logger.info(f"[ai_chat:{request_id}] Completed generation in {total_time:.3f}s (len={len(response_text)})")
 
-        # Yield response in chunks for smooth SSE transmission
-        chunk_size = 28
-        for i in range(0, len(response_text), chunk_size):
-            yield response_text[i:i + chunk_size]
-
-    except Exception as exc:
-        err_msg = str(exc)
-        logger.error(f"[ai_chat:{request_id}] Error in chat stream: {err_msg[:200]}")
-        if "RESOURCE_EXHAUSTED" in err_msg or "429" in err_msg:
-            yield "The AI Concierge has reached the daily free tier request limit. Please try again later.\n\nPRODUCT_IDS: none"
-        elif "503" in err_msg or "UNAVAILABLE" in err_msg or "504" in err_msg:
-            yield "The AI Concierge is currently experiencing temporary high demand from Google. Please try again in a moment.\n\nPRODUCT_IDS: none"
-        else:
-            yield f"The AI Concierge encountered an issue: {err_msg[:100]}. Please try again.\n\nPRODUCT_IDS: none"
+def stream_chat_response(message: str, history: list[dict], language: str = "om"):
+    """
+    Backwards-compatible wrapper delegating to the multi-provider orchestrator.
+    """
+    from apps.ai.services.orchestrator import stream_chat_response as orchestrator_stream
+    yield from orchestrator_stream(message, history, language=language)

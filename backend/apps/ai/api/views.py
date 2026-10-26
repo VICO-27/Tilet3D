@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.throttling import ScopedRateThrottle
 
-from apps.ai.services.gemini_client import stream_chat_response
+from apps.ai.services.orchestrator import stream_chat_response
 from apps.ai.services.recommend import get_similar_products
 from apps.ai.api.serializers import ChatMessageSerializer
 from apps.products.api.serializers import ProductSerializer

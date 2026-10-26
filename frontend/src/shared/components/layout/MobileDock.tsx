@@ -83,7 +83,7 @@ export const MobileDock: React.FC<MobileDockProps> = ({ onOpenCart }) => {
       {/* Dock Container: Fixed in place, stays rock-still on scroll without moving up or down */}
       <div 
         ref={dockRef}
-        className="md:hidden fixed right-0 top-1/2 -translate-y-1/2 z-[100] flex items-center pointer-events-none select-none"
+        className="md:hidden fixed right-0 top-[64%] -translate-y-1/2 z-[100] flex items-center pointer-events-none select-none"
       >
         <div className="relative flex items-center justify-end w-[80px] pointer-events-auto">
           {/* Handle when closed */}

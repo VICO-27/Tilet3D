@@ -302,7 +302,13 @@ export function AvatarViewer() {
       */}
       <Canvas
         id="avatar-canvas"
-        shadows
+        shadows={{ type: THREE.PCFShadowMap }}
+        onCreated={({ gl }) => {
+          gl.shadowMap.type = THREE.PCFShadowMap;
+          gl.domElement.addEventListener("webglcontextlost", (e) => {
+            e.preventDefault();
+          }, false);
+        }}
         frameloop={isTabVisible ? 'always' : 'never'}
         camera={{ position: [0, 3.5, 4.5], fov: 40 }}
         className="w-full h-full outline-none"

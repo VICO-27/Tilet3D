@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useRef, useEffect, useState, createContext, useContext } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, useGLTF, ContactShadows } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { prepareAvatar, applyNaturalSkinWarmth } from "../../avatar/utils/avatarRig";
 import type { Gender } from "../../avatar/types/avatar.types";
@@ -1070,7 +1070,13 @@ const HeroModel = ({
 
   return (
     <Canvas
-      shadows
+      shadows={{ type: THREE.PCFShadowMap }}
+      onCreated={({ gl }) => {
+        gl.shadowMap.type = THREE.PCFShadowMap;
+        gl.domElement.addEventListener("webglcontextlost", (e) => {
+          e.preventDefault();
+        }, false);
+      }}
       id="hero-canvas"
       frameloop={isInView && isTabVisible ? "always" : "never"}
       camera={{ position: [0, 1.05, 3.4], fov: 32 }}
@@ -1092,7 +1098,7 @@ const HeroModel = ({
         position={[3.5, 6.0, 4.5]} 
         intensity={0.95} 
         color="#fffaf2" 
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={isMobile ? [512, 512] : [1024, 1024]}
         shadow-camera-near={0.5}
         shadow-camera-far={12}
         shadow-camera-left={-2.5}
@@ -1143,17 +1149,6 @@ const HeroModel = ({
           );
         })}
       </TurntableGroup>
-
-      <Suspense fallback={null}>
-        <ContactShadows
-          position={[0, isMobile ? 0.475 : 0.375, 0]}
-          opacity={0.65}
-          scale={2.6}
-          blur={1.5}
-          far={3.0}
-          color="#180b2c"
-        />
-      </Suspense>
 
       <OrbitControls
         ref={controlsRef}

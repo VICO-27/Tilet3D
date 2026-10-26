@@ -46,7 +46,7 @@ def get_client():
     return genai.Client(
         api_key=settings.GEMINI_API_KEY,
         http_options=types.HttpOptions(
-            timeout=25000,
+            timeout=12000,
             retry_options=types.HttpRetryOptions(attempts=1)
         )
     )
@@ -210,12 +210,10 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
         while history_contents and history_contents[0].role != "user":
             history_contents.pop(0)
 
-        # Primary model and resilient fallback model
+        # Primary model and resilient fallback candidates that have capacity and support function calling
         primary_model = getattr(settings, "GEMINI_CHAT_MODEL", "gemini-3.8-flash")
-        fallback_model = "gemini-3.5-flash" if primary_model != "gemini-3.5-flash" else None
-        models_to_try = [primary_model]
-        if fallback_model:
-            models_to_try.append(fallback_model)
+        fallback_candidates = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash"]
+        models_to_try = [primary_model] + [m for m in fallback_candidates if m != primary_model]
 
         response_text = None
         last_error = None
@@ -239,11 +237,8 @@ def stream_chat_response(message: str, history: list[dict], language: str = "om"
                 last_error = exc
                 err_str = str(exc)
                 logger.warning(f"[ai_chat:{request_id}] Model {model_name} failed: {err_str[:120]}")
-                if "503" in err_str or "UNAVAILABLE" in err_str or "504" in err_str or "DEADLINE" in err_str:
-                    # Provider demand spike, try fallback model
-                    continue
-                else:
-                    break
+                # Continue through fallback models on provider error, 429 quota exhaustion, or timeout
+                continue
 
         if response_text is None:
             if last_error:

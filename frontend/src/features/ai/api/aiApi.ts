@@ -114,7 +114,14 @@ export const aiApi = {
         onError("Generation stopped.", true);
         return;
       }
-      const errorMessage = err instanceof Error ? err.message : "Failed to connect to AI assistant.";
+      let errorMessage = "Failed to connect to AI assistant.";
+      if (err instanceof Error) {
+        if (err.message.includes("Failed to fetch") || err.name === "TypeError") {
+          errorMessage = "Connection interrupted or server timed out. Tap Retry below.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
       onError(errorMessage, false);
     }
   },

@@ -135,7 +135,7 @@ GROQ_API_KEY = env(
 )
 GROQ_CHAT_MODEL = env(
     "GROQ_CHAT_MODEL",
-    default="llama-3.3-70b-versatile"
+    default="openai/gpt-oss-120b"
 )
 GROQ_TIMEOUT = env.int(
     "GROQ_TIMEOUT",

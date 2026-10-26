@@ -1,11 +1,14 @@
 import json
 import logging
+import re
 import time
 from typing import Optional
 from django.conf import settings
 from apps.ai.services.gemini_client import search_store, get_system_instruction
 
 logger = logging.getLogger("apps.ai.groq")
+
+DEFAULT_GROQ_CHAT_MODEL = "openai/gpt-oss-120b"
 
 GROQ_STORE_TOOL = {
     "type": "function",
@@ -93,7 +96,7 @@ def execute_groq_chat(
 
     t_start = time.time()
     req_label = request_id or "unknown"
-    model_name = getattr(settings, "GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
+    model_name = getattr(settings, "GROQ_CHAT_MODEL", None) or DEFAULT_GROQ_CHAT_MODEL
     logger.info(f"[groq_chat:{req_label}] Starting fallback generation with model={model_name} lang={language}")
 
     # Build system instructions and messages in OpenAI format
@@ -120,8 +123,8 @@ def execute_groq_chat(
 
     groq_messages.append({"role": "user", "content": message})
 
-    # Tool calling loop (max 2 iterations to prevent infinite loops)
-    max_tool_iterations = 2
+    # Tool calling loop (max 3 iterations to accommodate multi-step catalog refinement)
+    max_tool_iterations = 3
     response_text = None
 
     for iteration in range(max_tool_iterations):
@@ -201,24 +204,39 @@ def execute_groq_chat(
         else:
             # Model responded directly with text without calling any tools
             response_text = response_msg.content or ""
+            if not response_text and hasattr(response_msg, "reasoning") and response_msg.reasoning:
+                response_text = str(response_msg.reasoning)
             break
 
     # If the tool iteration finished without a final text response, request the final synthesis
     if response_text is None:
         try:
+            groq_messages.append({
+                "role": "user",
+                "content": "Please synthesize your final recommendation based on the catalog search results above."
+            })
             final_completion = client.chat.completions.create(
                 model=model_name,
                 messages=groq_messages,
+                tools=[GROQ_STORE_TOOL],
+                tool_choice="auto",
                 temperature=0.3
             )
-            response_text = final_completion.choices[0].message.content or ""
+            final_msg = final_completion.choices[0].message
+            response_text = final_msg.content or ""
+            if not response_text and hasattr(final_msg, "reasoning") and final_msg.reasoning:
+                response_text = str(final_msg.reasoning)
         except Exception as exc:
             err_str = str(exc)
             logger.error(f"[groq_chat:{req_label}] Groq final synthesis failed: {err_str[:160]}")
             raise GroqProviderError(f"Groq API error on synthesis: {err_str[:120]}") from exc
 
+    # Clean any internal thinking/reasoning blocks (e.g. <think>...</think>) if present
+    clean_text = re.sub(r'<(think|thought)>[\s\S]*?</\1>', '', response_text, flags=re.IGNORECASE).strip()
+    # Remove em-dashes and double dashes per brand voice guideline
+    clean_text = clean_text.replace("—", ", ").replace("--", ", ")
+
     # Ensure response ends with PRODUCT_IDS line if missing
-    clean_text = response_text.strip()
     if "PRODUCT_IDS:" not in clean_text:
         clean_text += "\n\nPRODUCT_IDS: none"
 

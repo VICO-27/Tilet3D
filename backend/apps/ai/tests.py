@@ -344,3 +344,48 @@ class GroqFallbackOrchestrationTests(TestCase):
             # Check logged output does not reflect raw secret key
             for log_record in log_capture.output:
                 self.assertNotIn(secret_key, log_record)
+
+    def test_13_groq_model_configuration_passes_configured_model_to_api(self):
+        """13. Ensure default model is openai/gpt-oss-120b and override_settings overrides it."""
+        from apps.ai.services.groq_client import DEFAULT_GROQ_CHAT_MODEL
+        self.assertEqual(DEFAULT_GROQ_CHAT_MODEL, "openai/gpt-oss-120b")
+
+        mock_groq_instance = MagicMock()
+        mock_completion = MagicMock()
+        mock_completion.choices = [
+            MagicMock(message=MagicMock(content="Hello!\n\nPRODUCT_IDS: none", tool_calls=None))
+        ]
+        mock_groq_instance.chat.completions.create.return_value = mock_completion
+
+        with patch("apps.ai.services.groq_client.get_groq_client", return_value=mock_groq_instance):
+            # Test 1: Default model openai/gpt-oss-120b
+            with override_settings(GROQ_API_KEY="gsk_test", GROQ_CHAT_MODEL="openai/gpt-oss-120b"):
+                execute_groq_chat("Hello", [], language="en")
+                called_model = mock_groq_instance.chat.completions.create.call_args[1]["model"]
+                self.assertEqual(called_model, "openai/gpt-oss-120b")
+
+            # Test 2: Custom model override
+            with override_settings(GROQ_API_KEY="gsk_test", GROQ_CHAT_MODEL="custom/groq-model-v2"):
+                execute_groq_chat("Hello", [], language="en")
+                called_model = mock_groq_instance.chat.completions.create.call_args[1]["model"]
+                self.assertEqual(called_model, "custom/groq-model-v2")
+
+    def test_14_groq_cleans_thinking_tags_and_handles_reasoning_attribute(self):
+        """14. Ensure reasoning scratchpads and <think> tags are stripped from patron responses."""
+        mock_groq_instance = MagicMock()
+        mock_completion = MagicMock()
+        mock_msg = MagicMock(
+            content="<think>Evaluating silk texture and embroidery options.</think>Here is our authentic silk Kemis.\n\nPRODUCT_IDS: none",
+            tool_calls=None,
+            reasoning="Evaluating silk texture and embroidery options."
+        )
+        mock_completion.choices = [MagicMock(message=mock_msg)]
+        mock_groq_instance.chat.completions.create.return_value = mock_completion
+
+        with patch("apps.ai.services.groq_client.get_groq_client", return_value=mock_groq_instance):
+            with override_settings(GROQ_API_KEY="gsk_test", GROQ_CHAT_MODEL="openai/gpt-oss-120b"):
+                result = execute_groq_chat("Recommend silk Kemis", [], language="en")
+                self.assertNotIn("<think>", result)
+                self.assertNotIn("Evaluating silk texture", result)
+                self.assertIn("Here is our authentic silk Kemis.", result)
+                self.assertIn("PRODUCT_IDS: none", result)

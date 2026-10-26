@@ -16,6 +16,11 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- High-Priority 3D Avatar & Draco Preloads for Instant Initial Render (<3s) -->
+    <link rel="preload" as="fetch" href="/models/female-white-dress.glb" type="model/gltf-binary" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="preload" as="fetch" href="/draco/draco_decoder.wasm" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="preload" as="script" href="/draco/draco_wasm_wrapper.js" fetchpriority="high" />
     <title>Tilet3D Habesha Couture in 3D</title>
   </head>
   <body>

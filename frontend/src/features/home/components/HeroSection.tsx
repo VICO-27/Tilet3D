@@ -515,8 +515,8 @@ const HeroSection = () => {
                 <motion.div
                   key="hero-brand-animation"
                   initial={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.08, filter: "blur(6px)" }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  exit={{ opacity: 0, scale: 1.04, filter: "blur(4px)" }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
                 >
                   <HeroBrandAnimation gender={currentModel.gender} />
@@ -526,7 +526,7 @@ const HeroSection = () => {
 
             {/* 2. Live 3D Experience — pointer-events-none on mobile so touches pass through cleanly; md:pointer-events-auto for desktop */}
             <div 
-              className={`absolute inset-0 w-full h-full z-10 transition-opacity duration-700 pointer-events-none md:pointer-events-auto ${
+              className={`absolute inset-0 w-full h-full z-10 transition-opacity duration-300 pointer-events-none md:pointer-events-auto ${
                 is3DReady ? 'opacity-100' : 'opacity-0'
               }`}
             >

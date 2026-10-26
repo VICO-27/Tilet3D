@@ -897,7 +897,7 @@ function AvatarModel({
     }
 
     // Confirm first usable rendered frame immediately
-    if (active && !reportedRef.current && p > 0.1) {
+    if (active && !reportedRef.current) {
       reportedRef.current = true;
       onRendered?.();
     }
@@ -1014,28 +1014,26 @@ const HeroModel = ({
     setMountedModels((prev) => ({ ...prev, [currentId]: true }));
   }
 
-  // Progressive background loading:
-  // Do NOT load all models at once! First display the first model immediately with full bandwidth.
-  // Once the first model is visible to the user, load the remaining models one-by-one in the background.
+  // Progressive single-model sequence loading:
+  // 1. Strictly load ONLY the initial model at page load. Zero background downloads.
+  // 2. Once the first avatar is fully rendered on screen and visible to the user:
+  //    Wait 4.5 seconds (plenty of time for the user to admire the first model without any network competition),
+  //    then gently warm up ONLY the immediate next model in sequence (or whenever the user hovers/interacts).
   useEffect(() => {
     if (!firstModelReady) return;
 
-    const remaining = HERO_MODELS.filter((m) => m.id !== currentId);
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    const currentIndex = HERO_MODELS.findIndex((m) => m.id === currentId);
+    const nextModel = HERO_MODELS[(currentIndex + 1) % HERO_MODELS.length];
 
-    remaining.forEach((m, idx) => {
-      // Stagger each model gently (1.5s, 3.0s, 4.5s...) so there is zero frame drop or network contention
+    if (nextModel && !mountedModels[nextModel.id]) {
       const timer = setTimeout(() => {
-        preloadHeroModel(m.path);
-        setMountedModels((prev) => (prev[m.id] ? prev : { ...prev, [m.id]: true }));
-      }, 1500 + idx * 1500);
-      timers.push(timer);
-    });
+        preloadHeroModel(nextModel.path);
+        setMountedModels((prev) => (prev[nextModel.id] ? prev : { ...prev, [nextModel.id]: true }));
+      }, 4500);
 
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [firstModelReady, currentId]);
+      return () => clearTimeout(timer);
+    }
+  }, [firstModelReady, currentId, mountedModels]);
 
   const handleActiveModelRendered = () => {
     if (!firstModelReady) {

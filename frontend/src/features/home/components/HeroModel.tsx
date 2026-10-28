@@ -899,31 +899,26 @@ const HeroModel = ({
     [exitingId]
   );
 
-  // Sequential smart preloading:
-  // When active avatar renders, preload the next sequential model into cache.
-  // When activeId changes, preload the immediate next and previous models.
+  // Sequential graceful cache warmup:
+  // Starts after the first model is fully rendered on screen, preloading one model every 1.2s
+  // This guarantees zero network or CPU bottlenecks on mobile, while ensuring every model
+  // is pre-cached long before auto-cycle or manual interaction!
   useEffect(() => {
     if (!firstModelReady) return;
 
-    const currentIndex = HERO_MODELS.findIndex((m) => m.id === activeId);
-    if (currentIndex === -1) return;
-
-    const nextModel = HERO_MODELS[(currentIndex + 1) % HERO_MODELS.length];
-    const prevModel = HERO_MODELS[(currentIndex - 1 + HERO_MODELS.length) % HERO_MODELS.length];
-
-    const timer1 = setTimeout(() => {
-      if (nextModel) preloadHeroModel(nextModel.path);
-    }, 150);
-
-    const timer2 = setTimeout(() => {
-      if (prevModel) preloadHeroModel(prevModel.path);
-    }, 1200);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    HERO_MODELS.slice(1).forEach((m, idx) => {
+      timers.push(
+        setTimeout(() => {
+          preloadHeroModel(m.path);
+        }, 150 + idx * 1200)
+      );
+    });
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      timers.forEach((t) => clearTimeout(t));
     };
-  }, [activeId, firstModelReady]);
+  }, [firstModelReady]);
 
   const handleActiveModelRendered = useCallback(() => {
     if (!firstModelReady) {

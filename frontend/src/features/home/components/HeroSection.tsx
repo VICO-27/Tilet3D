@@ -138,11 +138,30 @@ const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const [isInView, setIsInView] = useState(true);
   const [is3DReady, setIs3DReady] = useState(false);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
   const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Mobile Hold-to-Rotate Touch Controller
+  // Mobile Directional Touch Controller:
+  // - Immediate horizontal swipe detection (>7px) locks to smooth 360° avatar rotation with momentum inertia
+  // - Vertical swipe allows 100% native browser vertical scrolling with zero friction
   const rotateRef = useRef(0);
   const mobileTouchRef = useRef<HTMLDivElement>(null);
+
+  const interactingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markInteracting = useCallback(() => { 
+    if (interactingTimeoutRef.current) clearTimeout(interactingTimeoutRef.current);
+    interactingRef.current = true; 
+    setIsUserInteracting(true);
+  }, []);
+
+  const endInteracting = useCallback(() => { 
+    if (interactingTimeoutRef.current) clearTimeout(interactingTimeoutRef.current);
+    interactingTimeoutRef.current = setTimeout(() => {
+      interactingRef.current = false;
+      setIsUserInteracting(false);
+    }, 2500); 
+  }, []);
 
   useEffect(() => {
     const el = mobileTouchRef.current;
@@ -151,32 +170,40 @@ const HeroSection = () => {
     let touchStartX = 0;
     let touchStartY = 0;
     let lastTouchX = 0;
-    let isHoldingActive = false;
-    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    let gestureLock: "none" | "horizontal" | "vertical" = "none";
+    let velocityX = 0;
+    let animFrameId: number | null = null;
+
+    const stopInertia = () => {
+      if (animFrameId !== null) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    };
+
+    const runInertia = () => {
+      stopInertia();
+      const step = () => {
+        if (Math.abs(velocityX) > 0.0003) {
+          rotateRef.current += velocityX;
+          velocityX *= 0.92;
+          animFrameId = requestAnimationFrame(step);
+        } else {
+          animFrameId = null;
+        }
+      };
+      animFrameId = requestAnimationFrame(step);
+    };
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
+      stopInertia();
       const t = e.touches[0];
       touchStartX = t.clientX;
       touchStartY = t.clientY;
       lastTouchX = t.clientX;
-      isHoldingActive = false;
-
-      if (holdTimer) {
-        clearTimeout(holdTimer);
-      }
-
-      // If finger remains still for ~360ms, activate 360° avatar rotation mode
-      holdTimer = setTimeout(() => {
-        isHoldingActive = true;
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-          try {
-            navigator.vibrate(25);
-          } catch {
-            // vibration not supported or disallowed
-          }
-        }
-      }, 360);
+      gestureLock = "none";
+      velocityX = 0;
     };
 
     const onTouchMove = (e: TouchEvent) => {
@@ -184,38 +211,36 @@ const HeroSection = () => {
       const t = e.touches[0];
       const dx = t.clientX - touchStartX;
       const dy = t.clientY - touchStartY;
-      const dist = Math.hypot(dx, dy);
 
-      // If hold mode is NOT active yet:
-      if (!isHoldingActive) {
-        // Normal scroll or fast flick: any movement > 8px cancels hold timer immediately
-        if (dist > 8) {
-          if (holdTimer) {
-            clearTimeout(holdTimer);
-            holdTimer = null;
+      if (gestureLock === "none") {
+        if (Math.hypot(dx, dy) > 7) {
+          if (Math.abs(dx) > Math.abs(dy) * 0.9) {
+            gestureLock = "horizontal";
+            markInteracting();
+          } else {
+            gestureLock = "vertical";
           }
         }
-        // Crucial: do NOT call preventDefault! Native vertical browser scroll runs at full speed
-        return;
       }
 
-      // If hold IS active: user is deliberately rotating the avatar 360°
-      if (e.cancelable) {
-        e.preventDefault();
+      if (gestureLock === "horizontal") {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        const deltaX = t.clientX - lastTouchX;
+        const radDelta = deltaX * ((Math.PI * 2) / 360) * 0.75;
+        rotateRef.current += radDelta;
+        velocityX = radDelta * 0.45;
+        lastTouchX = t.clientX;
       }
-
-      const moveX = t.clientX - lastTouchX;
-      const factor = (2 * Math.PI) / 380;
-      rotateRef.current += moveX * factor * 0.95;
-      lastTouchX = t.clientX;
     };
 
     const onTouchEnd = () => {
-      if (holdTimer) {
-        clearTimeout(holdTimer);
-        holdTimer = null;
+      if (gestureLock === "horizontal") {
+        runInertia();
+        endInteracting();
       }
-      isHoldingActive = false;
+      gestureLock = "none";
     };
 
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -224,13 +249,13 @@ const HeroSection = () => {
     el.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     return () => {
-      if (holdTimer) clearTimeout(holdTimer);
+      stopInertia();
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, []);
+  }, [markInteracting, endInteracting]);
 
   // Mutable ref for pointer tracking — prevents React re-renders on mousemove
   const pointerRef = useRef<PointerTracker>({ x: 0, y: 0, active: false });
@@ -309,20 +334,6 @@ const HeroSection = () => {
     }, 8500);
     return () => clearInterval(id);
   }, [is3DReady, prefersReducedMotion, handleAutoCycle]);
-
-  const interactingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const markInteracting = useCallback(() => { 
-    if (interactingTimeoutRef.current) clearTimeout(interactingTimeoutRef.current);
-    interactingRef.current = true; 
-  }, []);
-
-  const endInteracting = useCallback(() => { 
-    if (interactingTimeoutRef.current) clearTimeout(interactingTimeoutRef.current);
-    interactingTimeoutRef.current = setTimeout(() => {
-      interactingRef.current = false;
-    }, 3500); 
-  }, []);
 
   const cycleModel = useCallback((dir: -1 | 1) => { 
     markInteracting(); 
@@ -539,17 +550,19 @@ const HeroSection = () => {
                 pointerRef={pointerRef}
                 rotateRef={rotateRef}
                 is3DReady={is3DReady}
+                isInteracting={isUserInteracting}
                 onCycleNext={handleAutoCycle}
                 onReady={() => {
                   setIs3DReady(true);
                 }} 
                 onInteractionChange={(interacting) => {
                   interactingRef.current = interacting;
+                  setIsUserInteracting(interacting);
                 }}
               />
             </div>
 
-            {/* 3. Mobile Touch Controller: allows native fast vertical scroll; engages 360° avatar spin on 360ms hold */}
+            {/* 3. Mobile Touch Controller: directional swipe locks to 360° avatar spin; vertical swipe scrolls natively */}
             <div 
               ref={mobileTouchRef}
               className="md:hidden absolute inset-0 z-20 touch-pan-y"

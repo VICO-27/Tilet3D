@@ -86,8 +86,6 @@ const _dirVec = new THREE.Vector3();
 const _midVec = new THREE.Vector3();
 const _unitDown = new THREE.Vector3(0, -1, 0);
 const _beamQuat = new THREE.Quaternion();
-const _circleVec = new THREE.Vector3();
-const _unitY = new THREE.Vector3(0, 1, 0);
 
 export interface PointerTracker {
   x: number;
@@ -153,12 +151,13 @@ function CinematicFollowspot({
   );
   const spotVec = useMemo(() => new THREE.Vector3(...spotPosition), [spotPosition]);
 
-  // Gossamer atmospheric beam material: smooth feathering at source, body, and target
+  // Gossamer atmospheric beam material: smooth feathering at source, body, and target (desktop only)
   const beamMaterial = useMemo(() => {
+    if (isMobile) return null;
     return new THREE.ShaderMaterial({
       uniforms: {
         uColor: { value: new THREE.Color("#d8b4fe") },
-        uOpacity: { value: isMobile ? 0.22 : 0.28 },
+        uOpacity: { value: 0.28 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -205,7 +204,7 @@ function CinematicFollowspot({
   }, [isMobile]);
 
   useFrame((_, delta) => {
-    const safeDelta = Math.min(delta, 0.05);
+    const safeDelta = Math.min(delta, 0.1);
 
     // 1. Calculate active avatar's head world coordinate
     if (activeAvatarGroupRef.current) {
@@ -221,15 +220,15 @@ function CinematicFollowspot({
     targetObj.position.copy(smoothedTarget.current);
     targetObj.updateMatrixWorld();
 
-    // 4. Update complementary face kicker light position along beam vector
-    _spotToTargetDir.subVectors(smoothedTarget.current, spotVec).normalize();
-    _faceKickerPos.copy(smoothedTarget.current).addScaledVector(_spotToTargetDir, -1.4);
-    if (faceKickerRef.current) {
+    // 4. Update complementary face kicker light position along beam vector (desktop only)
+    if (!isMobile && faceKickerRef.current) {
+      _spotToTargetDir.subVectors(smoothedTarget.current, spotVec).normalize();
+      _faceKickerPos.copy(smoothedTarget.current).addScaledVector(_spotToTargetDir, -1.4);
       faceKickerRef.current.position.copy(_faceKickerPos);
     }
 
-    // 5. Update atmospheric beam cone orientation & scale
-    if (beamMeshRef.current) {
+    // 5. Update atmospheric beam cone orientation & scale (desktop only)
+    if (!isMobile && beamMeshRef.current) {
       _dirVec.subVectors(smoothedTarget.current, spotVec);
       const dist = _dirVec.length();
       _dirVec.normalize();
@@ -259,33 +258,37 @@ function CinematicFollowspot({
         color="#f3e8ff"
       />
 
-      {/* Restrained Complementary Shoulder & Collar Halo */}
-      <spotLight
-        ref={haloLightRef}
-        target={targetObj}
-        position={spotPosition}
-        intensity={isMobile ? 1.6 : 2.0}
-        angle={0.46}
-        penumbra={0.96}
-        distance={9.5}
-        decay={1.2}
-        color="#c084fc"
-      />
+      {/* Desktop-only secondary halo, face kicker, and beam mesh to maintain silky 60fps on mobile */}
+      {!isMobile && (
+        <>
+          <spotLight
+            ref={haloLightRef}
+            target={targetObj}
+            position={spotPosition}
+            intensity={2.0}
+            angle={0.46}
+            penumbra={0.96}
+            distance={9.5}
+            decay={1.2}
+            color="#c084fc"
+          />
 
-      {/* Restrained Complementary Face Accent Light: ensures soft, circular luminous pool on facial features */}
-      <pointLight
-        ref={faceKickerRef}
-        position={spotPosition}
-        intensity={isMobile ? 0.65 : 0.85}
-        distance={2.4}
-        decay={1.0}
-        color="#ede9fe"
-      />
+          <pointLight
+            ref={faceKickerRef}
+            position={spotPosition}
+            intensity={0.85}
+            distance={2.4}
+            decay={1.0}
+            color="#ede9fe"
+          />
 
-      {/* Gossamer Theatrical Light Beam Cone */}
-      <mesh ref={beamMeshRef} material={beamMaterial} renderOrder={2}>
-        <cylinderGeometry args={[0.04, 0.76, 1, 28, 1, true]} />
-      </mesh>
+          {beamMaterial && (
+            <mesh ref={beamMeshRef} material={beamMaterial} renderOrder={2}>
+              <cylinderGeometry args={[0.04, 0.76, 1, 28, 1, true]} />
+            </mesh>
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -398,8 +401,8 @@ function TurntableGroup({
       return;
     }
 
-    // Guard against delta spikes on tab re-activation or hitch (capped to 50ms)
-    const safeDelta = Math.min(delta, 0.05);
+    // Guard against delta spikes on tab re-activation or hitch (capped to 100ms)
+    const safeDelta = Math.min(delta, 0.1);
 
     // Continuous, silky smooth uninterrupted turntable rotation — ZERO freezing, ZERO snapping
     spinAngleRef.current += ANGULAR_SPEED * safeDelta;
@@ -436,10 +439,6 @@ interface MaleBones {
 // Use a WeakSet to track posed scenes safely without violating React immutability linter rules
 const posedScenes = new WeakSet<THREE.Group>();
 
-// 3D Circular Carousel Arc Parameters for avatar switching
-const CAROUSEL_RADIUS = 2.4;
-const CAROUSEL_MAX_THETA = 1.35; // ~77 degrees circular travel path
-
 function AvatarModel({ 
   modelItem, 
   active, 
@@ -449,6 +448,7 @@ function AvatarModel({
   isUserInteracting = false,
   activeAvatarGroupRef,
   isInitial = false,
+  isMobile = false,
   onRendered 
 }: { 
   modelItem: HeroModelItem; 
@@ -459,6 +459,7 @@ function AvatarModel({
   isUserInteracting?: boolean;
   activeAvatarGroupRef?: React.MutableRefObject<THREE.Group | null>;
   isInitial?: boolean;
+  isMobile?: boolean;
   onRendered?: () => void 
 }) {
   const { scene } = useGLTF(modelItem.path, DRACO_URL);
@@ -471,11 +472,9 @@ function AvatarModel({
   // Damped pointer coordinates ref to avoid any React re-renders or allocations
   const smoothedPointerRef = useRef({ x: 0, y: 0 });
 
-  // Turntable showcase angle tracking & click snapshot
+  // Turntable showcase angle tracking
   const turntable = useContext(TurntableContext);
   const currentSpinAngleRef = useRef(0);
-  const exitAngleRef = useRef(0);
-  const entryAngleRef = useRef(0);
 
   // Continuous progress tracking: 1 when initial active model on page load, otherwise 0 to glide in along arc
   const progressRef = useRef(active && isInitial ? 1 : 0);
@@ -603,39 +602,28 @@ function AvatarModel({
 
   useEffect(() => {
     if (active !== prevActiveRef.current) {
-      const wasActive = prevActiveRef.current;
       prevActiveRef.current = active;
       activeDirectionRef.current = direction;
 
-      if (!active && wasActive) {
-        // Model was just clicked away from (exit initiated)!
-        // Snapshot the EXACT orientation it had at this instant:
-        exitAngleRef.current = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
-      }
-
-      if (active) {
-        // Incoming model: capture the exact transition angle so it enters along the same rotated carousel circle:
-        entryAngleRef.current = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
-      }
-
-      // Pre-position incoming avatar along the circular carousel arc immediately
+      // Pre-position incoming avatar along the screen-space runway arc immediately
       if (active && groupRef.current && !reducedMotion) {
         if (activeAvatarGroupRef && innerGroupRef.current) {
           activeAvatarGroupRef.current = innerGroupRef.current;
         }
-        const startAngle = -direction * CAROUSEL_MAX_THETA;
-        const startX = CAROUSEL_RADIUS * Math.sin(startAngle);
-        const startZ = -CAROUSEL_RADIUS * (1 - Math.cos(startAngle));
+        const xTravel = isMobile ? 1.35 : 1.80;
+        const zRecede = isMobile ? 0.35 : 0.50;
+        const startX = -direction * xTravel;
+        const startZ = -zRecede;
         const startScale = 1 - 0.22;
-        const entryAngle = turntable?.spinAngleRef.current ?? currentSpinAngleRef.current;
-        _circleVec.set(startX, 0, startZ).applyAxisAngle(_unitY, entryAngle);
-        groupRef.current.position.set(_circleVec.x, 0, _circleVec.z);
-        groupRef.current.rotation.set(0, entryAngle + startAngle, 0);
+        const spinAngle = turntable?.spinAngleRef.current ?? 0;
+        const startYaw = spinAngle - direction * 0.22;
+        groupRef.current.position.set(startX, 0, startZ);
+        groupRef.current.rotation.set(0, startYaw, 0);
         groupRef.current.scale.set(startScale, startScale, startScale);
         groupRef.current.visible = true;
       }
     }
-  }, [active, direction, reducedMotion, activeAvatarGroupRef, turntable]);
+  }, [active, direction, reducedMotion, activeAvatarGroupRef, turntable, isMobile]);
 
   // Combined render loop: cinematic transition cross-dissolve + grounded natural breathing
   useFrame((state, delta) => {
@@ -645,8 +633,8 @@ function AvatarModel({
       activeAvatarGroupRef.current = innerGroupRef.current;
     }
 
-    // Guard against large delta spikes on tab re-activation or GC hitches (capped to 50ms)
-    const safeDelta = Math.min(delta, 0.05);
+    // Guard against large delta spikes on tab re-activation or GC hitches (capped to 100ms)
+    const safeDelta = Math.min(delta, 0.1);
 
     const target = active ? 1 : 0;
     const current = progressRef.current;
@@ -702,48 +690,38 @@ function AvatarModel({
     // Cosine ease-in-out curve for runway motion (smooth velocity at 0 and 1, no jerky breaks)
     const eased = 0.5 - 0.5 * Math.cos(Math.PI * p);
 
-    // ─── 3D Circular Carousel Revolving Dynamics ───────────────────────
+    // ─── Screen-Space Aligned Runway Carousel Trajectory ─────────────
+    // Decoupled from world turntable spin: avatars glide strictly across the viewport
+    // (left/right & subtle depth recede), eliminating all camera clipping and avatar stacking!
+    const xTravel = isMobile ? 1.35 : 1.80;
+    const zRecede = isMobile ? 0.35 : 0.50;
+    const dir = activeDirectionRef.current;
+
     let worldCircleX: number;
     let worldCircleZ: number;
-    let baseModelYaw: number;
     let circleScale: number;
+    let runwayBanking: number;
 
     if (active) {
-      // Incoming / Active model: revolves along the circular arc towards center stage
-      const arcProgress = 1 - eased;
-      const signedAngle = -activeDirectionRef.current * arcProgress * CAROUSEL_MAX_THETA;
-      const circleX = reducedMotion ? 0 : CAROUSEL_RADIUS * Math.sin(signedAngle);
-      const circleZ = reducedMotion ? 0 : -CAROUSEL_RADIUS * (1 - Math.cos(signedAngle));
-      const circleRotY = reducedMotion ? 0 : signedAngle;
-      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(Math.abs(signedAngle) / CAROUSEL_MAX_THETA, 1.2));
-
-      // Active model applies the continuous turntable showcase spin
-      const spinAngle = turntable?.spinAngleRef.current ?? entryAngleRef.current;
-      currentSpinAngleRef.current = spinAngle;
-
-      // Rotate local entry carousel arc offset in lockstep with the spinning turntable:
-      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, spinAngle);
-      worldCircleX = _circleVec.x;
-      worldCircleZ = _circleVec.z;
-
-      baseModelYaw = spinAngle + circleRotY;
+      // Incoming / Active model: glides in from offscreen (-dir * xTravel) to center stage (0, 0)
+      const enterProgress = 1 - eased;
+      worldCircleX = reducedMotion ? 0 : -dir * enterProgress * xTravel;
+      worldCircleZ = reducedMotion ? 0 : -Math.pow(enterProgress, 1.3) * zRecede;
+      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(enterProgress, 1.2));
+      runwayBanking = reducedMotion ? 0 : -dir * enterProgress * 0.22;
     } else {
-      // Exiting model: revolves in the direction of its hand at the moment of click!
-      const arcProgress = 1 - eased;
-      const signedAngle = activeDirectionRef.current * arcProgress * CAROUSEL_MAX_THETA;
-      const circleX = reducedMotion ? 0 : CAROUSEL_RADIUS * Math.sin(signedAngle);
-      const circleZ = reducedMotion ? 0 : -CAROUSEL_RADIUS * (1 - Math.cos(signedAngle));
-      const circleRotY = reducedMotion ? 0 : signedAngle;
-      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(Math.abs(signedAngle) / CAROUSEL_MAX_THETA, 1.2));
-
-      // Rotate local carousel arc offset by the model's exact orientation when clicked:
-      _circleVec.set(circleX, 0, circleZ).applyAxisAngle(_unitY, exitAngleRef.current);
-      worldCircleX = _circleVec.x;
-      worldCircleZ = _circleVec.z;
-
-      // Maintain orientation without snapping, smoothly curving along the exit trajectory:
-      baseModelYaw = exitAngleRef.current + circleRotY;
+      // Exiting model: glides out from center stage (0, 0) to offscreen (+dir * xTravel)
+      const exitProgress = 1 - eased;
+      worldCircleX = reducedMotion ? 0 : dir * exitProgress * xTravel;
+      worldCircleZ = reducedMotion ? 0 : -Math.pow(exitProgress, 1.3) * zRecede;
+      circleScale = reducedMotion ? 1 : (1 - 0.22 * Math.pow(exitProgress, 1.2));
+      runwayBanking = reducedMotion ? 0 : dir * exitProgress * 0.22;
     }
+
+    // Live continuous turntable showcase spin for BOTH avatars — ZERO stopping, ZERO freezing
+    const spinAngle = turntable?.spinAngleRef.current ?? 0;
+    currentSpinAngleRef.current = spinAngle;
+    const baseModelYaw = spinAngle + runwayBanking;
 
     // ─── Damped Pointer Tracking ────────────────────────────────────
     const isTrackingDisabled = reducedMotion || isUserInteracting || !pointerRef?.current?.active;
@@ -981,37 +959,59 @@ const HeroModel = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Initially mount ONLY the active model so initial page load is blazing fast
+  // Initially mount ONLY the active model so initial page load is blazing fast (<2.5s)
   const [mountedModels, setMountedModels] = useState<Record<string, boolean>>(() => ({
     [currentId]: true,
   }));
   const [firstModelReady, setFirstModelReady] = useState(false);
 
-  // If the user clicks on a model directly before its background loading timer fires, mount it immediately
+  // If the user clicks on any model directly before background loading completes, mount it immediately
   if (!mountedModels[currentId]) {
     setMountedModels((prev) => ({ ...prev, [currentId]: true }));
   }
 
-  // Progressive single-model sequence loading:
-  // 1. Strictly load ONLY the initial model at page load. Zero background downloads.
-  // 2. Once the first avatar is fully rendered on screen and visible to the user:
-  //    Wait 4.5 seconds (plenty of time for the user to admire the first model without any network competition),
-  //    then gently warm up ONLY the immediate next model in sequence (or whenever the user hovers/interacts).
+  // Background Model Warming:
+  // 1. On initial page load, strictly load ONLY the first model so the user sees 3D in <3 seconds.
+  // 2. Once the first avatar is fully rendered on screen (firstModelReady === true):
+  //    - At 300ms: warm up the immediate next sequential model.
+  //    - At 1200ms: warm up all remaining models in background.
+  // This guarantees that before the first 8.5s showcase cycle completes or before the user clicks,
+  // all models are parsed in GPU memory and transitions are 100% instant with ZERO stopping or Suspense delay!
   useEffect(() => {
     if (!firstModelReady) return;
 
     const currentIndex = HERO_MODELS.findIndex((m) => m.id === currentId);
     const nextModel = HERO_MODELS[(currentIndex + 1) % HERO_MODELS.length];
 
-    if (nextModel && !mountedModels[nextModel.id]) {
-      const timer = setTimeout(() => {
+    // Step 1: Preload next model quickly at 300ms
+    const timer1 = setTimeout(() => {
+      if (nextModel) {
         preloadHeroModel(nextModel.path);
         setMountedModels((prev) => (prev[nextModel.id] ? prev : { ...prev, [nextModel.id]: true }));
-      }, 4500);
+      }
+    }, 300);
 
-      return () => clearTimeout(timer);
-    }
-  }, [firstModelReady, currentId, mountedModels]);
+    // Step 2: Preload and mount all remaining hero models at 1200ms
+    const timer2 = setTimeout(() => {
+      HERO_MODELS.forEach((m) => preloadHeroModel(m.path));
+      setMountedModels((prev) => {
+        const allMounted: Record<string, boolean> = { ...prev };
+        let changed = false;
+        HERO_MODELS.forEach((m) => {
+          if (!allMounted[m.id]) {
+            allMounted[m.id] = true;
+            changed = true;
+          }
+        });
+        return changed ? allMounted : prev;
+      });
+    }, 1200);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [firstModelReady]);
 
   const handleActiveModelRendered = () => {
     if (!firstModelReady) {
@@ -1087,7 +1087,7 @@ const HeroModel = ({
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.05,
       }}
-      dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
+      dpr={isMobile ? 1.0 : [1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1.75, 1.75)]}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
       {/* Balanced Studio Lighting — softened ambient and fill to create dramatic theatrical contrast */}
@@ -1143,6 +1143,7 @@ const HeroModel = ({
                 isUserInteracting={isUserInteracting}
                 activeAvatarGroupRef={activeAvatarGroupRef}
                 isInitial={!firstModelReady && currentId === item.id}
+                isMobile={isMobile}
                 onRendered={currentId === item.id ? handleActiveModelRendered : undefined}
               />
             </Suspense>

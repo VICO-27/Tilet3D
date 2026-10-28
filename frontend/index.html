@@ -17,8 +17,10 @@
       rel="stylesheet"
     />
 
-    <!-- High-Priority Initial 3D Avatar Preload (<3s initial render) -->
+    <!-- High-Priority Initial 3D Avatar & Draco Preload (<3s initial render) -->
     <link rel="preload" as="fetch" href="/models/female-white-dress.glb" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="preload" as="script" href="/draco/draco_wasm_wrapper.js" crossorigin="anonymous" />
+    <link rel="preload" as="fetch" href="/draco/draco_decoder.wasm" crossorigin="anonymous" />
     <title>Tilet3D Habesha Couture in 3D</title>
   </head>
   <body>

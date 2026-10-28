@@ -312,6 +312,14 @@ const HeroSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const upcomingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (upcomingTimerRef.current) clearTimeout(upcomingTimerRef.current);
+    };
+  }, []);
+
   // Callback triggered when a model completes its single 360° rotation: advance to next model
   const handleAutoCycle = useCallback(() => {
     setTransitionDirection(1);
@@ -319,7 +327,10 @@ const HeroSection = () => {
       const total = HERO_MODELS.length;
       const nextIdx = (prev + 1) % total;
       const upcomingIdx = (nextIdx + 1) % total;
-      preloadHeroModel(HERO_MODELS[upcomingIdx].path);
+      if (upcomingTimerRef.current) clearTimeout(upcomingTimerRef.current);
+      upcomingTimerRef.current = setTimeout(() => {
+        preloadHeroModel(HERO_MODELS[upcomingIdx].path);
+      }, 800);
       return nextIdx;
     });
   }, []);
@@ -336,25 +347,24 @@ const HeroSection = () => {
   }, [is3DReady, prefersReducedMotion, handleAutoCycle]);
 
   const cycleModel = useCallback((dir: -1 | 1) => { 
-    markInteracting(); 
-    endInteracting(); 
     setTransitionDirection(dir);
     setCurrentModelIndex((prev) => {
       const total = HERO_MODELS.length;
       const nextIdx = (prev + dir + total) % total;
       const upcomingIdx = (nextIdx + dir + total) % total;
-      preloadHeroModel(HERO_MODELS[upcomingIdx].path);
+      if (upcomingTimerRef.current) clearTimeout(upcomingTimerRef.current);
+      upcomingTimerRef.current = setTimeout(() => {
+        preloadHeroModel(HERO_MODELS[upcomingIdx].path);
+      }, 800);
       return nextIdx;
     });
-  }, [markInteracting, endInteracting]);
+  }, []);
 
   const selectModel = useCallback((index: number) => {
     if (index === currentModelIndex) return;
-    markInteracting();
-    endInteracting();
     setTransitionDirection(index > currentModelIndex ? 1 : -1);
     setCurrentModelIndex(index);
-  }, [currentModelIndex, markInteracting, endInteracting]);
+  }, [currentModelIndex]);
 
   // Keyboard navigation for laptop/desktop: "<" (or ",") or ArrowLeft to switch left,
   // ">" (or ".") or ArrowRight to switch right.

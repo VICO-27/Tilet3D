@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useEffect, useState, createContext, useContext, useCallback } from "react";
+import { Suspense, useMemo, useRef, useEffect, useState, createContext, useContext, useCallback, Component } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -417,6 +417,39 @@ interface MaleBones {
 // Use a WeakSet to track posed scenes safely without violating React immutability linter rules
 const posedScenes = new WeakSet<THREE.Group>();
 
+interface ModelTransform {
+  scale: number;
+  position: [number, number, number];
+}
+
+const transformCache = new WeakMap<THREE.Group, ModelTransform>();
+
+function getModelTransform(scene: THREE.Group): ModelTransform {
+  const cached = transformCache.get(scene);
+  if (cached) return cached;
+
+  const box = new THREE.Box3().setFromObject(scene);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  // Standardize character height: the hero models share the same female base rig (~1.716m).
+  // Models with high accessories (like the Oromo ceremonial staff at 1.80m) are normalized
+  // to the standard avatar height so eye level and head height remain completely uniform.
+  const standardHeight = 1.716;
+  const effectiveHeight = Math.min(size.y || standardHeight, standardHeight);
+  const scaleFactor = 1.6;
+  const s = scaleFactor / effectiveHeight;
+
+  const transform: ModelTransform = {
+    scale: s,
+    position: [-center.x * s, -box.min.y * s, -center.z * s],
+  };
+  transformCache.set(scene, transform);
+  return transform;
+}
+
 function AvatarModel({ 
   modelItem, 
   isEntering = false,
@@ -446,8 +479,6 @@ function AvatarModel({
   const { gl, camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const innerGroupRef = useRef<THREE.Group>(null);
-  const reportedRef = useRef(false);
-  const materialsRef = useRef<THREE.Material[]>([]);
 
   // Damped pointer coordinates ref
   const smoothedPointerRef = useRef({ x: 0, y: 0 });
@@ -457,7 +488,7 @@ function AvatarModel({
   const currentSpinAngleRef = useRef(0);
 
   // Transition progress tracking: 0 -> 1
-  const enterProgressRef = useRef(isEntering ? 0 : 1);
+  const enterProgressRef = useRef(isEntering && !reducedMotion ? 0 : 1);
   const exitProgressRef = useRef(0);
 
   // Locate Mixamo upper-body articulation bones (male avatar)
@@ -533,44 +564,22 @@ function AvatarModel({
         // Fallback for headless/mock environments
       }
     }
-
-    // Collect all cloned materials and enable shadows for this avatar
-    const mats = new Set<THREE.Material>();
-    scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (Array.isArray(child.material)) {
-          child.material.forEach((m) => mats.add(m));
-        } else if (child.material) {
-          mats.add(child.material);
-        }
-      }
-    });
-    materialsRef.current = Array.from(mats);
   }, [scene, gl, camera]);
 
-  const transform = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
+  useEffect(() => {
+    if (!isExiting) {
+      onRendered?.();
+    }
+  }, [isExiting, onRendered]);
 
-    const scaleFactor = 1.6;
-    const s = scaleFactor / (size.y || scaleFactor);
-
-    return {
-      scale: s,
-      position: [-center.x * s, -box.min.y * s, -center.z * s] as [number, number, number],
-    };
-  }, [scene]);
+  const transform = useMemo(() => getModelTransform(scene), [scene]);
 
   // Calibrated screen-space trajectory bounds:
-  // On mobile (narrow screen ~1.22m width at depth), 0.78m puts avatar just past viewport boundary
-  // On desktop widescreen, 1.45m gives grand runway clearance
-  const xTravel = isMobile ? 0.78 : 1.45;
-  const zRecede = isMobile ? 0.22 : 0.40;
+  // On mobile, pure horizontal glide along X (zRecede = 0) ensures 100% constant visible height
+  // throughout the transition, completely eliminating the perspective dip toward the floor shadow.
+  // On desktop widescreen, 1.45m gives grand runway clearance.
+  const xTravel = isMobile ? 1.65 : 1.45;
+  const zRecede = isMobile ? 0 : 0.40;
 
   // Set initial position on mount
   useEffect(() => {
@@ -578,10 +587,9 @@ function AvatarModel({
       if (isEntering && !reducedMotion) {
         const startX = -direction * xTravel;
         const startZ = -zRecede;
-        const startScale = 1 - 0.15;
         groupRef.current.position.set(startX, 0, startZ);
-        groupRef.current.scale.set(startScale, startScale, startScale);
-      } else if (!isExiting) {
+        groupRef.current.scale.set(1, 1, 1);
+      } else if (!isExiting && enterProgressRef.current >= 1) {
         groupRef.current.position.set(0, 0, 0);
         groupRef.current.scale.set(1, 1, 1);
       }
@@ -605,7 +613,7 @@ function AvatarModel({
     const speed = safeDelta * 2.8; // ~350ms snappy runway transition
 
     let p = 1;
-    if (isEntering) {
+    if (enterProgressRef.current < 1) {
       enterProgressRef.current = Math.min(1, enterProgressRef.current + speed);
       p = enterProgressRef.current;
     } else if (isExiting) {
@@ -622,21 +630,18 @@ function AvatarModel({
 
     let worldCircleX = 0;
     let worldCircleZ = 0;
-    let circleScale = 1;
     let runwayBanking = 0;
 
     if (isExiting) {
       // Exiting model: glides out from center stage (0, 0) to offscreen (+direction * xTravel)
       worldCircleX = reducedMotion ? 0 : direction * eased * xTravel;
       worldCircleZ = reducedMotion ? 0 : -Math.pow(eased, 1.2) * zRecede;
-      circleScale = reducedMotion ? 1 : (1 - 0.15 * Math.pow(eased, 1.2));
       runwayBanking = reducedMotion ? 0 : direction * eased * 0.12;
-    } else if (isEntering) {
+    } else if (p < 1) {
       // Incoming model: glides in from offscreen (-direction * xTravel) to center stage (0, 0)
       const enterRemain = 1 - eased;
       worldCircleX = reducedMotion ? 0 : -direction * enterRemain * xTravel;
       worldCircleZ = reducedMotion ? 0 : -Math.pow(enterRemain, 1.2) * zRecede;
-      circleScale = reducedMotion ? 1 : (1 - 0.15 * Math.pow(enterRemain, 1.2));
       runwayBanking = reducedMotion ? 0 : -direction * enterRemain * 0.12;
     }
 
@@ -749,25 +754,18 @@ function AvatarModel({
 
       groupRef.current.position.set(worldCircleX, 0, worldCircleZ);
       groupRef.current.rotation.set(0, baseModelYaw, 0);
-      groupRef.current.scale.set(circleScale, circleScale, circleScale);
+      groupRef.current.scale.set(1, 1, 1);
     } else {
       // ─── Female Avatar Grounded Motion ─────────────────────────────
       const femalePitch = -0.004 * breath - 0.012 * currentPointerY;
       const femaleRoll = 0.0035 * swayZ - 0.008 * currentPointerX;
       const femaleYaw = 0.0025 * twistY + 0.055 * currentPointerX + baseModelYaw;
 
-      const currentScale = circleScale;
-      const thoracicScaleY = currentScale * (1 + 0.003 * breath);
+      const thoracicScaleY = 1 + 0.003 * breath;
 
       groupRef.current.position.set(worldCircleX, 0, worldCircleZ);
       groupRef.current.rotation.set(femalePitch, femaleYaw, femaleRoll);
-      groupRef.current.scale.set(currentScale, thoracicScaleY, currentScale);
-    }
-
-    // Confirm first usable rendered frame immediately
-    if (!isExiting && !reportedRef.current) {
-      reportedRef.current = true;
-      onRendered?.();
+      groupRef.current.scale.set(1, thoracicScaleY, 1);
     }
   });
 
@@ -843,6 +841,51 @@ function AvatarFloorShadow({ isMobile }: { isMobile: boolean }) {
   );
 }
 
+class PreloadErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.warn("[HeroModel] Preloader error:", error);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
+function ModelPreloader({
+  modelItem,
+  onReady,
+}: {
+  modelItem: HeroModelItem;
+  onReady: (id: string) => void;
+}) {
+  const { scene } = useGLTF(modelItem.path, DRACO_URL);
+  const { gl, camera } = useThree();
+
+  useEffect(() => {
+    if (!posedScenes.has(scene)) {
+      prepareAvatar(scene);
+      applyNaturalSkinWarmth(scene);
+      posedScenes.add(scene);
+      getModelTransform(scene);
+      try {
+        gl.compile(scene, camera);
+      } catch {
+        // Fallback for mock/headless
+      }
+    }
+    onReady(modelItem.id);
+  }, [scene, gl, camera, modelItem.id, onReady]);
+
+  return null;
+}
+
 const HeroModel = ({ 
   gender, 
   activeModelId,
@@ -878,13 +921,39 @@ const HeroModel = ({
   const [transitionDir, setTransitionDir] = useState<-1 | 1>(direction);
   const [firstModelReady, setFirstModelReady] = useState(false);
 
+  const activeIdRef = useRef(activeId);
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
+  const directionRef = useRef(direction);
+  useEffect(() => {
+    directionRef.current = direction;
+  }, [direction]);
+
+  // Target model to preload before starting handoff
+  const targetId = currentId !== activeId ? currentId : null;
+  const targetModel = useMemo(
+    () => (targetId ? HERO_MODELS.find((m) => m.id === targetId) || null : null),
+    [targetId]
+  );
+
+  const handleTargetReady = useCallback((readyId: string) => {
+    if (readyId === activeIdRef.current) return;
+    setExitingId(activeIdRef.current);
+    setActiveId(readyId);
+    setTransitionDir(directionRef.current);
+  }, []);
+
+  // Safety fallback: if target model does not report ready within 4s, advance anyway
   useEffect(() => {
     if (currentId !== activeId) {
-      setExitingId(activeId);
-      setActiveId(currentId);
-      setTransitionDir(direction);
+      const timer = setTimeout(() => {
+        handleTargetReady(currentId);
+      }, 4000);
+      return () => clearTimeout(timer);
     }
-  }, [currentId, activeId, direction]);
+  }, [currentId, activeId, handleTargetReady]);
 
   const handleExitComplete = useCallback((id: string) => {
     setExitingId((prev) => (prev === id ? null : prev));
@@ -900,25 +969,36 @@ const HeroModel = ({
   );
 
   // Sequential graceful cache warmup:
-  // Starts after the first model is fully rendered on screen, preloading one model every 1.2s
-  // This guarantees zero network or CPU bottlenecks on mobile, while ensuring every model
-  // is pre-cached long before auto-cycle or manual interaction!
+  // On desktop: preloads models progressively every 1.2s
+  // On mobile: only preloads the immediate next model after a 3.5s settling delay,
+  // preventing multiple overlapping Draco/texture decodes from causing animation pauses
   useEffect(() => {
     if (!firstModelReady) return;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    HERO_MODELS.slice(1).forEach((m, idx) => {
+
+    if (isMobile) {
+      // Mobile: stagger only the immediate next avatar comfortably before the 8.5s auto-cycle
       timers.push(
         setTimeout(() => {
-          preloadHeroModel(m.path);
-        }, 150 + idx * 1200)
+          preloadHeroModel(HERO_MODELS[1].path);
+        }, 3500)
       );
-    });
+    } else {
+      // Desktop: preserve progressive warmup across all models
+      HERO_MODELS.slice(1).forEach((m, idx) => {
+        timers.push(
+          setTimeout(() => {
+            preloadHeroModel(m.path);
+          }, 150 + idx * 1200)
+        );
+      });
+    }
 
     return () => {
       timers.forEach((t) => clearTimeout(t));
     };
-  }, [firstModelReady]);
+  }, [firstModelReady, isMobile]);
 
   const handleActiveModelRendered = useCallback(() => {
     if (!firstModelReady) {
@@ -995,7 +1075,7 @@ const HeroModel = ({
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.05,
       }}
-      dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
+      dpr={isMobile ? [1, 1.25] : [1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 2)]}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
       {/* Balanced Studio Lighting */}
@@ -1049,7 +1129,7 @@ const HeroModel = ({
           />
         </Suspense>
 
-        {exitingModel && (
+        {exitingModel && exitingModel.id !== activeModel.id && (
           <Suspense fallback={null}>
             <AvatarModel
               key={exitingModel.id}
@@ -1064,6 +1144,14 @@ const HeroModel = ({
               onExitComplete={() => handleExitComplete(exitingModel.id)}
             />
           </Suspense>
+        )}
+
+        {targetModel && (
+          <PreloadErrorBoundary key={targetModel.id}>
+            <Suspense fallback={null}>
+              <ModelPreloader modelItem={targetModel} onReady={handleTargetReady} />
+            </Suspense>
+          </PreloadErrorBoundary>
         )}
       </TurntableGroup>
 

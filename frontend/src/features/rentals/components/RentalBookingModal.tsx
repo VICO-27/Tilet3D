@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -92,15 +93,23 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Lock background scroll when modal is open
+  // Lock background scroll when modal is open with layout shift prevention
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+    };
   }, [isOpen]);
 
   // Escape key handler
@@ -280,25 +289,32 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      {/* Blurred fixed backdrop — perfectly centered in the middle of screen for both laptop & phone */}
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/75 backdrop-blur-md overflow-y-auto overscroll-contain select-none"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 8 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-[560px] md:max-w-[620px] lg:max-w-[660px] max-h-[min(90dvh,780px)] bg-white border border-stone-200/90 text-stone-900 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden select-text my-auto"
-          onClick={(e) => e.stopPropagation()}
+      {isOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("rentals.modalTitle", "Reserve Cultural Couture")}
+          className="fixed inset-0 z-[9995] overflow-y-auto overflow-x-hidden bg-black/75 backdrop-blur-md select-none overscroll-contain"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
+          {/* Centering wrapper: min-h-full flex items-center justify-center. If viewport is taller than modal, modal is centered vertically & horizontally. If viewport is shorter, it starts cleanly at p-3/p-5 and scrolls without clipping into negative coordinates. */}
+          <div className="min-h-full w-full flex items-center justify-center p-3 sm:p-5 md:p-6 text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-[560px] md:max-w-[620px] lg:max-w-[660px] max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2.5rem)] md:max-h-[min(90dvh,820px)] bg-white border border-stone-200/90 text-stone-900 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden select-text text-left my-auto"
+              style={{ maxHeight: 'min(90vh, 820px)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
           {/* Header Banner — Pinned at top */}
           <div className="relative px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-stone-50 via-purple-50/70 to-stone-50 border-b border-stone-200 flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -708,8 +724,11 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
-  );
+    </div>
+  )}
+</AnimatePresence>,
+document.body
+);
 };
 
 export default RentalBookingModal;

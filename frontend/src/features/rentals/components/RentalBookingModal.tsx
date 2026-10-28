@@ -284,19 +284,19 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
 
   return (
     <AnimatePresence>
-      {/* Blurred fixed backdrop — stays completely still and prevents page scrolling */}
+      {/* Blurred fixed backdrop — perfectly centered in the middle of screen for both laptop & phone */}
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden select-none"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/75 backdrop-blur-md overflow-y-auto overscroll-contain select-none"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 12 }}
+          initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 12 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full max-w-lg max-h-[92vh] bg-white border border-stone-200 text-stone-900 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden select-text"
+          exit={{ opacity: 0, scale: 0.96, y: 8 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-[560px] md:max-w-[620px] lg:max-w-[660px] max-h-[min(90dvh,780px)] bg-white border border-stone-200/90 text-stone-900 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden select-text my-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Banner — Pinned at top */}
@@ -346,7 +346,7 @@ export const RentalBookingModal: React.FC<RentalBookingModalProps> = ({
           ) : (
             <form onSubmit={handleCheckout} className="flex-1 flex flex-col min-h-0">
               {/* Scrollable Form Body */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 text-stone-800 bg-white">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-3.5 sm:space-y-4 text-stone-800 bg-white">
                 
                 {/* Product Summary Card */}
                 <div className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl bg-stone-50 border border-stone-200 shrink-0">

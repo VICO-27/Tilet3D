@@ -461,8 +461,8 @@ export const AdminRentalsPage: React.FC = () => {
 
       {/* Return Inspection Modal */}
       {inspectingBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-zinc-950 border border-purple-500/30 rounded-3xl p-6 shadow-2xl text-zinc-100 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto select-none">
+          <div className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[480px] sm:max-w-lg md:max-w-xl max-h-[min(90dvh,750px)] bg-zinc-950 border border-purple-500/30 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl text-zinc-100 space-y-4 sm:space-y-5 my-auto overflow-y-auto select-text">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-purple-400" />
@@ -579,8 +579,8 @@ export const AdminRentalsPage: React.FC = () => {
 
       {/* Detail View Modal */}
       {viewingBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-zinc-950 border border-white/10 rounded-3xl p-6 shadow-2xl text-zinc-100 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto select-none">
+          <div className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[480px] sm:max-w-lg md:max-w-xl max-h-[min(90dvh,750px)] bg-zinc-950 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl text-zinc-100 space-y-4 my-auto overflow-y-auto select-text">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
                 <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest font-bold">

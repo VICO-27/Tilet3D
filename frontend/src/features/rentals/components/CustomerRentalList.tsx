@@ -228,12 +228,12 @@ export const CustomerRentalList: React.FC = () => {
       {/* Booking Detail Modal */}
       <AnimatePresence>
         {selectedBooking && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto select-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-lg bg-zinc-950 border border-white/10 rounded-3xl p-6 shadow-2xl text-zinc-100 space-y-5"
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              className="relative w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-[540px] md:max-w-[580px] max-h-[min(90dvh,720px)] bg-zinc-950 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl text-zinc-100 space-y-4 sm:space-y-5 my-auto overflow-y-auto select-text"
             >
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
                 <div>

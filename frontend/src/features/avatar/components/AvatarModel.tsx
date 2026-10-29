@@ -133,6 +133,7 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
     const t = Math.min(delta * 7, 1);
     targetScaleRef.current.set(targetSxz, targetSy, targetSxz);
     group.current.scale.lerp(targetScaleRef.current, t);
+    group.current.visible = active || group.current.scale.y > 0.01;
 
     if (active) {
       if (currentAnimation === 'spin') {
@@ -150,8 +151,6 @@ function SingleGenderAvatar({ gender, active }: { gender: Gender; active: boolea
     <group 
       ref={group} 
       scale={0.001} 
-      // Only hide completely when inactive AND fully shrunk down, so the shrink animation is visible
-      visible={active || (group.current ? group.current.scale.y > 0.01 : false)}
     >
       <primitive object={clonedScene} dispose={null} />
     </group>
@@ -168,15 +167,14 @@ export function AvatarModel() {
     male: gender === 'male',
     female: gender === 'female',
   });
+  const [prevGender, setPrevGender] = useState(gender);
 
-  useEffect(() => {
-    setMountedGenders((prev) => {
-      if (!prev[gender]) {
-        return { ...prev, [gender]: true };
-      }
-      return prev;
-    });
-  }, [gender]);
+  if (prevGender !== gender) {
+    setPrevGender(gender);
+    if (!mountedGenders[gender]) {
+      setMountedGenders((prev) => ({ ...prev, [gender]: true }));
+    }
+  }
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Gender, BodyType, SkinTone } from '../types/avatar.types';
 import { useAvatarStore } from '../store/useAvatarStore';
@@ -41,11 +41,13 @@ interface EditableNumberInputProps {
 
 function EditableNumberInput({ id, label, value, min, max, step = 1, suffix, onCommit }: EditableNumberInputProps) {
   const [draft, setDraft] = useState(String(value));
+  const [prevValue, setPrevValue] = useState(value);
 
   // Sync draft when store updates externally
-  useEffect(() => {
+  if (prevValue !== value) {
+    setPrevValue(value);
     setDraft(String(value));
-  }, [value]);
+  }
 
   const commitValue = (rawValue: string) => {
     const trimmed = rawValue.trim();

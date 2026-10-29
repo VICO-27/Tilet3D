@@ -6,11 +6,6 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import HeroModel, { HERO_MODELS, preloadHeroModel, type PointerTracker } from "./HeroModel";
 import HeroBrandAnimation from "./HeroBrandAnimation";
-
-// Preload initial hero 3D model immediately
-if (typeof window !== "undefined") {
-  preloadHeroModel(HERO_MODELS[0].path);
-}
 import type { Variants } from "framer-motion";
 
 // ─── Motion Language: Tumble & Fun ───────────────────────────────────────────
@@ -320,32 +315,6 @@ const HeroSection = () => {
     };
   }, []);
 
-  // Callback triggered when a model completes its single 360° rotation: advance to next model
-  const handleAutoCycle = useCallback(() => {
-    setTransitionDirection(1);
-    setCurrentModelIndex((prev) => {
-      const total = HERO_MODELS.length;
-      const nextIdx = (prev + 1) % total;
-      const upcomingIdx = (nextIdx + 1) % total;
-      if (upcomingTimerRef.current) clearTimeout(upcomingTimerRef.current);
-      upcomingTimerRef.current = setTimeout(() => {
-        preloadHeroModel(HERO_MODELS[upcomingIdx].path);
-      }, 800);
-      return nextIdx;
-    });
-  }, []);
-
-  // Fallback timer strictly for reduced-motion users (where 3D auto-spin is paused)
-  useEffect(() => {
-    if (!is3DReady || !prefersReducedMotion) return;
-    const id = setInterval(() => {
-      if (!interactingRef.current) {
-        handleAutoCycle();
-      }
-    }, 8500);
-    return () => clearInterval(id);
-  }, [is3DReady, prefersReducedMotion, handleAutoCycle]);
-
   const cycleModel = useCallback((dir: -1 | 1) => { 
     setTransitionDirection(dir);
     setCurrentModelIndex((prev) => {
@@ -359,6 +328,23 @@ const HeroSection = () => {
       return nextIdx;
     });
   }, []);
+
+  // Callback triggered when a model completes its single 360° rotation: advance to next model
+  // Uses the exact same proven transition-start path as manual switching
+  const handleAutoCycle = useCallback(() => {
+    cycleModel(1);
+  }, [cycleModel]);
+
+  // Fallback timer strictly for reduced-motion users (where 3D auto-spin is paused)
+  useEffect(() => {
+    if (!is3DReady || !prefersReducedMotion) return;
+    const id = setInterval(() => {
+      if (!interactingRef.current) {
+        handleAutoCycle();
+      }
+    }, 8500);
+    return () => clearInterval(id);
+  }, [is3DReady, prefersReducedMotion, handleAutoCycle]);
 
   const selectModel = useCallback((index: number) => {
     if (index === currentModelIndex) return;
@@ -601,14 +587,14 @@ const HeroSection = () => {
             }}
           />
 
-          {/* Floating Outfit Collection Badge — Dynamic position per model with organic water-floating wave motion */}
+          {/* Floating Outfit Collection Badge — Dynamic position per model */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentModel.id}
-              initial={{ opacity: 0, x: currentBadgePos.initialX, scale: 0.92 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: currentBadgePos.initialX * 0.8, scale: 0.92 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 8, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.94 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className={`absolute ${currentBadgePos.positionClass} z-20 pointer-events-auto`}
             >
               {/* Organic "flowing in water" continuous floating motion */}
@@ -632,44 +618,47 @@ const HeroSection = () => {
             </motion.div>
           </AnimatePresence>
 
-          {/* 3-Model Sliding Window Capsule Bar */}
+          {/* 3-Model Sliding Window Capsule Bar — stable 3-slot layout, smooth slide */}
           <div className="absolute bottom-4 sm:bottom-6 lg:bottom-9 left-1/2 -translate-x-1/2 z-20 pointer-events-auto max-w-[96vw]">
-            <div className="relative flex items-center justify-center p-1 sm:p-1.5 rounded-full border border-black/5 bg-white/80 shadow-lg backdrop-blur-xl overflow-hidden">
+            <div className="relative flex items-center justify-center p-1 sm:p-1.5 rounded-full border border-black/5 bg-white/80 shadow-lg backdrop-blur-xl">
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <AnimatePresence initial={false} mode="popLayout">
-                  {visibleThreeModels.map((item) => {
-                    const isActive = item.originalIndex === currentModelIndex;
-                    return (
-                      <motion.button
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, x: transitionDirection * 35, scale: 0.92 }}
-                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                        exit={{ opacity: 0, x: -transitionDirection * 35, scale: 0.92 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 420,
-                          damping: 30,
-                          opacity: { duration: 0.25 },
-                        }}
-                        onClick={() => selectModel(item.originalIndex)}
-                        onMouseEnter={() => preloadHeroModel(item.path)}
-                        className={`relative whitespace-nowrap px-3.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-semibold tracking-wide rounded-full transition-colors duration-200 cursor-pointer ${
-                          isActive ? "text-white" : "text-zinc-600 hover:text-zinc-950 hover:bg-black/5"
-                        }`}
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="activeSlidingCapsule"
-                            className="absolute inset-0 rounded-full bg-plum-600 shadow-sm -z-10"
-                            transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                          />
-                        )}
-                        <span className="relative z-10">{t(`hero.models.${item.id}.name`, item.name)}</span>
-                      </motion.button>
-                    );
-                  })}
-                </AnimatePresence>
+                {visibleThreeModels.map((item, slotIdx) => {
+                  const isActive = slotIdx === 1; // center slot is always active
+                  return (
+                    <button
+                      key={`slot-${slotIdx}`}
+                      type="button"
+                      onClick={() => selectModel(item.originalIndex)}
+                      onMouseEnter={() => preloadHeroModel(item.path)}
+                      className={`relative px-3.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-semibold tracking-wide rounded-full cursor-pointer transition-colors duration-150 ${
+                        isActive ? "text-white" : "text-zinc-600 hover:text-zinc-950"
+                      }`}
+                      style={{ minWidth: "4.5rem" }}
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="activeSlidingCapsule"
+                          className="absolute inset-0 rounded-full bg-plum-600 shadow-sm -z-10"
+                          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                        />
+                      )}
+                      <span className="relative z-10 block overflow-hidden whitespace-nowrap text-center" style={{ height: "1.2em" }}>
+                        <AnimatePresence mode="popLayout" initial={false}>
+                          <motion.span
+                            key={item.id}
+                            className="block"
+                            initial={{ y: transitionDirection > 0 ? "100%" : "-100%", opacity: 0 }}
+                            animate={{ y: "0%", opacity: 1 }}
+                            exit={{ y: transitionDirection > 0 ? "-100%" : "100%", opacity: 0 }}
+                            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                          >
+                            {t(`hero.models.${item.id}.name`, item.name)}
+                          </motion.span>
+                        </AnimatePresence>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

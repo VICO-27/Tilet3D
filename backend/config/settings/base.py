@@ -445,7 +445,16 @@ CELERY_BEAT_SCHEDULE = {
 # CLOUDINARY CONFIGURATION
 # ==========================================================
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': env("CLOUDINARY_CLOUD_NAME", default=""),
+    'CLOUD_NAME': env("CLOUDINARY_CLOUD_NAME", default="hb9b9fd8"),
     'API_KEY': env("CLOUDINARY_API_KEY", default=""),
     'API_SECRET': env("CLOUDINARY_API_SECRET", default=""),
 }
+
+import cloudinary
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'] or "hb9b9fd8",
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True,
+)
+

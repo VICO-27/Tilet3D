@@ -2,31 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo/tilet3d-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tilet3D Habesha Couture in 3D</title>
     <meta
       name="description"
       content="Tilet3D — Ethiopian Habesha couture, reimagined in 3D. Build your avatar and try on heritage fashion before you order."
     />
+    <link rel="icon" type="image/png" href="/logo/tilet3d-logo.png" />
 
-    <!-- Luxury type pairing: Fraunces (display serif) + Hanken Grotesk (body) -->
+    <!-- High-priority preloads for the first 3D avatar and the Draco decoder.
+         NOTE: three's DRACOLoader fetches ALL of these with fetch(), so every one must be as="fetch". -->
+    <link rel="preload" as="fetch" href="/models/female-white-dress.glb" crossorigin="anonymous" fetchpriority="high" />
+    <link rel="preload" as="fetch" href="/draco/draco_wasm_wrapper.js" crossorigin="anonymous" />
+    <link rel="preload" as="fetch" href="/draco/draco_decoder.wasm" crossorigin="anonymous" />
+
+    <!-- Luxury type pairing: Fraunces (display serif) + Hanken Grotesk (body).
+         Loaded without blocking the first paint (fallback font shows until they arrive). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
-
-    <!-- High-Priority Initial 3D Avatar & Draco Preload (<3s initial render) -->
-    <link rel="preload" as="fetch" href="/models/female-white-dress.glb" crossorigin="anonymous" fetchpriority="high" />
-    <link rel="preload" as="script" href="/draco/draco_wasm_wrapper.js" crossorigin="anonymous" />
-    <link rel="preload" as="fetch" href="/draco/draco_decoder.wasm" crossorigin="anonymous" />
-    <title>Tilet3D Habesha Couture in 3D</title>
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Hanken+Grotesk:wght@300;400;500;600;700;800&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-  
+
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -37,4 +47,4 @@
       }
     </script>
   </body>
-</html>
+</html> 

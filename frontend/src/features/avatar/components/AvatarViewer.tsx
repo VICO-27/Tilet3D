@@ -213,7 +213,7 @@ function BottomControls() {
   if (isEditing) return null;
 
   return (
-    <div className="absolute bottom-20 sm:bottom-14 md:bottom-10 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
+    <div className="absolute bottom-5 sm:bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto">
       <AvatarControls />
     </div>
   );
@@ -278,7 +278,7 @@ function StudioScene() {
 // ─────────────────────────────────────────────────────────────────────────────
 // AvatarViewer — the full-screen 3D studio
 // ─────────────────────────────────────────────────────────────────────────────
-export function AvatarViewer() {
+export function AvatarViewer({ showControls = true }: { showControls?: boolean } = {}) {
   const setIsInteracting = useAvatarStore((s) => s.setIsInteracting);
   const [isTabVisible, setIsTabVisible] = useState(() => (typeof document !== 'undefined' ? !document.hidden : true));
 
@@ -291,7 +291,7 @@ export function AvatarViewer() {
   }, []);
 
   return (
-    <div className="relative h-full w-full bg-gradient-to-b from-[#f8f8f9] to-[#e8e8ed]">
+    <div className="relative h-full w-full bg-white">
 
       <NotificationToast />
 
@@ -356,7 +356,7 @@ export function AvatarViewer() {
 
       <LeftHUD />
       <RightHUD />
-      <BottomControls />
+      {showControls && <BottomControls />}
     </div>
   );
 }

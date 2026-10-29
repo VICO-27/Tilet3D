@@ -25,6 +25,7 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             "file",
             "is_primary",
             "display_order",
+            "alt_text",
         )
 
     def get_file(self, obj):

@@ -1,9 +1,10 @@
 export interface ProductMedia {
-  id: string;               // ADD THIS LINE
+  id: string;
   media_type: 'image' | 'video';
   file: string;
   is_primary: boolean;
   display_order: number;
+  alt_text?: string;
 }
 
 export interface ProductVariant {
